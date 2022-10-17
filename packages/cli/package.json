@@ -1,0 +1,16 @@
+{
+  "name": "@kauiproject/cli",
+  "version": "0.0.1",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "bin": {
+    "kuai": "lib/main.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "commander": "^9.4.1"
+  }
+}
