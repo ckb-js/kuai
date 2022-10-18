@@ -1,5 +1,5 @@
 {
-  "name": "@kauiproject/cli",
+  "name": "@kuaiproject/cli",
   "version": "0.0.1",
   "license": "MIT",
   "main": "lib/index.js",
