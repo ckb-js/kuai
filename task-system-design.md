@@ -66,7 +66,7 @@ Clarifying how many modules there are and what the system architecture looks lik
 // entry.ts
 import { KuaiContext, RuntimeEnvironment } from 'kuai/core'
 
-const ctx = HardhatContext.createHardhatContext();
+const ctx = KuaiContext.createKuaiContext();
 const config = loadConfigAndTasks();
 
 const env = new RuntimeEnvironment(
@@ -83,6 +83,7 @@ ctx.setRuntimeEnvironment(env)
 ```mermaid
 classDiagram
   class TaskParam {
+    <<Interface>>
     String name
     String type
     String description
@@ -93,6 +94,7 @@ classDiagram
   }
 
   class Task {
+    <<Interface>>
     String name
     String description
     Record~string, TaskParam~ params
@@ -102,10 +104,12 @@ classDiagram
   }
 
   class OverrideTask {
+    <<Interface>>
     Task parentTask
   }
 
   class RuntimeEnvironment {
+    <<Interface>>
     - Extender extenders
     + Record~string, Task~ tasks
 
@@ -174,7 +178,7 @@ task(TASK_NAME)
 
 #### How to run task
 
-There is a `run` method in `RuntimeEnvironment`, which will find the matched task from `tasks`, and when running it will check if the `Task` is an `OverrideTask`, if it is, it will pass the action of its `parentTask` as `runSuper` parameter to the `action` of the task
+There is a `run` method in `RuntimeEnvironment`, which will find the matched task from `tasks` by name, and when running it will check if the `Task` is an `OverrideTask`, if it is, it will pass the action of its `parentTask` as `runSuper` parameter to the `action` of the task
 
 
 #### How to extends RuntimeEnvironment
@@ -243,11 +247,18 @@ AVAILABLE TASKS:
   node                  Starts a JSON-RPC ckb server
   test                  Run tests
 ```
-In this article we focus on how the task system will integrate with cli
+In this article we focus on how the task system will integrate with cli.
 
-Our task itself has a name and we want to be able to run the task by typing `kuai TASK_NAME` directly, so this requires the cli module to dynamically load commands based on the task
+Our task itself has a name and we want to be able to run the task by typing `kuai TASK_NAME` directly, so this requires the cli module to dynamically load commands based on the task.
 
-The `name` of the `Task` will be used as the name of the command, and the `params` will be parsed as options 
+The `name` of the `Task` will be used as the name of the command, and the `params` will be parsed as options.
+
+```mermaid
+sequenceDiagram
+  CLI ->> KuaiContext : loadConfigAndTasks
+  KuaiContext ->> RuntimeEnvironment : init
+  CLI ->> RuntimeEnvironment : call task
+```
 
 **Possible usage**
 ```ts
