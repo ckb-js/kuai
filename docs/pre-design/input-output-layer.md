@@ -146,8 +146,8 @@ cor.use(async (ctx, next) => {
 });
 
 cor.dispatch({ type: "is-five", value: 6 }).then(console.log, console.error);
-//      👆
-// please give me five
+//                                                                 👆
+//                                                            please give me five
 ```
 
 #### Logger Plugin
@@ -216,6 +216,42 @@ const signResultPlugin: Middleware = async (ctx, next) => {
 };
 
 cor.use(signResultPlugin);
+```
+
+#### Onion Model
+
+To make it more like Koa's onion model, developers can use a middleware like this
+
+```mermaid
+graph LR
+  mo["onion_model_middleware"]
+  m1["middleware_1"]
+  m2["middleware_2"]
+  m3["middleware_3"]
+
+  x[" "] -.payload.-> mo
+  --1--> m1
+  --2--> m2
+  --3--> m3
+  --4--> m2
+  --5--> m1
+  --6--> mo
+```
+
+```ts
+interface Context {
+  onionResult: unknown;
+}
+
+const onionModelMiddleware: Middleware = async (ctx, next) => {
+  const oritinalOk = ctx.ok;
+  ctx.ok = (value) => {
+    ctx.onionResult = value;
+  };
+  await next();
+
+  oritinalOk(ctx.onionResult);
+};
 ```
 
 ## Integration with Other Frameworks
