@@ -1,0 +1,10 @@
+{
+  "name": "@kuaiproject/core",
+  "version": "0.0.1",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  }
+}
