@@ -1,14 +1,23 @@
-import { RuntimeEnvironment, RunTaskFunction, TaskArguments, Task, TaskParam, EnvironmentExtender } from './type';
+import {
+  RuntimeEnvironment,
+  RunTaskFunction,
+  TaskArguments,
+  Task,
+  TaskParam,
+  EnvironmentExtender,
+  KuaiConfig,
+  TaskMap,
+} from './type';
 import { OverrideTask } from './task';
 import { KuaiError } from './errors';
 import { ERRORS } from './errors-list';
 
 export class KuaiRuntimeEnvironment implements RuntimeEnvironment {
-  public readonly tasks: Record<string, Task>;
-
-  constructor(config: unknown, tasks: Task[], private readonly extenders: EnvironmentExtender[]) {
-    this.tasks = tasks.reduce((acc, task) => ({ ...acc, [task.name]: task }), {});
-
+  constructor(
+    public readonly config: KuaiConfig,
+    public readonly tasks: TaskMap,
+    private readonly extenders: EnvironmentExtender[],
+  ) {
     this.extenders.forEach((extender) => extender(this));
   }
 

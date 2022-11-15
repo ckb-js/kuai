@@ -1,6 +1,8 @@
 import { RuntimeEnvironment } from './type';
 import { TasksLoader } from './task-loader';
 import { ExtenderManager } from './extenders';
+import { KuaiError } from './errors';
+import { ERRORS } from './errors-list';
 
 export type GlobalWithKuaiContext = typeof global & {
   __KuaiContext: KuaiContext;
@@ -14,7 +16,7 @@ export class KuaiContext {
 
   public static createKuaiContext(): KuaiContext {
     if (this.isCreated()) {
-      throw new Error('context already created');
+      throw new KuaiError(ERRORS.GENERAL.CONTEXT_ALREADY_CREATED);
     }
     const globalWithKuaiContext = global as GlobalWithKuaiContext;
     const ctx = new KuaiContext();
@@ -26,7 +28,7 @@ export class KuaiContext {
     const globalWithKuaiContext = global as GlobalWithKuaiContext;
     const ctx = globalWithKuaiContext.__KuaiContext;
     if (ctx === undefined) {
-      throw new Error('context not created');
+      throw new KuaiError(ERRORS.GENERAL.CONTEXT_NOT_CREATED);
     }
     return ctx;
   }
@@ -43,14 +45,14 @@ export class KuaiContext {
 
   public setRuntimeEnvironment(env: RuntimeEnvironment): void {
     if (this.environment !== undefined) {
-      throw new Error('context already defined');
+      throw new KuaiError(ERRORS.GENERAL.RUNTIME_ALREADY_DEFINED);
     }
     this.environment = env;
   }
 
   public getRuntimeEnvironment(): RuntimeEnvironment {
     if (this.environment === undefined) {
-      throw new Error('context not defined');
+      throw new KuaiError(ERRORS.GENERAL.RUNTIME_NOT_DEFINED);
     }
     return this.environment;
   }

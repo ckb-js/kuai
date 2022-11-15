@@ -1,6 +1,13 @@
 // eslint-disable-next-line
 export type TaskArguments = any;
 
+// eslint-disable-next-line
+export type KuaiConfig = any;
+
+export interface KuaiArguments {
+  config?: string;
+}
+
 export type RunTaskFunction = (name: string, taskArguments?: TaskArguments) => Promise<unknown>;
 
 export type EnvironmentExtender = (env: RuntimeEnvironment) => void;

@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { RuntimeEnvironment } from '../src/type';
+import { RuntimeEnvironment, Task, TaskMap } from '../src/type';
 import { KuaiRuntimeEnvironment } from '../src/runtime';
 import { SimpleTask } from '../src/task';
 import { fakeType } from '../src/params';
@@ -18,6 +18,8 @@ declare module '../src/type/runtime' {
     };
   }
 }
+
+const makeTaskMap = (tasks: Task[]): TaskMap => tasks.reduce((prev, task) => ({ ...prev, [task.name]: task }), {});
 
 describe('kuai task system', () => {
   const buildWheelTask = new SimpleTask('BUILD_WHEEL')
@@ -72,7 +74,7 @@ describe('kuai task system', () => {
 
   const environment = new KuaiRuntimeEnvironment(
     {},
-    [buildWheelTask, buildEngineTask, buildCarTask, buildSkidProofWheelTask],
+    makeTaskMap([buildWheelTask, buildEngineTask, buildCarTask, buildSkidProofWheelTask]),
     [],
     // eslint-disable-next-line
   ) as any as RuntimeEnvironment;
@@ -99,7 +101,7 @@ describe('kuai task system', () => {
 
     const environment = new KuaiRuntimeEnvironment(
       {},
-      [buildWheelTask],
+      makeTaskMap([buildWheelTask]),
       [],
       // eslint-disable-next-line
     ) as any as RuntimeEnvironment;
