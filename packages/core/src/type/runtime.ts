@@ -66,3 +66,5 @@ export interface Task<ArgsT extends TaskArguments = TaskArguments> extends Confi
   // eslint-disable-next-line
   readonly params: Record<string, TaskParam<any>>;
 }
+
+export type TaskMap = Record<string, Task>;
