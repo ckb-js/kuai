@@ -5,9 +5,9 @@
 ```sh
 git clone https://github.com/ckb-js/kuai.git
 cd kuai
-yarn install
-yarn build
-yarn test
+npx lerna bootstrap
+npm run build
+npm test
 ```
 
 ## Conventions

@@ -1,18 +1,18 @@
 {
-  "name": "kuaiproject",
+  "name": "kuai",
   "version": "0.0.1",
   "description": "A framework for building dApps on Nervos",
   "repository": "https://github.com/ckb-js/kuai.git",
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   },
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn run build:lib",
+    "build": "npm run build:lib",
     "build:lib": "lerna run build",
     "test": "lerna run test",
     "lint": "eslint 'packages/*/{src,__tests__}/**/*.ts'",
@@ -33,8 +33,8 @@
   },
   "lint-staged": {
     "*.ts": [
-      "yarn prettier --list-different",
-      "yarn eslint"
+      "npx prettier --list-different",
+      "npx eslint"
     ],
     "*.md": [
       "prettier --list-different"
