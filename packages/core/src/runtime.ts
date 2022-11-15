@@ -1,5 +1,7 @@
 import { RuntimeEnvironment, RunTaskFunction, TaskArguments, Task, TaskParam, EnvironmentExtender } from './type';
 import { OverrideTask } from './task';
+import { KuaiError } from './errors';
+import { ERRORS } from './errors-list';
 
 export class KuaiRuntimeEnvironment implements RuntimeEnvironment {
   public readonly tasks: Record<string, Task>;
@@ -13,7 +15,7 @@ export class KuaiRuntimeEnvironment implements RuntimeEnvironment {
   public readonly run: RunTaskFunction = async (name, taskArguments = {}) => {
     const task = this.tasks[name];
     if (!task) {
-      throw new Error(`Task ${name} is not defined`);
+      throw new KuaiError(ERRORS.ARGUMENTS.UNRECOGNIZED_TASK, { task: name });
     }
 
     const taskArgs = this._resolveValidTaskArgs(task, taskArguments);
@@ -39,7 +41,7 @@ export class KuaiRuntimeEnvironment implements RuntimeEnvironment {
     const paramList = Object.values(params);
 
     const initResolvedArgs: {
-      errors: Error[];
+      errors: KuaiError[];
       args: TaskArguments;
     } = { errors: [], args: {} };
 
@@ -52,8 +54,9 @@ export class KuaiRuntimeEnvironment implements RuntimeEnvironment {
           args[paramName] = resolvedArgValue;
         }
       } catch (error) {
-        // todo: format error
-        errors.push(new Error('invalid task args'));
+        if (KuaiError.isKuaiError(error)) {
+          errors.push(error);
+        }
       }
       return { errors, args };
     }, initResolvedArgs);
@@ -71,15 +74,16 @@ export class KuaiRuntimeEnvironment implements RuntimeEnvironment {
 
   // eslint-disable-next-line
   private _resolveArgument(param: TaskParam<any>, argValue: any) {
-    const { isOptional, defaultValue } = param;
+    const { name, isOptional, defaultValue } = param;
 
-    if (argValue == undefined) {
+    if (argValue === undefined) {
       if (isOptional) {
         return defaultValue;
       }
 
-      // todo: format error
-      throw new Error('invalid task args');
+      throw new KuaiError(ERRORS.ARGUMENTS.MISSING_TASK_ARGUMENT, {
+        param: name,
+      });
     }
 
     this._checkTypeValid(param, argValue);

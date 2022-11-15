@@ -4,6 +4,8 @@ import { RuntimeEnvironment } from '../src/type';
 import { KuaiRuntimeEnvironment } from '../src/runtime';
 import { SimpleTask } from '../src/task';
 import { fakeType } from '../src/params';
+import { ERRORS } from '../src/errors-list';
+import { expectKuaiErrorAsync } from './errors';
 
 declare module '../src/type/runtime' {
   export interface RuntimeEnvironment {
@@ -78,5 +80,36 @@ describe('kuai task system', () => {
   test('should build car with skid proof wheel', () => {
     environment.run('BUILD_CAR', { wheelType: 'skid_proof', engineType: 'v8' });
     expect(environment.wheel?.type).toBe('skid_proof');
+  });
+
+  describe('invalid task', () => {
+    const buildWheelTask = new SimpleTask('BUILD_WHEEL')
+      .addParam('wheelType', 'Type of wheel to build')
+      .setAction<{ wheelType: string }>(async ({ wheelType }, env, runSuper) => {
+        if (wheelType === 'steel') {
+          env.wheel = {
+            type: wheelType,
+          };
+        }
+
+        if (runSuper.isDefined) {
+          await runSuper();
+        }
+      });
+
+    const environment = new KuaiRuntimeEnvironment(
+      {},
+      [buildWheelTask],
+      [],
+      // eslint-disable-next-line
+    ) as any as RuntimeEnvironment;
+
+    test('invalid task name', async () => {
+      expectKuaiErrorAsync(() => environment.run('BUILD_WHEEL1', {}), ERRORS.ARGUMENTS.UNRECOGNIZED_TASK);
+    });
+
+    test('missing task arguments', async () => {
+      expectKuaiErrorAsync(() => environment.run('BUILD_WHEEL', {}), ERRORS.ARGUMENTS.MISSING_TASK_ARGUMENT);
+    });
   });
 });
