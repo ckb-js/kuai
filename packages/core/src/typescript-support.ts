@@ -14,7 +14,7 @@ export function isRunningKuaiCoreTests(): boolean {
  */
 export function willRunWithTypescript(configPath?: string): boolean {
   const config = resolveConfigPath(configPath);
-  return isTypescriptFile(config);
+  return config ? isTypescriptFile(config) : false;
 }
 
 export function isTypescriptSupported(): boolean {

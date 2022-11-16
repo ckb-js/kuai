@@ -29,10 +29,6 @@ export const ERRORS = {
     },
   },
   GENERAL: {
-    NOT_INSIDE_PROJECT: {
-      code: 'NOT_INSIDE_PROJECT',
-      message: 'You are not inside a Kuai project.',
-    },
     CONTEXT_ALREADY_CREATED: {
       code: 'CONTEXT_ALREADY_CREATED',
       message: 'KuaiContext is already created.',

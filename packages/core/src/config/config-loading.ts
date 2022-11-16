@@ -9,7 +9,7 @@ function importCsjOrEsModule(filePath: string): any {
   return imported.default !== undefined ? imported.default : imported;
 }
 
-export function resolveConfigPath(configPath: string | undefined): string {
+export function resolveConfigPath(configPath: string | undefined): string | undefined {
   if (configPath === undefined) {
     configPath = getUserConfigPath();
   } else {
@@ -26,7 +26,10 @@ export function loadConfigAndTasks(args: KuaiArguments = {}): { config: KuaiConf
 
   require('../builtin-tasks');
 
-  const config = importCsjOrEsModule(configPath);
+  let config = {};
+  if (configPath) {
+    config = importCsjOrEsModule(configPath);
+  }
 
   return { config };
 }

@@ -32,6 +32,7 @@ export type ActionType<ArgsT extends TaskArguments> = (
 
 // eslint-disable-next-line
 export interface ArgumentType<T = any> {
+  name: string;
   /**
    * Check if argument value is of type <T>.
    *
@@ -55,7 +56,7 @@ export interface ConfigurableTaskDefinition<ArgsT extends TaskArguments = TaskAr
     isFlag?: boolean,
   ): this;
 }
-export interface TaskParam<T> {
+export interface TaskParam<T = TaskArguments> {
   name: string;
   description?: string;
   defaultValue?: T;
