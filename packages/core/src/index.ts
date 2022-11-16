@@ -7,3 +7,6 @@ export { KuaiRuntimeEnvironment } from './runtime';
 export * from './helper';
 
 export * from './type';
+
+export * from './errors';
+export * from './errors-list';
