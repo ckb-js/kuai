@@ -1,8 +1,8 @@
 {
-  "name": "@kuaiproject/cli",
+  "name": "@kuai/cli",
   "version": "0.0.1",
   "license": "MIT",
-  "main": "lib/index.js",
+  "main": "lib/main.js",
   "bin": {
     "kuai": "lib/main.js"
   },
@@ -11,6 +11,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@kuai/core": "0.0.1",
     "commander": "9.4.1"
   }
 }

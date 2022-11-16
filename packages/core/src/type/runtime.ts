@@ -1,6 +1,13 @@
 // eslint-disable-next-line
 export type TaskArguments = any;
 
+// eslint-disable-next-line
+export type KuaiConfig = any;
+
+export interface KuaiArguments {
+  config?: string;
+}
+
 export type RunTaskFunction = (name: string, taskArguments?: TaskArguments) => Promise<unknown>;
 
 export type EnvironmentExtender = (env: RuntimeEnvironment) => void;
@@ -25,6 +32,7 @@ export type ActionType<ArgsT extends TaskArguments> = (
 
 // eslint-disable-next-line
 export interface ArgumentType<T = any> {
+  name: string;
   /**
    * Check if argument value is of type <T>.
    *
@@ -48,7 +56,7 @@ export interface ConfigurableTaskDefinition<ArgsT extends TaskArguments = TaskAr
     isFlag?: boolean,
   ): this;
 }
-export interface TaskParam<T> {
+export interface TaskParam<T = TaskArguments> {
   name: string;
   description?: string;
   defaultValue?: T;
@@ -66,3 +74,5 @@ export interface Task<ArgsT extends TaskArguments = TaskArguments> extends Confi
   // eslint-disable-next-line
   readonly params: Record<string, TaskParam<any>>;
 }
+
+export type TaskMap = Record<string, Task>;
