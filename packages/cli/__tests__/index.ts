@@ -20,13 +20,13 @@ describe('kuai cli', () => {
 
   describe('--config', () => {
     test('normal case 1', () => {
-      const output1 = execSync('npx kuai node --config ./tests/kuai-config-case/kuai.config1.ts');
-      expect(output1.toString()).toMatch(/ckb running on:\s+8114/);
+      const output = execSync('npx kuai demo-task1 --config ./__tests__/__fixtures__/kuai-config-case/kuai.config1.ts');
+      expect(output.toString()).toMatch(/demo-task1/);
     });
 
     test('normal case 2', () => {
-      const output1 = execSync('npx kuai node --config ./tests/kuai-config-case/kuai.config2.ts');
-      expect(output1.toString()).toMatch(/ckb running on:\s+8114/);
+      const output = execSync('npx kuai demo-task2 --config ./__tests__/__fixtures__/kuai-config-case/kuai.config2.ts');
+      expect(output.toString()).toMatch(/demo-task2/);
     });
 
     test('missing config file', () => {
