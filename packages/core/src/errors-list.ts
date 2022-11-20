@@ -13,6 +13,10 @@ export const ERRORS = {
       code: 'MISSING_TASK_ARGUMENT',
       message: "The '%param%' parameter expects a value, but none was passed.",
     },
+    MISSING_CONFIG_FILE: {
+      code: 'MISSING_CONFIG_FILE',
+      message: '--config should be followed by a configuration file.',
+    },
   },
   INTERNAL: {
     TEMPLATE_INVALID_VARIABLE_NAME: {
