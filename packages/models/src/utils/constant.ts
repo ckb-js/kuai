@@ -1,8 +1,3 @@
-export const INTERNAL_STATUS = Symbol('internal_status');
-export const ARGS_METADATA = Symbol('args_metadata');
-export const BEHAVIOR = Symbol('behavior');
-export const PATTERN = Symbol('pattern');
-
 export enum PROTOCOL {
   LOCAL = 'local',
 }
