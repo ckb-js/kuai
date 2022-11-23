@@ -4,7 +4,7 @@
  * The message queue is used as a set of actors' mailboxes.
  * At this early stage, a custom queue is used for demostration, will be replaced by redis-stream
  */
-/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const { scheduler } = require('node:timers/promises');
 
 import type { Registry } from './registry';
