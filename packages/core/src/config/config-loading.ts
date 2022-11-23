@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { KuaiConfig, KuaiArguments } from '../type';
 import { getUserConfigPath } from '../project-structure';
+import { DEFAULT_KUAI_ARGUMENTS } from '../constants';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function importCsjOrEsModule(filePath: string): any {
@@ -35,6 +36,10 @@ export async function loadConfigAndTasks(args: KuaiArguments = {}): Promise<Kuai
 
   return {
     ...userConfig,
-    kuaiArguments: args,
+    kuaiArguments: {
+      ...DEFAULT_KUAI_ARGUMENTS,
+      ...args,
+      configPath,
+    },
   };
 }
