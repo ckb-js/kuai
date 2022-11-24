@@ -1,25 +1,25 @@
-import { Task, ActionType, TaskArguments, TaskParam, ArgumentType } from './type';
-import { paramTypes } from './params';
+import { Task, ActionType, TaskArguments, TaskParam, ArgumentType } from './type'
+import { paramTypes } from './params'
 
 export class SimpleTask implements Task {
-  public description?: string;
-  public action: ActionType<TaskArguments>;
-  readonly params: Record<string, TaskParam<TaskArguments>> = {};
+  public description?: string
+  public action: ActionType<TaskArguments>
+  readonly params: Record<string, TaskParam<TaskArguments>> = {}
 
   constructor(public readonly name: string, public readonly isSubtask: boolean = false) {
     this.action = () => {
-      throw new Error('Not implemented');
-    };
+      throw new Error('Not implemented')
+    }
   }
 
   public setDescription(description: string): this {
-    this.description = description;
-    return this;
+    this.description = description
+    return this
   }
 
   public setAction<ArgsT extends TaskArguments>(action: ActionType<ArgsT>): this {
-    this.action = action;
-    return this;
+    this.action = action
+    return this
   }
 
   public addParam<T>(
@@ -37,50 +37,50 @@ export class SimpleTask implements Task {
       description,
       isOptional,
       isFlag,
-    };
+    }
 
-    return this;
+    return this
   }
 }
 
 export class OverrideTask implements Task {
-  private _description?: string;
-  private _action?: ActionType<TaskArguments>;
+  private _description?: string
+  private _action?: ActionType<TaskArguments>
 
   constructor(public readonly parentTask: Task, public readonly isSubtask: boolean = false) {}
 
   public setDescription(description: string): this {
-    this._description = description;
-    return this;
+    this._description = description
+    return this
   }
 
   public setAction<ArgsT extends TaskArguments>(action: ActionType<ArgsT>): this {
-    this._action = action;
-    return this;
+    this._action = action
+    return this
   }
 
   public get name(): string {
-    return this.parentTask.name;
+    return this.parentTask.name
   }
 
   public get description(): string | undefined {
     if (this._description !== undefined) {
-      return this._description;
+      return this._description
     }
 
-    return this.parentTask.description;
+    return this.parentTask.description
   }
 
   public get action(): ActionType<TaskArguments> {
     if (this._action !== undefined) {
-      return this._action;
+      return this._action
     }
 
-    return this.parentTask.action;
+    return this.parentTask.action
   }
 
   public get params(): Record<string, TaskParam<TaskArguments>> {
-    return this.parentTask.params;
+    return this.parentTask.params
   }
 
   public addParam<T>(
@@ -91,10 +91,10 @@ export class OverrideTask implements Task {
     isOptional?: boolean,
   ): this {
     if (isOptional === undefined || !isOptional) {
-      throw new Error('Cannot add required params to an overridden task');
+      throw new Error('Cannot add required params to an overridden task')
     }
 
-    this.parentTask.addParam(name, description, defaultValue, type, true);
-    return this;
+    this.parentTask.addParam(name, description, defaultValue, type, true)
+    return this
   }
 }
