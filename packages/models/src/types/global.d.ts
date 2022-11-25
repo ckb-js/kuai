@@ -1,6 +1,6 @@
-import type { MessageQueue } from '../actor';
+import type { MessageQueue } from '../actor'
 
 declare global {
   /* eslint-disable-next-line no-var */
-  var mq: MessageQueue | undefined;
+  var mq: MessageQueue | undefined
 }

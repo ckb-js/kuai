@@ -5,72 +5,72 @@
  * At this early stage, a custom queue is used for demostration, will be replaced by redis-stream
  */
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
-const { scheduler } = require('node:timers/promises');
+const { scheduler } = require('node:timers/promises')
 
-import type { Registry } from './registry';
-import { Behavior } from '../utils';
-import { ActorURI, ActorMessage } from './interface';
+import type { Registry } from './registry'
+import { Behavior } from '../utils'
+import { ActorURI, ActorMessage } from './interface'
 
 export class MessageQueue {
-  #mailboxes: Map<ActorURI, Array<ActorMessage>> = new Map();
-  #registry: Registry;
-  #isRunning = false;
+  #mailboxes: Map<ActorURI, Array<ActorMessage>> = new Map()
+  #registry: Registry
+  #isRunning = false
 
   constructor(registry: Registry) {
-    this.#registry = registry;
+    this.#registry = registry
   }
 
   start = async (): Promise<void> => {
-    this.#isRunning = true;
+    this.#isRunning = true
     while (this.#isRunning) {
-      await scheduler.wait(1000);
-      [...this.#mailboxes.entries()].forEach(([uri, msgs]) => {
+      await scheduler.wait(1000)
+      ;[...this.#mailboxes.entries()].forEach(([uri, msgs]) => {
         if (msgs.length) {
-          const actor = this.#registry.find(uri);
+          const actor = this.#registry.find(uri)
           if (!actor) {
-            throw new Error('Actor is not found');
+            throw new Error('Actor is not found')
           }
 
-          const msg = msgs.shift();
+          const msg = msgs.shift()
           if (msg) {
             switch (msg.behavior) {
               case Behavior.Call: {
-                actor.handleCall(msg);
-                break;
+                actor.handleCall(msg)
+                break
               }
               case Behavior.Cast: {
-                actor.handleCast(msg);
-                break;
+                actor.handleCast(msg)
+                break
               }
               default: {
-                throw new Error();
+                throw new Error()
               }
             }
           }
         }
-      });
+      })
     }
-    return;
-  };
+    return
+  }
 
   stop = (): void => {
-    this.#isRunning = false;
-    return;
-  };
+    this.#isRunning = false
+    return
+  }
 
   push = (to: ActorURI, msg: ActorMessage): void => {
     if (!this.#registry.isLive(to)) {
-      throw new Error(`Actor ${to} is not found`);
+      throw new Error(`Actor ${to} is not found`)
     }
 
-    const mailbox = this.#mailboxes.get(to);
+    const mailbox = this.#mailboxes.get(to)
 
     if (!Array.isArray(mailbox)) {
-      this.#mailboxes.set(to, [msg]);
-      return;
+      this.#mailboxes.set(to, [msg])
+      return
     }
 
-    mailbox.push(msg);
-    return;
-  };
+    mailbox.push(msg)
+    return
+  }
 }

@@ -3,12 +3,12 @@
  * @tutorial https://github.com/ckb-js/kuai/issues/4
  */
 
-import { resolve } from 'node:path';
-import type { ActorMessage, ActorURI, ActorRef, MessagePayload, CallResponse } from './interface';
-import { Status, Behavior, PROTOCOL } from '../utils';
+import { resolve } from 'node:path'
+import type { ActorMessage, ActorURI, ActorRef, MessagePayload, CallResponse } from './interface'
+import { Status, Behavior, PROTOCOL } from '../utils'
 
 export interface ActorConstructor {
-  new (parent?: ActorRef, name?: symbol | string): Actor;
+  new (parent?: ActorRef, name?: symbol | string): Actor
 }
 
 export abstract class Actor<_State = unknown, Message extends MessagePayload = MessagePayload> {
@@ -16,13 +16,13 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
    * @member
    * name of the actor
    */
-  #name: string | symbol;
+  #name: string | symbol
 
   /**
    * @member
    * parent of the actor
    */
-  #parent?: ActorRef;
+  #parent?: ActorRef
 
   /**
    * @access
@@ -33,16 +33,16 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
       name: this.#name,
       path: resolve(this.#parent?.path ?? '/', this.#parent?.name.toString() ?? ''),
       protocol: this.#parent?.protocol ?? PROTOCOL.LOCAL,
-    };
-    return { ...ref, uri: ref.protocol + ':/' + resolve(ref.path, ref.name.toString()) };
+    }
+    return { ...ref, uri: ref.protocol + ':/' + resolve(ref.path, ref.name.toString()) }
   }
 
   constructor(parent?: ActorRef, name?: symbol | string) {
-    this.#parent = parent;
+    this.#parent = parent
     /**
      * TODO: use uuid
      */
-    this.#name = name ?? `${Math.random() * Number.MIN_SAFE_INTEGER}`;
+    this.#name = name ?? `${Math.random() * Number.MIN_SAFE_INTEGER}`
   }
 
   /**
@@ -60,18 +60,18 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
      * TODO: A global mq object is used in this early stage, will be replaced by a mq service.
      */
     if (globalThis.mq) {
-      globalThis.mq.push(to, { from, payload, behavior: Behavior.Call, timeout });
+      globalThis.mq.push(to, { from, payload, behavior: Behavior.Call, timeout })
       return Promise.resolve({
         status: Status.ok,
         message: null,
-      });
+      })
     }
 
     return Promise.resolve({
       status: Status.error,
       message: null,
-    });
-  };
+    })
+  }
 
   /**
    * @static
@@ -83,11 +83,11 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
      * TODO: A global mq object is used in this early stage, will be replaced by a mq service.
      */
     if (globalThis.mq) {
-      globalThis.mq.push(to, { from, payload, behavior: Behavior.Cast, timeout });
-      return;
+      globalThis.mq.push(to, { from, payload, behavior: Behavior.Cast, timeout })
+      return
     }
 
-    throw new Error(`message queue is not found`);
+    throw new Error(`message queue is not found`)
   }
 
   /**
@@ -95,7 +95,7 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
    * push a `call request` to the message queue through `Actor.call`
    */
   call(to: ActorURI, payload: MessagePayload, timeout?: number): Promise<CallResponse<MessagePayload>> {
-    return Actor.call(to, this.ref, payload, timeout);
+    return Actor.call(to, this.ref, payload, timeout)
   }
 
   /**
@@ -103,7 +103,7 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
    * push a `cast request` to the message queue through `Actor.cast`
    */
   cast(to: ActorURI, payload: MessagePayload, timeout?: number): void {
-    Actor.cast(to, this.ref, payload, timeout);
+    Actor.cast(to, this.ref, payload, timeout)
   }
 
   /**
@@ -112,8 +112,8 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
    */
   handleCall = (_msg: ActorMessage<Message>): void => {
     // TODO: delegate to other inner methods decorated by @HandleCall
-    return;
-  };
+    return
+  }
 
   /**
    * @method
@@ -121,8 +121,8 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
    */
   handleCast = (_msg: ActorMessage<Message>): void => {
     // TODO: delegate to other inner methods decorated by @HandleCast
-    return;
-  };
+    return
+  }
 }
 
 export class ActorBase extends Actor {}

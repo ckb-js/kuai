@@ -19,4 +19,4 @@ export const Status = {
   continue: Symbol('continue'),
   timeout: Symbol('timeout'),
   stop: Symbol('stop'),
-};
+}
