@@ -1,18 +1,20 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TaskArguments = any;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type KuaiConfig = any;
-
 export interface KuaiArguments {
-  config?: string;
+  configPath?: string;
 }
+
+export type KuaiConfig = {
+  kuaiArguments?: KuaiArguments;
+};
 
 export type RunTaskFunction = (name: string, taskArguments?: TaskArguments) => Promise<unknown>;
 
 export type EnvironmentExtender = (env: RuntimeEnvironment) => void;
 
 export interface RuntimeEnvironment {
+  readonly config: KuaiConfig;
   readonly tasks: Record<string, Task>;
   readonly run: RunTaskFunction;
 }

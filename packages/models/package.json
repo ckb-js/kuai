@@ -29,7 +29,6 @@
     "url": "https://github.com/ckb-js/kuai/issues"
   },
   "dependencies": {
-    "@kuai/common": "0.0.1",
     "reflect-metadata": "0.1.13",
     "tslib": "2.4.1"
   },
