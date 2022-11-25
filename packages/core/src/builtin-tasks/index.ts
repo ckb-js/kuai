@@ -1,1 +1,1 @@
-import './mock';
+import './mock'
