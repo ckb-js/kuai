@@ -1,2 +1,2 @@
-export * from './config-env';
-export * from './config-loading';
+export * from './config-env'
+export * from './config-loading'

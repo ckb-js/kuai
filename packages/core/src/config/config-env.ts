@@ -1,5 +1,5 @@
-import { ActionType, ConfigurableTaskDefinition, EnvironmentExtender, TaskArguments } from '../type';
-import { KuaiContext } from '../context';
+import { ActionType, ConfigurableTaskDefinition, EnvironmentExtender, TaskArguments } from '../type'
+import { KuaiContext } from '../context'
 
 /**
  * Creates a task, overriding any previous task with the same name.
@@ -15,7 +15,7 @@ export function task<ArgsT extends TaskArguments>(
   name: string,
   description?: string,
   action?: ActionType<ArgsT>,
-): ConfigurableTaskDefinition;
+): ConfigurableTaskDefinition
 
 /**
  * Creates a task without description, overriding any previous task
@@ -28,25 +28,25 @@ export function task<ArgsT extends TaskArguments>(
  *
  * @returns A task definition.
  */
-export function task<ArgsT extends TaskArguments>(name: string, action: ActionType<ArgsT>): ConfigurableTaskDefinition;
+export function task<ArgsT extends TaskArguments>(name: string, action: ActionType<ArgsT>): ConfigurableTaskDefinition
 
 export function task<ArgsT extends TaskArguments>(
   name: string,
   descriptionOrAction?: string | ActionType<ArgsT>,
   action?: ActionType<ArgsT>,
 ): ConfigurableTaskDefinition {
-  const ctx = KuaiContext.getInstance();
-  const loader = ctx.tasksLoader;
+  const ctx = KuaiContext.getInstance()
+  const loader = ctx.tasksLoader
 
   if (descriptionOrAction === undefined) {
-    return loader.task(name);
+    return loader.task(name)
   }
 
   if (typeof descriptionOrAction !== 'string') {
-    return loader.task(name, descriptionOrAction);
+    return loader.task(name, descriptionOrAction)
   }
 
-  return loader.task(name, descriptionOrAction, action);
+  return loader.task(name, descriptionOrAction, action)
 }
 
 /**
@@ -64,7 +64,7 @@ export function subtask<ArgsT extends TaskArguments>(
   name: string,
   description?: string,
   action?: ActionType<ArgsT>,
-): ConfigurableTaskDefinition;
+): ConfigurableTaskDefinition
 
 /**
  * Creates a subtask without description, overriding any previous
@@ -80,25 +80,25 @@ export function subtask<ArgsT extends TaskArguments>(
 export function subtask<ArgsT extends TaskArguments>(
   name: string,
   action: ActionType<ArgsT>,
-): ConfigurableTaskDefinition;
+): ConfigurableTaskDefinition
 
 export function subtask<ArgsT extends TaskArguments>(
   name: string,
   descriptionOrAction?: string | ActionType<ArgsT>,
   action?: ActionType<ArgsT>,
 ): ConfigurableTaskDefinition {
-  const ctx = KuaiContext.getInstance();
-  const loader = ctx.tasksLoader;
+  const ctx = KuaiContext.getInstance()
+  const loader = ctx.tasksLoader
 
   if (descriptionOrAction === undefined) {
-    return loader.subtask(name);
+    return loader.subtask(name)
   }
 
   if (typeof descriptionOrAction !== 'string') {
-    return loader.subtask(name, descriptionOrAction);
+    return loader.subtask(name, descriptionOrAction)
   }
 
-  return loader.subtask(name, descriptionOrAction, action);
+  return loader.subtask(name, descriptionOrAction, action)
 }
 
 /**
@@ -108,7 +108,7 @@ export function subtask<ArgsT extends TaskArguments>(
  * @param extender A function that receives the Runtime Environment.
  */
 export function extendEnvironment(extender: EnvironmentExtender): void {
-  const ctx = KuaiContext.getInstance();
-  const extenderManager = ctx.extendersManager;
-  extenderManager.add(extender);
+  const ctx = KuaiContext.getInstance()
+  const extenderManager = ctx.extendersManager
+  extenderManager.add(extender)
 }

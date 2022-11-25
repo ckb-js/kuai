@@ -1,37 +1,37 @@
-import path from 'node:path';
-import { KuaiConfig, KuaiArguments } from '../type';
-import { getUserConfigPath } from '../project-structure';
-import { DEFAULT_KUAI_ARGUMENTS } from '../constants';
+import path from 'node:path'
+import { KuaiConfig, KuaiArguments } from '../type'
+import { getUserConfigPath } from '../project-structure'
+import { DEFAULT_KUAI_ARGUMENTS } from '../constants'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function importCsjOrEsModule(filePath: string): any {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const imported = require(filePath);
-  return imported.default !== undefined ? imported.default : imported;
+  const imported = require(filePath)
+  return imported.default !== undefined ? imported.default : imported
 }
 
 export function resolveConfigPath(configPath: string | undefined): string | undefined {
   if (configPath === undefined) {
-    return getUserConfigPath();
+    return getUserConfigPath()
   }
 
   if (!path.isAbsolute(configPath)) {
-    configPath = path.join(process.cwd(), configPath);
-    configPath = path.normalize(configPath);
+    configPath = path.join(process.cwd(), configPath)
+    configPath = path.normalize(configPath)
   }
 
-  return configPath;
+  return configPath
 }
 
 export async function loadConfigAndTasks(args: KuaiArguments = {}): Promise<KuaiConfig> {
-  const configPath = resolveConfigPath(args.configPath);
+  const configPath = resolveConfigPath(args.configPath)
 
-  await import('../builtin-tasks');
+  await import('../builtin-tasks')
 
-  let userConfig;
+  let userConfig
 
   if (configPath) {
-    userConfig = importCsjOrEsModule(configPath);
+    userConfig = importCsjOrEsModule(configPath)
   }
 
   return {
@@ -41,5 +41,5 @@ export async function loadConfigAndTasks(args: KuaiArguments = {}): Promise<Kuai
       ...args,
       configPath,
     },
-  };
+  }
 }

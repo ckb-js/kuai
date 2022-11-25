@@ -16,7 +16,9 @@
     "build:lib": "lerna run build",
     "test": "lerna run test",
     "lint": "eslint 'packages/*/{src,__tests__}/**/*.ts'",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "format:check": "prettier -cu packages/**/src/*",
+    "format:write": "prettier -wu packages/**/src/*"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "5.44.0",
@@ -32,12 +34,9 @@
     "typescript": "4.9.3"
   },
   "lint-staged": {
-    "*.ts": [
-      "npx prettier --list-different",
+    "**/*": [
+      "prettier -wu",
       "npx eslint"
-    ],
-    "*.md": [
-      "prettier --list-different"
     ]
   }
 }

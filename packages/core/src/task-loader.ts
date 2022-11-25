@@ -1,11 +1,11 @@
-import { ActionType, TaskArguments, Task, TaskMap } from './type';
+import { ActionType, TaskArguments, Task, TaskMap } from './type'
 
-import { OverrideTask, SimpleTask } from './task';
+import { OverrideTask, SimpleTask } from './task'
 
 export class TasksLoader {
-  public readonly internalTask = this.subtask;
+  public readonly internalTask = this.subtask
 
-  private readonly _tasks: TaskMap = {};
+  private readonly _tasks: TaskMap = {}
 
   /**
    * Creates a task, overriding any previous task with the same name.
@@ -17,7 +17,7 @@ export class TasksLoader {
    * @param action The task's action.
    * @returns A task definition.
    */
-  public task<ArgsT extends TaskArguments>(name: string, description?: string, action?: ActionType<ArgsT>): Task;
+  public task<ArgsT extends TaskArguments>(name: string, description?: string, action?: ActionType<ArgsT>): Task
 
   /**
    * Creates a task without description, overriding any previous task
@@ -30,14 +30,14 @@ export class TasksLoader {
    *
    * @returns A task definition.
    */
-  public task<ArgsT extends TaskArguments>(name: string, action: ActionType<ArgsT>): Task;
+  public task<ArgsT extends TaskArguments>(name: string, action: ActionType<ArgsT>): Task
 
   public task<ArgsT extends TaskArguments>(
     name: string,
     descriptionOrAction?: string | ActionType<ArgsT>,
     action?: ActionType<ArgsT>,
   ): Task {
-    return this._addTask(name, descriptionOrAction, action, false);
+    return this._addTask(name, descriptionOrAction, action, false)
   }
 
   /**
@@ -51,7 +51,7 @@ export class TasksLoader {
    * @param action The task's action.
    * @returns A task definition.
    */
-  public subtask<ArgsT extends TaskArguments>(name: string, description?: string, action?: ActionType<ArgsT>): Task;
+  public subtask<ArgsT extends TaskArguments>(name: string, description?: string, action?: ActionType<ArgsT>): Task
 
   /**
    * Creates a subtask without description, overriding any previous
@@ -64,13 +64,13 @@ export class TasksLoader {
    * @param action The task's action.
    * @returns A task definition.
    */
-  public subtask<ArgsT extends TaskArguments>(name: string, action: ActionType<ArgsT>): Task;
+  public subtask<ArgsT extends TaskArguments>(name: string, action: ActionType<ArgsT>): Task
   public subtask<ArgsT extends TaskArguments>(
     name: string,
     descriptionOrAction?: string | ActionType<ArgsT>,
     action?: ActionType<ArgsT>,
   ): Task {
-    return this._addTask(name, descriptionOrAction, action, true);
+    return this._addTask(name, descriptionOrAction, action, true)
   }
 
   /**
@@ -79,7 +79,7 @@ export class TasksLoader {
    * @returns The tasks container.
    */
   public getTasks(): TaskMap {
-    return this._tasks;
+    return this._tasks
   }
 
   private _addTask<ArgT extends TaskArguments>(
@@ -88,25 +88,25 @@ export class TasksLoader {
     action?: ActionType<ArgT>,
     isSubtask?: boolean,
   ) {
-    const parentTask = this._tasks[name];
+    const parentTask = this._tasks[name]
 
     const task: Task =
-      parentTask !== undefined ? new OverrideTask(parentTask, isSubtask) : new SimpleTask(name, isSubtask);
+      parentTask !== undefined ? new OverrideTask(parentTask, isSubtask) : new SimpleTask(name, isSubtask)
 
     if (descriptionOrAction instanceof Function) {
-      action = descriptionOrAction;
-      descriptionOrAction = undefined;
+      action = descriptionOrAction
+      descriptionOrAction = undefined
     }
 
     if (descriptionOrAction !== undefined) {
-      task.setDescription(descriptionOrAction);
+      task.setDescription(descriptionOrAction)
     }
 
     if (action !== undefined) {
-      task.setAction(action);
+      task.setAction(action)
     }
 
-    this._tasks[name] = task;
-    return task;
+    this._tasks[name] = task
+    return task
   }
 }

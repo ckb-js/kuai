@@ -1,6 +1,6 @@
 export interface ErrorDescriptor {
-  code: string;
-  message: string;
+  code: string
+  message: string
 }
 
 export const ERRORS = {
@@ -58,4 +58,4 @@ Please run: npm install --save-dev ts-node`,
 Please run: npm install --save-dev typescript`,
     },
   },
-};
+}
