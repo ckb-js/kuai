@@ -6,5 +6,8 @@ lerna-debug.log*
 node_modules/
 **/lib
 
+# build cache
+.tsbuildinfo
+
 .idea
 yarn.lock

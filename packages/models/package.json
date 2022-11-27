@@ -1,0 +1,39 @@
+{
+  "name": "@kuai/models",
+  "version": "0.0.1",
+  "description": "Models of Kuai runtime",
+  "author": "Keith <keithwhisper@gmail.com>",
+  "homepage": "https://github.com/ckb-js/kuai#readme",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ckb-js/kuai.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "bugs": {
+    "url": "https://github.com/ckb-js/kuai/issues"
+  },
+  "dependencies": {
+    "reflect-metadata": "0.1.13",
+    "tslib": "2.4.1"
+  },
+  "devDependencies": {
+    "@jest/globals": "29.3.1",
+    "typescript": "4.8.4"
+  }
+}
