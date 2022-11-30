@@ -1,10 +1,10 @@
 import { Behavior } from '../utils'
 
+export type ActorName = string | symbol
 export type ActorURI = string
 
-// TODO:
 export interface ActorRef {
-  name: symbol | string
+  name: ActorName
   protocol: string
   path: string
   uri: ActorURI

@@ -1,41 +1,70 @@
 /**
  * @tutorial https://github.com/ckb-js/kuai/issues/17#issuecomment-1305896619
- *
- * The registry is used as an IoC of actors
- * At this early stage, a custom registry is used for demostration, will be replaced by inversify
  */
+import fs from 'node:fs'
+import { resolve } from 'node:path'
 
-import { ActorRef, ActorURI } from './interface'
-import type { Actor, ActorConstructor } from './actor'
+import { Container } from 'inversify'
+import type { ActorRef, ActorURI } from './interface'
+import type { Actor } from './actor'
+import { DuplicatedActorException, InvalidActorURIException, ProviderKey } from '../utils'
 
 export class Registry {
-  #actors: Map<ActorURI, Actor> = new Map()
-  #actorConstructor: ActorConstructor
+  #actors: Set<ActorURI> = new Set()
+  #container: Container = new Container()
 
-  constructor(actorConstructor: ActorConstructor) {
-    this.#actorConstructor = actorConstructor
-  }
-
-  spawn = ({ parent, name }: Partial<{ parent: ActorRef; name: string | symbol }>): ActorRef => {
-    // TODO: use IoC to spawn an actor
-    const actor = new this.#actorConstructor(parent, name)
-    const ref = actor.ref
-    this.#actors.set(ref.uri, actor)
-    return ref
+  isLive = (uri: ActorURI): boolean => {
+    return this.#actors.has(uri)
   }
 
   find = (uri: ActorURI): Actor | undefined => {
-    if (this.isLive(uri)) {
-      return this.#actors.get(uri)
+    try {
+      return this.#container.get(uri)
+    } catch {
+      return undefined
     }
-    return undefined
   }
 
   list = (): IterableIterator<ActorURI> => {
     return this.#actors.keys()
   }
 
-  isLive = (uri: ActorURI): boolean => {
-    return this.#actors.has(uri)
+  // TODO: this method is not tested
+  load = (path: string): void => {
+    if (fs.statSync(path).isDirectory()) {
+      fs.readdirSync(path).forEach((sub) => this.load(resolve(path, sub)))
+      return
+    }
+
+    if (!/\.(js|ts)$/.test(path)) return
+    /**
+     * require used here to load modules synchronously so the users don't have to use a promise on launch
+     */
+    /* eslint-disable-next-line @typescript-eslint/no-var-requires */
+    const exports = require(path)
+
+    for (const m in exports) {
+      const module = exports[m]
+      if (typeof module !== 'function') continue
+      this.#bind(module)
+    }
+  }
+
+  /**
+   * this method is defined as public for testing
+   */
+  bind = (module: new (...args: Array<unknown>) => unknown): void => this.#bind(module)
+
+  #bind = (module: new (...args: Array<unknown>) => unknown): void => {
+    const metadata: Record<'ref', ActorRef> | undefined = Reflect.getMetadata(ProviderKey.Actor, module)
+    if (!metadata) return
+    if (!metadata.ref.uri) {
+      throw new InvalidActorURIException(metadata.ref.uri)
+    }
+    if (this.isLive(metadata.ref.uri)) {
+      throw new DuplicatedActorException(metadata.ref.uri)
+    }
+    this.#container.bind(metadata.ref.uri).to(module)
+    this.#actors.add(metadata.ref.uri)
   }
 }

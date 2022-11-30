@@ -3,46 +3,31 @@
  * @tutorial https://github.com/ckb-js/kuai/issues/4
  */
 
-import { resolve } from 'node:path'
 import type { ActorMessage, ActorURI, ActorRef, MessagePayload, CallResponse } from './interface'
-import { Status, Behavior, PROTOCOL } from '../utils'
+import { injectable } from 'inversify'
+import { Status, Behavior, ProviderKey, MessageQueueNotFoundException } from '../utils'
 
-export interface ActorConstructor {
-  new (parent?: ActorRef, name?: symbol | string): Actor
-}
-
+@injectable()
 export abstract class Actor<_State = unknown, Message extends MessagePayload = MessagePayload> {
   /**
    * @member
-   * name of the actor
+   * reference of the actor
    */
-  #name: string | symbol
-
-  /**
-   * @member
-   * parent of the actor
-   */
-  #parent?: ActorRef
+  #ref: ActorRef
 
   /**
    * @access
    * reference to the actor
    */
   public get ref(): ActorRef {
-    const ref = {
-      name: this.#name,
-      path: resolve(this.#parent?.path ?? '/', this.#parent?.name.toString() ?? ''),
-      protocol: this.#parent?.protocol ?? PROTOCOL.LOCAL,
-    }
-    return { ...ref, uri: ref.protocol + ':/' + resolve(ref.path, ref.name.toString()) }
+    return this.#ref
   }
 
-  constructor(parent?: ActorRef, name?: symbol | string) {
-    this.#parent = parent
-    /**
-     * TODO: use uuid
-     */
-    this.#name = name ?? `${Math.random() * Number.MIN_SAFE_INTEGER}`
+  constructor() {
+    const metadata: { ref: ActorRef | undefined } = Reflect.getMetadata(ProviderKey.Actor, this.constructor)
+    // TODO: add explicit error message
+    if (!metadata?.ref?.uri) throw new Error()
+    this.#ref = metadata?.ref
   }
 
   /**
@@ -87,7 +72,7 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
       return
     }
 
-    throw new Error(`message queue is not found`)
+    throw new MessageQueueNotFoundException()
   }
 
   /**
@@ -125,4 +110,5 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
   }
 }
 
+@injectable()
 export class ActorBase extends Actor {}
