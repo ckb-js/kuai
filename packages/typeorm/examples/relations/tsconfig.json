@@ -6,7 +6,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "module": "commonjs",
-    "rootDir": "./src",
     "moduleResolution": "node",
     "outDir": "./lib",
     "importHelpers": true,
@@ -17,5 +16,5 @@
     "skipLibCheck": true,
     "declaration": true
   },
-  "exclude": ["__tests__", "node_modules", "examples"]
+  "exclude": ["node_modules"]
 }

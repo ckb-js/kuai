@@ -12,6 +12,7 @@
     "packages/*"
   ],
   "scripts": {
+    "install": "lerna bootstrap --hoist",
     "build": "npm run build:lib",
     "build:lib": "lerna run build",
     "test": "lerna run test",
