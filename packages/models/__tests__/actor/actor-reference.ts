@@ -11,7 +11,7 @@ describe(`Test Actor Reference`, () => {
     }
     const ref = new ActorReference(REF.name, REF.path, REF.protocol)
 
-    it(`should have natm`, () => {
+    it(`should have name`, () => {
       expect(ref.name).toBe(REF.name)
     })
 
