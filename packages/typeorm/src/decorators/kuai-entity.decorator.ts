@@ -6,7 +6,7 @@ export enum Location {
 }
 
 export const KuaiEntity =
-  (location: Location, nameOrOptions?: string | EntityOptions, maybeOptions?: EntityOptions) =>
+  (name_suffix: Location, nameOrOptions?: string | EntityOptions, maybeOptions?: EntityOptions) =>
   (cls: new (...args: never[]) => unknown): void => {
     let name = cls.name
     if (nameOrOptions) {
@@ -16,5 +16,5 @@ export const KuaiEntity =
         name = nameOrOptions.name
       }
     }
-    Entity(name + location, maybeOptions)(cls)
+    Entity(name + name_suffix, maybeOptions)(cls)
   }

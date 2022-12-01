@@ -1,15 +1,6 @@
 import { Observable, defer, lastValueFrom } from 'rxjs'
 import { delay, retryWhen, scan } from 'rxjs/operators'
-import {
-  AbstractRepository,
-  Connection,
-  DataSource,
-  DataSourceOptions,
-  EntityManager,
-  EntitySchema,
-  Repository,
-  createConnection,
-} from 'typeorm'
+import { AbstractRepository, DataSource, DataSourceOptions, EntityManager, EntitySchema, Repository } from 'typeorm'
 import { CircularDependencyError } from './errors/circular-dependency.error'
 import { EntityClassOrSchema } from './interfaces/entity-class-or-schema.type'
 import { DEFAULT_DATA_SOURCE_NAME } from './typeorm.constants'
@@ -62,11 +53,11 @@ export function getDataSourceToken(
   // eslint-disable-next-line @typescript-eslint/ban-types
 ): string | Function | Type<DataSource> {
   return DEFAULT_DATA_SOURCE_NAME === dataSource
-    ? DataSource ?? Connection
+    ? DataSource
     : 'string' === typeof dataSource
     ? `${dataSource}DataSource`
     : DEFAULT_DATA_SOURCE_NAME === dataSource.name || !dataSource.name
-    ? DataSource ?? Connection
+    ? DataSource
     : `${dataSource.name}DataSource`
 }
 
@@ -99,12 +90,9 @@ export function getEntityManagerToken(
 }
 
 export async function createDataSource(options: TypeOrmOptions): Promise<DataSource> {
-  const createTypeormDataSource = (options: DataSourceOptions) => {
-    return DataSource === undefined ? createConnection(options) : new DataSource(options)
-  }
-  return await lastValueFrom(
-    defer(async () => {
-      const dataSource = await createTypeormDataSource(options as DataSourceOptions)
+  return lastValueFrom(
+    defer(() => {
+      const dataSource = new DataSource(options as DataSourceOptions)
       return dataSource.initialize()
     }).pipe(handleRetry(options.retryAttempts, options.retryDelay, options.toRetry)),
   )

@@ -45,7 +45,7 @@ export class TypeOrmManager {
   ): Promise<void> {
     const conn = this.getDataSource(dataSource)
 
-    ;(entities || []).forEach((entity: EntityClassOrSchema) => {
+    entities?.forEach((entity: EntityClassOrSchema) => {
       const enitityMetadata = conn.entityMetadatas.find((meta: EntityMetadata) => meta.target === entity)
       const isTreeEntity = typeof enitityMetadata?.treeType !== 'undefined'
       const repository = isTreeEntity

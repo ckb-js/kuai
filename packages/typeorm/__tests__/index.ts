@@ -28,10 +28,10 @@ describe(`decorator`, () => {
       let findNamedEntity = false
 
       getMetadataArgsStorage().tables.forEach((table) => {
-        if (table.name! == 'DummyEntity_data') {
+        if (table.name === 'DummyEntity_data') {
           findDummyEntity = true
         }
-        if (table.name! == 'Named_witness') {
+        if (table.name === 'Named_witness') {
           findNamedEntity = true
         }
       })
