@@ -5,7 +5,7 @@
 ```sh
 git clone https://github.com/ckb-js/kuai.git
 cd kuai
-npm install
+npm run bootstrap
 npm run build
 npm test
 ```

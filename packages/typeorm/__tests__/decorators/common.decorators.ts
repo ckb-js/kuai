@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals'
 import { getMetadataArgsStorage } from 'typeorm'
 
-import { Service, KuaiEntity, Location, container } from '../src'
+import { Service, KuaiEntity, Location, container } from '../../src'
 
 class DummyService {}
 class NamedService {}

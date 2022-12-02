@@ -12,7 +12,7 @@ Install the required dependencies.
 npm install --save @kuai/typeorm typeorm pg
 ```
 
-Define the `User` entity.
+We need at least one entity, so we define the `User` entity firstly.
 
 ```
 // user.entity.ts
@@ -29,7 +29,7 @@ export class User {
 }
 ```
 
-Then bind the `Datasource` and `EntityManager` to the container using `TypeOrmManager.importRoot()`, and they will be available to inject across the entire project.
+To use `Datasource` and `EntityManager`, we need to bind them to the container using `TypeOrmManager.importRoot()`, and they will be available to inject across the entire project.
 
 - Note: To begin using the `User` entity, we need to let `TypeORM` know about it by inserting it into the entities array (unless you use a static glob path).
 
@@ -157,7 +157,7 @@ const userList = await service.findAll()
 console.log({ userList })
 ```
 
-At last, you can close the connection with the database. Once connection is closed, you cannot use repositories or perform any operations except opening connection again.
+At last, we can close the connection with the database. Once connection is closed, we cannot use repositories or perform any operations except opening connection again.
 
 ```
 // app.ts
@@ -165,7 +165,7 @@ At last, you can close the connection with the database. Once connection is clos
 try {
   await TypeOrmManager.destroyDataSource()
 } cache (e) {
-  console.log(e)
+  // log error
 }
 ```
 

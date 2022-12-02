@@ -18,5 +18,5 @@ export type TypeOrmOptions = {
    * @param err error that was thrown
    * @returns whether to retry connection or not
    */
-  toRetry?: (err: unknown) => boolean
+  shouldRetry?: (err: unknown) => boolean
 } & Partial<DataSourceOptions>

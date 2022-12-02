@@ -1,25 +1,15 @@
 import { Observable, defer, lastValueFrom } from 'rxjs'
 import { delay, retryWhen, scan } from 'rxjs/operators'
 import { AbstractRepository, DataSource, DataSourceOptions, EntityManager, EntitySchema, Repository } from 'typeorm'
-import { CircularDependencyError } from './errors/circular-dependency.error'
 import { EntityClassOrSchema } from './interfaces/entity-class-or-schema.type'
 import { DEFAULT_DATA_SOURCE_NAME } from './typeorm.constants'
 import { TypeOrmOptions } from './interfaces/typeorm-options.interface'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface Type<T = any> extends Function {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  new (...args: any[]): T
-}
 
 export function getRepositoryToken(
   entity: EntityClassOrSchema,
   dataSource: DataSource | DataSourceOptions | string = DEFAULT_DATA_SOURCE_NAME,
   // eslint-disable-next-line @typescript-eslint/ban-types
 ): Function | string {
-  if (entity === null || entity === undefined) {
-    throw new CircularDependencyError('@InjectRepository()')
-  }
   const dataSourcePrefix = getDataSourcePrefix(dataSource)
   if (
     entity instanceof Function &&
@@ -42,16 +32,13 @@ export function getRepositoryToken(
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function getCustomRepositoryToken(repository: Function): string {
-  if (repository === null || repository === undefined) {
-    throw new CircularDependencyError('@InjectRepository()')
-  }
   return repository.name
 }
 
 export function getDataSourceToken(
   dataSource: DataSource | DataSourceOptions | string = DEFAULT_DATA_SOURCE_NAME,
   // eslint-disable-next-line @typescript-eslint/ban-types
-): string | Function | Type<DataSource> {
+): string | Function {
   return DEFAULT_DATA_SOURCE_NAME === dataSource
     ? DataSource
     : 'string' === typeof dataSource
@@ -89,26 +76,31 @@ export function getEntityManagerToken(
     : `${dataSource.name}EntityManager`
 }
 
-export async function createDataSource(options: TypeOrmOptions): Promise<DataSource> {
-  return lastValueFrom(
-    defer(() => {
-      const dataSource = new DataSource(options as DataSourceOptions)
-      return dataSource.initialize()
-    }).pipe(handleRetry(options.retryAttempts, options.retryDelay, options.toRetry)),
-  )
+export async function createDataSource(options: TypeOrmOptions, shouldInitialize = true): Promise<DataSource> {
+  if (shouldInitialize) {
+    return lastValueFrom(
+      defer(() => {
+        const dataSource = new DataSource(options as DataSourceOptions)
+        return dataSource.initialize()
+      }).pipe(handleRetry(options.retryAttempts, options.retryDelay, options.shouldRetry)),
+    )
+  } else {
+    const dataSource = new DataSource(options as DataSourceOptions)
+    return Promise.resolve(dataSource)
+  }
 }
 
 function handleRetry(
   retryAttempts = 9,
   retryDelay = 3000,
-  toRetry?: (err: unknown) => boolean,
+  shouldRetry?: (err: unknown) => boolean,
 ): <T>(source: Observable<T>) => Observable<T> {
   return <T>(source: Observable<T>) =>
     source.pipe(
       retryWhen((e) =>
         e.pipe(
           scan((errorCount, error: Error) => {
-            if (toRetry && !toRetry(error)) {
+            if (shouldRetry && !shouldRetry(error)) {
               throw error
             }
             if (errorCount + 1 >= retryAttempts) {

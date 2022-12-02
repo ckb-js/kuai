@@ -17,5 +17,5 @@
     "skipLibCheck": true,
     "declaration": true
   },
-  "exclude": ["__tests__", "node_modules", "examples", "lib"]
+  "exclude": ["__tests__", "node_modules", "lib"]
 }

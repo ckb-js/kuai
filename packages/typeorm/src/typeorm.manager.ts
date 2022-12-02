@@ -24,8 +24,8 @@ export class TypeOrmManager {
    * Bind DataSource and EntityManager to the container.
    * @param options
    */
-  static async importRoot(options: TypeOrmOptions): Promise<void> {
-    const dataSource = await createDataSource(options)
+  static async importRoot(options: TypeOrmOptions, shouldInitialize = true): Promise<void> {
+    const dataSource = await createDataSource(options, shouldInitialize)
 
     const dataSouceToken = getDataSourceToken(options as DataSourceOptions)
     container.bind<DataSource>(dataSouceToken).toConstantValue(dataSource)
@@ -40,12 +40,12 @@ export class TypeOrmManager {
    * @param dataSource
    */
   static async importRepository(
-    entities: EntityClassOrSchema[] = [],
+    entities: EntityClassOrSchema[],
     dataSource: DataSource | DataSourceOptions | string = DEFAULT_DATA_SOURCE_NAME,
   ): Promise<void> {
     const conn = this.getDataSource(dataSource)
 
-    entities?.forEach((entity: EntityClassOrSchema) => {
+    entities.forEach((entity: EntityClassOrSchema) => {
       const enitityMetadata = conn.entityMetadatas.find((meta: EntityMetadata) => meta.target === entity)
       const isTreeEntity = typeof enitityMetadata?.treeType !== 'undefined'
       const repository = isTreeEntity
