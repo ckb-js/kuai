@@ -1,16 +1,18 @@
-import { StorageOffChain, ChainStorage, StorageOnChain } from "./chain-storage"
+import { ChainStorage, StorageOnChain, StorageOffChain } from './chain-storage'
 
 type JSONStorageType = string | number | boolean | bigint
-type JSONStorageOffChain = JSONStorageType | {
-  [x: string]: JSONStorageType | JSONStorageType[] | JSONStorageOffChain
-}
+export type JSONStorageOffChain =
+  | JSONStorageType
+  | {
+      [x: string]: JSONStorageType | JSONStorageType[] | JSONStorageOffChain
+    }
 
 const typeMarkLen = 4
 const typeMarkMap: Record<string, string> = {
-  'string': '0001',
-  'number': '0010',
-  'boolean': '0011',
-  'bigint': '0100'
+  string: '0001',
+  number: '0010',
+  boolean: '0011',
+  bigint: '0100',
 }
 
 function replacer(_: string, value: JSONStorageOffChain | JSONStorageType) {
@@ -48,13 +50,13 @@ function reviver(_: string, value: JSONStorageOffChain | JSONStorageType) {
 
 export class JSONStorage<T extends StorageOffChain<JSONStorageOffChain>> extends ChainStorage<T> {
   serialize(data: T): StorageOnChain {
-    if (data.data && data.witness) {
+    if ('data' in data && 'witness' in data) {
       return {
         data: Buffer.from(JSON.stringify(data.data, replacer)),
         witness: Buffer.from(JSON.stringify(data.witness, replacer)),
       }
     }
-    if (data.data) {
+    if ('data' in data) {
       return {
         data: Buffer.from(JSON.stringify(data.data, replacer)),
       }

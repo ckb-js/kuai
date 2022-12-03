@@ -1,1 +1,1 @@
-export const PATTERN_META_NAME = '__pattern__';
+export const PATTERN_META_NAME = '__pattern__'

@@ -1,5 +1,5 @@
-
 type OneOfStorageLoc<Data, Witness = Data> = { data: Data; witness?: Witness } | { data?: Data; witness: Witness }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type StorageOffChain<Data = any, Witness = Data> = OneOfStorageLoc<Data, Witness>
 export type StorageOnChain = OneOfStorageLoc<Uint8Array>
 
