@@ -1,91 +1,109 @@
-import { Actor, ActorMessage, MessagePayload } from "../actor";
-import { OutPointString, StatePath, StoreMessage } from "./interface";
-import { ChainStorage } from "./chain-storage";
+import { Actor, ActorMessage, MessagePayload } from '../actor'
+import { OutPointString, StoreMessage, StorePath } from './interface'
+import { ChainStorage, StorageOffChain } from './chain-storage'
+import { JSONStorage, JSONStorageOffChain } from './json-storage'
+import { NonExistentException, NonStorageInstanceException } from '../exceptions'
 
 type GetState<T> = T extends ChainStorage<infer State> ? State : never
+type UnknownAsNever<T> = unknown extends T ? (0 extends 1 & T ? T : never) : T
 
-export class Store<Storage extends ChainStorage> extends Actor<Storage, MessagePayload<StoreMessage<GetState<Storage>>>> {
-  protected states: Record<OutPointString, GetState<Storage>> = {}
+export class Store<StorageT extends ChainStorage> extends Actor<
+  StorageT,
+  MessagePayload<StoreMessage<GetState<StorageT>>>
+> {
+  protected states: Record<OutPointString, GetState<StorageT>> = {}
 
-  //@ts-ignore TODO should init
-  protected storageInstance: Storage
+  storageInstance: StorageT | undefined
 
-  // sync from tx or database
-  private addState(addStates: Record<OutPointString, GetState<Storage>>) {
+  private addState(addStates: Record<OutPointString, GetState<StorageT>>) {
     this.states = {
       ...this.states,
-      ...addStates
+      ...addStates,
     }
   }
 
   private removeState(keys: OutPointString[]) {
-    keys.forEach(key => {
+    keys.forEach((key) => {
       delete this.states[key]
     })
   }
 
-  private getAndValidTargetKey(path: Required<StatePath>, ignoreLast?: boolean) {
-    const keys = path.path.split('.')
-    if (keys[0] !== 'data' && keys[0] !== 'witness') {
-      throw Error(`The first path should be data or witness`)
-    }
-    let result = this.states[path.key]?.[keys[0]]
-    for (let i = 1; i < (ignoreLast ? keys.length - 1 : keys.length); i++) {
-      result = result?.[keys[i]]
+  private getAndValidTargetKey(key: OutPointString, paths: StorePath, ignoreLast?: boolean) {
+    if (ignoreLast && paths.length === 1) return this.states[key]
+    let result = this.states[key]?.[paths[0]]
+    for (let i = 1; i < (ignoreLast ? paths.length - 1 : paths.length); i++) {
+      result = result?.[paths[i]]
     }
     if (result === undefined || result === null) {
-      throw Error(`The path is not exist in state`)
+      throw new NonExistentException(paths.join('.'))
     }
     return result
   }
 
-  handleCall = (_msg: ActorMessage<MessagePayload<StoreMessage<GetState<Storage>>>>): void => {
+  handleCall = (_msg: ActorMessage<MessagePayload<StoreMessage<GetState<StorageT>>>>): void => {
     switch (_msg.payload?.value?.type) {
       case 'add_state':
         if (_msg.payload?.value?.add) {
           this.addState(_msg.payload.value.add)
         }
-        break;
+        break
       case 'remove_state':
         if (_msg.payload?.value?.remove) {
           this.removeState(_msg.payload.value.remove)
         }
-        break;
+        break
       default:
-        break;
+        break
     }
   }
 
-  clone() {
-    const store = new Store()
-    Object.keys(this.states).forEach(key => {
-      store.states[key] = this.storageInstance.clone(this.states[key])
+  clone(): Store<StorageT> {
+    if (!this.storageInstance) throw new NonStorageInstanceException()
+    const store = new Store<StorageT>()
+    Object.keys(this.states).forEach((key) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      store.states[key] = this.storageInstance!.clone(this.states[key]) as GetState<StorageT>
     })
     return store
   }
 
-  get(path: StatePath) {
-    if (path.path) {
-      return this.getAndValidTargetKey(path as Required<StatePath>)
+  get(key: OutPointString): GetState<StorageT> | void
+  get(key: OutPointString, paths: ['data']): UnknownAsNever<GetState<StorageT>['data']> | void
+  get(key: OutPointString, paths: ['witness']): UnknownAsNever<GetState<StorageT>['witness']> | void
+  get(key: OutPointString, paths: ['data' | 'witness', string, ...string[]]): unknown | void
+  get(key: OutPointString, paths?: StorePath) {
+    try {
+      if (paths) {
+        return this.getAndValidTargetKey(key, paths)
+      }
+      return this.states[key]
+    } catch (error) {
+      return
     }
-    return this.states[path.key]
   }
 
-  set(path: StatePath, value: any) {
-    if (path.path) {
-      const target = this.getAndValidTargetKey(path as Required<StatePath>, true)
-      const lastKey = path.path.split('.').at(-1)
-      target[lastKey!] = value
+  set(key: OutPointString, value: GetState<StorageT>): void
+  set(key: OutPointString, value: UnknownAsNever<GetState<StorageT>['data']>, paths: ['data']): void
+  set(key: OutPointString, value: UnknownAsNever<GetState<StorageT>['witness']>, paths: ['witness']): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  set(key: OutPointString, value: any, paths: ['data' | 'witness', string, ...string[]]): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  set(key: OutPointString, value: any, paths?: StorePath) {
+    if (paths) {
+      const target = this.getAndValidTargetKey(key, paths, true)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const lastKey = paths.at(-1)!
+      target[lastKey] = value
+      return
     }
-    this.states[path.key] = value
+    this.states[key] = value
   }
 
-  remove(path: StatePath) {
-    if (path.path) {
-      const target = this.getAndValidTargetKey(path as Required<StatePath>, true)
-      const lastKey = path.path.split('.')[-1]
-      delete target[lastKey]
-    }
-    delete this.states[path.key]
+  remove(key: OutPointString) {
+    delete this.states[key]
   }
+}
+
+export class JSONStore<T extends StorageOffChain<JSONStorageOffChain>> extends Store<JSONStorage<T>> {
+  storageInstance = new JSONStorage<T>()
 }
