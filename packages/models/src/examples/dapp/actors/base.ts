@@ -1,6 +1,6 @@
-import { Actor, MessageQueue, Registry, ActorMessage, MessagePayload } from '../actor'
+import { Actor, ActorMessage, MessagePayload } from '../../../'
 
-const Step: Record<string, symbol> = {
+export const Step: Record<string, symbol> = {
   One: Symbol('one'),
   Two: Symbol('two'),
   Done: Symbol('done'),
@@ -9,7 +9,10 @@ const Step: Record<string, symbol> = {
 /**
  * add business logic in an actor
  */
-class CustomActor<State extends { value: number }, Message extends MessagePayload> extends Actor<State, Message> {
+export class CustomActorBase<
+  State extends { value: number } = { value: number },
+  Message extends MessagePayload = MessagePayload,
+> extends Actor<State, Message> {
   #value = 0
 
   handleCall = (msg: ActorMessage<Message>): void => {
@@ -78,19 +81,3 @@ class CustomActor<State extends { value: number }, Message extends MessagePayloa
     return state
   }
 }
-
-/**
- * initialize the registry, should be done by the framework
- */
-const registry = new Registry(CustomActor)
-
-/**
- * initialize the message queue, should be done by the framekwork
- */
-globalThis.mq = new MessageQueue(registry)
-globalThis.mq.start()
-
-const rootRef = registry.spawn({ name: 'root' })
-const childOneRef = registry.spawn({ parent: rootRef, name: 'child_one' })
-
-Actor.call(childOneRef.uri, rootRef, { symbol: Step.One })

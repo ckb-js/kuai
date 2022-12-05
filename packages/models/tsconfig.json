@@ -17,5 +17,5 @@
     "skipLibCheck": true,
     "declaration": true
   },
-  "exclude": ["__tests__"]
+  "exclude": ["lib", "__tests__"]
 }
