@@ -7,7 +7,8 @@ export enum Location {
 
 export const KuaiEntity =
   (nameSuffix: Location, nameOrOptions?: string | EntityOptions, maybeOptions?: EntityOptions) =>
-  (cls: new (...args: never[]) => unknown): void => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (cls: new (...args: any[]) => unknown): void => {
     let name = cls.name
     if (nameOrOptions) {
       if ('string' === typeof nameOrOptions) {
