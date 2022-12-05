@@ -3,11 +3,8 @@ import { container } from '../typeorm.manager'
 
 export const Service =
   (name?: string) =>
-  (cls: new (...args: never[]) => unknown): void => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (cls: new (...args: any[]) => unknown): void => {
     injectable()(cls)
-    if (name) {
-      container.bind(name).to(cls)
-    } else {
-      container.bind(cls.name).to(cls)
-    }
+    container.bind(name || cls.name).to(cls)
   }

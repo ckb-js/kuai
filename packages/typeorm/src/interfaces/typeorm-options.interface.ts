@@ -7,10 +7,10 @@ export type TypeOrmOptions = {
    */
   retryAttempts?: number
   /**
-   * Delay between connection retry attempts (ms)
+   * Interval between connection retry attempts (ms)
    * Default: 3000
    */
-  retryDelay?: number
+  retryInterval?: number
   /**
    * Function that determines whether the module should
    * attempt to connect upon failure.

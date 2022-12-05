@@ -82,7 +82,7 @@ export async function createDataSource(options: TypeOrmOptions, shouldInitialize
       defer(() => {
         const dataSource = new DataSource(options as DataSourceOptions)
         return dataSource.initialize()
-      }).pipe(handleRetry(options.retryAttempts, options.retryDelay, options.shouldRetry)),
+      }).pipe(handleRetry(options.retryAttempts, options.retryInterval, options.shouldRetry)),
     )
   } else {
     const dataSource = new DataSource(options as DataSourceOptions)
