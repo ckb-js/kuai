@@ -89,7 +89,7 @@ export class JSONStorage<T extends StorageOffChain<JSONStorageOffChain>> extends
     }
     if (witnessStr) {
       return {
-        data: JSON.parse(witnessStr, reviver),
+        witness: JSON.parse(witnessStr, reviver),
       } as T
     }
     throw new NoExpectedDataException()
