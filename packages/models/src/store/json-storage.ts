@@ -1,4 +1,6 @@
-import { ChainStorage, StorageOnChain, StorageOffChain } from './chain-storage'
+import type { StorageOnChain, StorageOffChain } from './chain-storage'
+import { NoExpectedDataException, UnexpectedMarkException, UnexpectedTypeException } from '../exceptions'
+import { ChainStorage } from './chain-storage'
 
 type JSONStorageType = string | number | boolean | bigint
 export type JSONStorageOffChain =
@@ -7,44 +9,46 @@ export type JSONStorageOffChain =
       [x: string]: JSONStorageType | JSONStorageType[] | JSONStorageOffChain
     }
 
-const typeMarkLen = 4
-const typeMarkMap: Record<string, string> = {
+const TYPE_MARK_LEN = 4
+const TYPE_MARK_MAP: Record<string, string> = {
   string: '0001',
   number: '0010',
   boolean: '0011',
   bigint: '0100',
 }
 
-function replacer(_: string, value: JSONStorageOffChain | JSONStorageType) {
+function replacer(key: string, value: JSONStorageOffChain | JSONStorageType) {
   const valueType = typeof value
+  if (value === null) throw new UnexpectedTypeException('null')
   if (valueType === 'object') return value
-  const mark = typeMarkMap[valueType]
+  const mark = TYPE_MARK_MAP[valueType]
   if (mark) {
     return `${mark}${value.toString()}`
   }
-  throw new Error('Unexpected type')
+  throw new UnexpectedTypeException(valueType)
 }
 
-function reviver(_: string, value: JSONStorageOffChain | JSONStorageType) {
+function reviver(key: string, value: JSONStorageOffChain | JSONStorageType) {
+  if (value === null) throw new UnexpectedTypeException('null')
   if (typeof value === 'object') {
     return value
   }
-  const mark = value.toString().slice(0, typeMarkLen)
-  if (mark.length !== typeMarkLen) {
-    throw new Error('Unexpected type')
+  const mark = value.toString().slice(0, TYPE_MARK_LEN)
+  if (mark.length !== TYPE_MARK_LEN) {
+    throw new UnexpectedMarkException(mark)
   }
-  const acturalValue = value.toString().slice(typeMarkLen)
+  const acturalValue = value.toString().slice(TYPE_MARK_LEN)
   switch (mark) {
-    case typeMarkMap['string']:
+    case TYPE_MARK_MAP['string']:
       return acturalValue
-    case typeMarkMap['number']:
+    case TYPE_MARK_MAP['number']:
       return +acturalValue
-    case typeMarkMap['boolean']:
+    case TYPE_MARK_MAP['boolean']:
       return acturalValue === 'true'
-    case typeMarkMap['bigint']:
+    case TYPE_MARK_MAP['bigint']:
       return BigInt(acturalValue)
     default:
-      throw new Error('Unexpected type')
+      throw new UnexpectedMarkException(mark)
   }
 }
 
@@ -61,9 +65,12 @@ export class JSONStorage<T extends StorageOffChain<JSONStorageOffChain>> extends
         data: Buffer.from(JSON.stringify(data.data, replacer)),
       }
     }
-    return {
-      witness: Buffer.from(JSON.stringify(data.witness, replacer)),
+    if ('witness' in data) {
+      return {
+        witness: Buffer.from(JSON.stringify(data.witness, replacer)),
+      }
     }
+    throw new NoExpectedDataException()
   }
 
   deserialize(data: StorageOnChain): T {
@@ -80,8 +87,11 @@ export class JSONStorage<T extends StorageOffChain<JSONStorageOffChain>> extends
         data: JSON.parse(dataStr, reviver),
       } as T
     }
-    return {
-      witness: JSON.parse(witnessStr!, reviver),
-    } as T
+    if (witnessStr) {
+      return {
+        data: JSON.parse(witnessStr, reviver),
+      } as T
+    }
+    throw new NoExpectedDataException()
   }
 }

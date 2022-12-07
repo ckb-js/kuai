@@ -1,10 +1,12 @@
-import { Actor, ActorMessage, MessagePayload } from '../actor'
-import { OutPointString, StoreMessage, StorePath } from './interface'
-import { ChainStorage, StorageOffChain } from './chain-storage'
-import { JSONStorage, JSONStorageOffChain } from './json-storage'
+import type { ActorMessage, MessagePayload } from '../actor'
+import type { OutPointString, StoreMessage, StorePath } from './interface'
+import type { JSONStorageOffChain } from './json-storage'
+import type { StorageOffChain, GetState } from './chain-storage'
+import { ChainStorage } from './chain-storage'
+import { Actor } from '../actor'
+import { JSONStorage } from './json-storage'
 import { NonExistentException, NonStorageInstanceException } from '../exceptions'
 
-type GetState<T> = T extends ChainStorage<infer State> ? State : never
 type UnknownAsNever<T> = unknown extends T ? (0 extends 1 & T ? T : never) : T
 
 export class Store<StorageT extends ChainStorage> extends Actor<
@@ -67,10 +69,10 @@ export class Store<StorageT extends ChainStorage> extends Actor<
     return store
   }
 
-  get(key: OutPointString): GetState<StorageT> | void
-  get(key: OutPointString, paths: ['data']): UnknownAsNever<GetState<StorageT>['data']> | void
-  get(key: OutPointString, paths: ['witness']): UnknownAsNever<GetState<StorageT>['witness']> | void
-  get(key: OutPointString, paths: ['data' | 'witness', string, ...string[]]): unknown | void
+  get(key: OutPointString): GetState<StorageT>
+  get(key: OutPointString, paths: ['data']): UnknownAsNever<GetState<StorageT>['data']>
+  get(key: OutPointString, paths: ['witness']): UnknownAsNever<GetState<StorageT>['witness']>
+  get(key: OutPointString, paths: ['data' | 'witness', string, ...string[]]): unknown
   get(key: OutPointString, paths?: StorePath) {
     try {
       if (paths) {
