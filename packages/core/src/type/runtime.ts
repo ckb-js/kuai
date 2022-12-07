@@ -53,7 +53,7 @@ export interface ConfigurableTaskDefinition<ArgsT extends TaskArguments = TaskAr
     defaultValue?: T,
     type?: ArgumentType<T>,
     isOptional?: boolean,
-    isFlag?: boolean,
+    isVariadic?: boolean,
   ): this
 }
 export interface TaskParam<T = TaskArguments> {
@@ -61,8 +61,8 @@ export interface TaskParam<T = TaskArguments> {
   description?: string
   defaultValue?: T
   type: ArgumentType<T>
-  isOptional: boolean
-  isFlag: boolean
+  isOptional?: boolean
+  isVariadic?: boolean
 }
 
 export interface Task<ArgsT extends TaskArguments = TaskArguments> extends ConfigurableTaskDefinition<ArgsT> {

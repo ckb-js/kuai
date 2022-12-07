@@ -13,6 +13,10 @@ export const ERRORS = {
       code: 'MISSING_TASK_ARGUMENT',
       message: "The '%param%' parameter expects a value, but none was passed.",
     },
+    INVALID_VALUE_FOR_TYPE: {
+      code: 'INVALID_VALUE_FOR_TYPE',
+      message: 'Invalid value %value% for argument %name% of type %type%',
+    },
   },
   INTERNAL: {
     TEMPLATE_INVALID_VARIABLE_NAME: {

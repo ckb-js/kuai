@@ -1,23 +1,41 @@
 import { ArgumentType } from './type'
+import { KuaiError } from './errors'
+import { ERRORS } from './errors-list'
 
 const string: ArgumentType = {
   name: 'string',
-  validate: (value) => typeof value === 'string',
+  validate: (value) => {
+    if (typeof value !== 'string') {
+      throw new KuaiError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE)
+    }
+  },
 }
 
 const boolean: ArgumentType = {
   name: 'boolean',
-  validate: (value) => typeof value === 'boolean',
+  validate: (value) => {
+    if (typeof value !== 'boolean') {
+      throw new KuaiError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE)
+    }
+  },
 }
 
 const number: ArgumentType = {
   name: 'number',
-  validate: (value) => typeof value === 'number',
+  validate: (value) => {
+    if (typeof value !== 'number' || isNaN(value)) {
+      throw new KuaiError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE)
+    }
+  },
 }
 
 const path: ArgumentType = {
   name: 'path',
-  validate: (value) => typeof value === 'string',
+  validate: (value) => {
+    if (typeof value !== 'string') {
+      throw new KuaiError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE)
+    }
+  },
 }
 
 export const paramTypes = {
