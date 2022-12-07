@@ -1,9 +1,8 @@
 import { Observable, defer, lastValueFrom } from 'rxjs'
-import { delay, retryWhen, scan } from 'rxjs/operators'
-import { AbstractRepository, DataSource, DataSourceOptions, EntityManager, EntitySchema, Repository } from 'typeorm'
-import { EntityClassOrSchema } from './interfaces/entity-class-or-schema.type'
+import { retry } from 'rxjs/operators'
+import { DataSource, EntityManager, EntitySchema, Repository } from 'typeorm'
 import { DEFAULT_DATA_SOURCE_NAME } from './typeorm.constants'
-import { TypeOrmOptions } from './interfaces/typeorm-options.interface'
+import { DataSourceOptions, EntityClassOrSchema, TypeOrmOptions } from './interfaces'
 
 export function getRepositoryToken(
   entity: EntityClassOrSchema,
@@ -11,10 +10,7 @@ export function getRepositoryToken(
   // eslint-disable-next-line @typescript-eslint/ban-types
 ): Function | string {
   const dataSourcePrefix = getDataSourcePrefix(dataSource)
-  if (
-    entity instanceof Function &&
-    (entity.prototype instanceof Repository || entity.prototype instanceof AbstractRepository)
-  ) {
+  if (entity instanceof Function && entity.prototype instanceof Repository) {
     if (!dataSourcePrefix) {
       return entity
     }
@@ -82,7 +78,7 @@ export async function createDataSource(options: TypeOrmOptions, shouldInitialize
       defer(() => {
         const dataSource = new DataSource(options as DataSourceOptions)
         return dataSource.initialize()
-      }).pipe(handleRetry(options.retryAttempts, options.retryInterval, options.shouldRetry)),
+      }).pipe(handleRetry(options.retryAttempts, options.retryInterval)),
     )
   } else {
     const dataSource = new DataSource(options as DataSourceOptions)
@@ -90,26 +86,12 @@ export async function createDataSource(options: TypeOrmOptions, shouldInitialize
   }
 }
 
-function handleRetry(
-  retryAttempts = 9,
-  retryDelay = 3000,
-  shouldRetry?: (err: unknown) => boolean,
-): <T>(source: Observable<T>) => Observable<T> {
+function handleRetry(retryAttempts = 10, retryInterval = 3000): <T>(source: Observable<T>) => Observable<T> {
   return <T>(source: Observable<T>) =>
     source.pipe(
-      retryWhen((e) =>
-        e.pipe(
-          scan((errorCount, error: Error) => {
-            if (shouldRetry && !shouldRetry(error)) {
-              throw error
-            }
-            if (errorCount + 1 >= retryAttempts) {
-              throw error
-            }
-            return errorCount + 1
-          }, 0),
-          delay(retryDelay),
-        ),
-      ),
+      retry({
+        count: retryAttempts,
+        delay: retryInterval,
+      }),
     )
 }

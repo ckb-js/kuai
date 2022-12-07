@@ -10,7 +10,7 @@ describe(`TypeOrmManager`, () => {
   it(`should get default data source and repository`, async () => {
     await TypeOrmManager.importRoot(
       {
-        type: 'postgres',
+        type: 'mysql',
         entities: [User],
       },
       false,
@@ -24,7 +24,7 @@ describe(`TypeOrmManager`, () => {
   it(`should get data source and repository if give a name`, async () => {
     await TypeOrmManager.importRoot(
       {
-        type: 'postgres',
+        type: 'mysql',
         name: 'test',
         entities: [User],
       },
@@ -38,7 +38,7 @@ describe(`TypeOrmManager`, () => {
 
   it(`should get default data source and repository if give data source options`, async () => {
     const options: DataSourceOptions = {
-      type: 'postgres',
+      type: 'mysql',
       name: 'test1',
       entities: [User],
     }

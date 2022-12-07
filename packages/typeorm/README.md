@@ -9,7 +9,7 @@ We assume that you are familiar with [TypeOrm](https://github.com/typeorm/typeor
 Install the required dependencies.
 
 ```
-npm install --save @kuai/typeorm typeorm pg
+npm install --save @kuai/typeorm
 ```
 
 We need at least one entity, so we define the `User` entity firstly.
@@ -40,7 +40,7 @@ import { TypeOrmManager } from '@kuai/typeorm'
 import { User } from './user.entity'
 
 await TypeOrmManager.importRoot({
-  type: 'postgres',
+  type: 'mysql',
   host: 'localhost',
   port: 5432,
   username: 'test',

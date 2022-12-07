@@ -17,38 +17,38 @@ describe(`getDataSourceToken`, () => {
 
   it(`should get a data source token if give a created data source`, () => {
     const dataSource = new DataSource({
-      type: 'postgres',
+      type: 'mysql',
     })
     expect(getDataSourceToken(dataSource)).toBeInstanceOf(Function)
 
     const dataSource1 = new DataSource({
       name: DEFAULT_DATA_SOURCE_NAME,
-      type: 'postgres',
+      type: 'mysql',
     })
     expect(getDataSourceToken(dataSource1)).toBeInstanceOf(Function)
 
     const dataSource2 = new DataSource({
       name: 'test',
-      type: 'postgres',
+      type: 'mysql',
     })
     expect(getDataSourceToken(dataSource2)).toBe('testDataSource')
   })
 
   it(`should get a data source token if give data source options`, () => {
     const dataSourceOptions: DataSourceOptions = {
-      type: 'postgres',
+      type: 'mysql',
     }
     expect(getDataSourceToken(dataSourceOptions)).toBeInstanceOf(Function)
 
     const dataSourceOptions1: DataSourceOptions = {
       name: DEFAULT_DATA_SOURCE_NAME,
-      type: 'postgres',
+      type: 'mysql',
     }
     expect(getDataSourceToken(dataSourceOptions1)).toBeInstanceOf(Function)
 
     const dataSourceOptions2: DataSourceOptions = {
       name: 'test',
-      type: 'postgres',
+      type: 'mysql',
     }
     expect(getDataSourceToken(dataSourceOptions2)).toBe('testDataSource')
   })

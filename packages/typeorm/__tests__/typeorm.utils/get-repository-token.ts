@@ -12,31 +12,31 @@ describe(`getRepositoryToken`, () => {
   Entity()(UserEntity)
 
   const dataSource = new DataSource({
-    type: 'postgres',
+    type: 'mysql',
   })
 
   const dataSource1 = new DataSource({
     name: DEFAULT_DATA_SOURCE_NAME,
-    type: 'postgres',
+    type: 'mysql',
   })
 
   const dataSource2 = new DataSource({
     name: 'test',
-    type: 'postgres',
+    type: 'mysql',
   })
 
   const dataSourceOptions: DataSourceOptions = {
-    type: 'postgres',
+    type: 'mysql',
   }
 
   const dataSourceOptions1: DataSourceOptions = {
     name: DEFAULT_DATA_SOURCE_NAME,
-    type: 'postgres',
+    type: 'mysql',
   }
 
   const dataSourceOptions2: DataSourceOptions = {
     name: 'test',
-    type: 'postgres',
+    type: 'mysql',
   }
 
   describe(`entity instanceof EntityClass`, () => {
