@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 import { NonExistentException, NonStorageInstanceException } from '../../src/exceptions'
-import { ChainStorage, JSONStore, StorageOffChain, StorageOnChain, Store } from '../../src/store'
-import { Behavior } from '../../src/utils'
+import { ChainStorage, JSONStore, StorageOffChain, StorageOnChain, Store, Behavior, ProviderKey } from '../../src'
 
 const ref = {
   name: '',
   protocol: '',
   path: '',
-  uri: '',
+  uri: 'json',
 }
 
 type CustomType = string
@@ -43,7 +42,12 @@ class NoInstanceCustomStore<T extends StorageOffChain<CustomType>> extends Store
   storageInstance = new StorageCustom<T>()
 }
 
-describe('tes store', () => {
+Reflect.defineMetadata(ProviderKey.Actor, { ref }, Store)
+Reflect.defineMetadata(ProviderKey.Actor, { ref }, JSONStore)
+Reflect.defineMetadata(ProviderKey.Actor, { ref }, CustomStore)
+Reflect.defineMetadata(ProviderKey.Actor, { ref }, NoInstanceCustomStore)
+
+describe('test store', () => {
   describe('use json storage', () => {
     describe('test handleCall with add', () => {
       const store = new JSONStore<{ data: { a: number } }>()
