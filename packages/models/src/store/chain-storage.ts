@@ -10,3 +10,5 @@ export abstract class ChainStorage<Data extends StorageOffChain = StorageOffChai
     return this.deserialize(this.serialize(data))
   }
 }
+
+export type GetState<T> = T extends ChainStorage<infer State> ? State : never
