@@ -31,7 +31,8 @@
   "dependencies": {
     "inversify": "6.0.1",
     "reflect-metadata": "0.1.13",
-    "tslib": "2.4.1"
+    "tslib": "2.4.1",
+    "undici": "5.13.0"
   },
   "devDependencies": {
     "@jest/globals": "29.3.1",
