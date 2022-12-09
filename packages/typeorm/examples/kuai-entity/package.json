@@ -1,0 +1,7 @@
+{
+  "name": "inject-typeorm-example-2",
+  "description": "Example project for testing the library.",
+  "scripts": {
+    "start": "ts-node ./src/index.ts"
+  }
+}
