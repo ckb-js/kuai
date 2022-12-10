@@ -6,17 +6,29 @@ import { TaskParam, TaskArguments, initialKuai, paramTypes, KuaiArguments } from
 const KUAI_GLOBAL_PARAMS: Array<TaskParam> = [
   {
     name: 'config',
-    description: 'A Kuai config file.',
+    description: 'a kuai config file.',
     type: paramTypes.path,
-    isFlag: false,
-    isOptional: true,
+    isOptional: false,
   },
 ]
 
 function parseTaskParams(param: TaskParam<TaskArguments>): Option {
-  const type = param.type.name === 'boolean' ? '' : ` <${param.type.name}>`
+  const wrapper = (content: string) => (param.isOptional ? `[${content}]` : `<${content}>`)
+  const suffix = param.isVariadic ? '...' : ''
+  const type = param.type.name === 'boolean' ? '' : ` ${wrapper(param.type.name + suffix)}`
 
-  return createOption(`--${param.name}${type}`, param.description)
+  const option = createOption(`--${param.name}${type}`, param.description)
+  if (param.defaultValue !== undefined) {
+    option.default(param.defaultValue)
+  }
+
+  if (param.type.name === 'number') {
+    option.argParser((value, pre) =>
+      option.variadic ? (Array.isArray(pre) ? pre : []).concat([Number(value)]) : Number(value),
+    )
+  }
+
+  return option
 }
 
 const main = async () => {

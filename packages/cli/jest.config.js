@@ -3,4 +3,9 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testPathIgnorePatterns: ['/__fixtures__/', '/__utils__/'],
+  globals: {
+    'ts-jest': {
+      diagnostics: false,
+    },
+  },
 }

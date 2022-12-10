@@ -27,8 +27,8 @@ export class SimpleTask implements Task {
     description?: string,
     defaultValue?: T,
     type?: ArgumentType<T>,
-    isFlag = false,
     isOptional: boolean = defaultValue !== undefined,
+    isVariadic = false,
   ): this {
     this.params[name] = {
       name,
@@ -36,7 +36,7 @@ export class SimpleTask implements Task {
       type: type || paramTypes.string,
       description,
       isOptional,
-      isFlag,
+      isVariadic,
     }
 
     return this

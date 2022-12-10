@@ -104,6 +104,22 @@ export class KuaiRuntimeEnvironment implements RuntimeEnvironment {
   private _checkTypeValid(param: TaskParam<any>, argValue: any) {
     const { type } = param
 
-    type.validate(argValue)
+    const argumentValueContainer = Array.isArray(argValue) ? argValue : [argValue]
+
+    for (const value of argumentValueContainer) {
+      try {
+        type.validate(value)
+      } catch (e) {
+        if (!KuaiError.isKuaiError(e)) {
+          throw e
+        }
+
+        throw new KuaiError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
+          name: param.name,
+          value,
+          type: type.name,
+        })
+      }
+    }
   }
 }
