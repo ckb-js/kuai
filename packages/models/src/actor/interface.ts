@@ -11,7 +11,7 @@ export interface ActorRef {
 }
 
 export type MessagePayload<Payload = string | number | object> = {
-  symbol: symbol
+  pattern: string
   value?: Payload
 } | null
 

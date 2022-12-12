@@ -1,4 +1,11 @@
-import { describe, expect, it, beforeEach } from '@jest/globals'
+import { jest, describe, expect, it, beforeEach } from '@jest/globals'
+
+jest.mock('ioredis', () => {
+  return class Redis {
+    xread = jest.fn()
+    xadd = jest.fn()
+  }
+})
 
 import {
   Registry,

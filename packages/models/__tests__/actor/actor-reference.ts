@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals'
-import { ActorReference, InvalidPathException } from '../../src'
+import { ActorReference, InvalidActorURIException, InvalidPathException } from '../../src'
 
 describe(`Test Actor Reference`, () => {
   describe(`should have specific attributes`, () => {
@@ -69,6 +69,36 @@ describe(`Test Actor Reference`, () => {
           expect(e).toBeInstanceOf(InvalidPathException)
         }
       })
+    })
+  })
+
+  describe('Test ActorReference#fromURI', () => {
+    it(`uri has protocol, path, and name`, () => {
+      const REF = {
+        name: 'test_name',
+        path: '/test_path/',
+        protocol: 'http',
+        uri: `http://test_path/test_name`,
+      }
+      expect(ActorReference.fromURI(REF.uri).json).toEqual(REF)
+    })
+
+    it(`uri has protocol and name without path`, () => {
+      const REF = {
+        protocol: 'local',
+        path: '/',
+        name: 'test_name',
+        uri: 'local://test_name',
+      }
+      expect(ActorReference.fromURI(REF.uri).json).toEqual(REF)
+    })
+
+    it(`should thown when uri has invalid protocol`, () => {
+      try {
+        ActorReference.fromURI('local:/test_name')
+      } catch (e) {
+        expect(e).toBeInstanceOf(InvalidActorURIException)
+      }
     })
   })
 })
