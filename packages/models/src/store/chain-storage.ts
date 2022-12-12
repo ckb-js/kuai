@@ -3,10 +3,10 @@ type AtLeastOneOfLoc<Data, Witness = Data> = { data: Data; witness?: Witness } |
 export type StorageOffChain<Data = any, Witness = Data> = AtLeastOneOfLoc<Data, Witness>
 export type StorageOnChain = AtLeastOneOfLoc<Uint8Array>
 
-export abstract class ChainStorage<Data extends StorageOffChain = StorageOffChain> {
-  abstract serialize(data: Data): StorageOnChain
-  abstract deserialize(data: StorageOnChain): Data
-  clone(data: Data): Data {
+export abstract class ChainStorage<OffChain extends StorageOffChain = StorageOffChain> {
+  abstract serialize(data: OffChain): StorageOnChain
+  abstract deserialize(data: StorageOnChain): OffChain
+  clone(data: OffChain): OffChain {
     return this.deserialize(this.serialize(data))
   }
 }
