@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals'
 import { JSONStorage } from '../../src'
+import { NoExpectedDataException, UnexpectedTypeException } from '../../src/exceptions'
 
 describe('test json storage', () => {
   describe('only data exist', () => {
@@ -86,6 +87,56 @@ describe('test json storage', () => {
         expect((original.witness.lay as any)[key]).toEqual((witness as any)[key])
       })
       expect(original.data).toBe(10)
+    })
+  })
+
+  describe('some exception withnot type', () => {
+    const storage = new JSONStorage()
+    it('serialize with empty', () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        storage.serialize({} as any)
+      } catch (error) {
+        expect(error).toBeInstanceOf(NoExpectedDataException)
+      }
+    })
+    it('data serialize with null', () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        storage.serialize({ data: { a: null } } as any)
+      } catch (error) {
+        expect(error).toBeInstanceOf(UnexpectedTypeException)
+      }
+    })
+    it('witness serialize with null', () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        storage.serialize({ witness: { a: null } } as any)
+      } catch (error) {
+        expect(error).toBeInstanceOf(UnexpectedTypeException)
+      }
+    })
+    it('deserialize data with null', () => {
+      try {
+        storage.deserialize({ data: Buffer.from(JSON.stringify({ a: null })) })
+      } catch (error) {
+        expect(error).toBeInstanceOf(UnexpectedTypeException)
+      }
+    })
+    it('deserialize witness with null', () => {
+      try {
+        storage.deserialize({ witness: Buffer.from(JSON.stringify({ a: null })) })
+      } catch (error) {
+        expect(error).toBeInstanceOf(UnexpectedTypeException)
+      }
+    })
+    it('deserialize witness with empty', () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        storage.deserialize({} as any)
+      } catch (error) {
+        expect(error).toBeInstanceOf(NoExpectedDataException)
+      }
     })
   })
 })
