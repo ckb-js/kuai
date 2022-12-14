@@ -62,4 +62,10 @@ Please run: npm install --save-dev ts-node`,
 Please run: npm install --save-dev typescript`,
     },
   },
+  BUILTIN_TASKS: {
+    UNSUPPORTED_NETWORK: {
+      code: 'UNSUPPORTED_NETWORK',
+      message: 'Unsupported network %var%.',
+    },
+  },
 }

@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { Command, createOption, Option } from 'commander'
-import { node } from './commands/node'
 import { TaskParam, TaskArguments, initialKuai, paramTypes, KuaiArguments } from '@kuai/core'
 
 const KUAI_GLOBAL_PARAMS: Array<TaskParam> = [
@@ -8,6 +7,12 @@ const KUAI_GLOBAL_PARAMS: Array<TaskParam> = [
     name: 'config',
     description: 'a kuai config file.',
     type: paramTypes.path,
+    isOptional: false,
+  },
+  {
+    name: 'network',
+    description: 'The network to connect to.',
+    type: paramTypes.string,
     isOptional: false,
   },
 ]
@@ -36,15 +41,17 @@ const main = async () => {
 
   KUAI_GLOBAL_PARAMS.map((param) => parseTaskParams(param)).forEach((option) => program.addOption(option))
 
-  program.addCommand(node)
-
   const args: KuaiArguments = (() => {
     const result: KuaiArguments = {}
 
     const configPathFlagIndex = process.argv.slice(0, -1).lastIndexOf('--config')
-
     if (configPathFlagIndex !== -1) {
       Object.assign(result, { configPath: process.argv[configPathFlagIndex + 1] })
+    }
+
+    const networkFlagIndex = process.argv.slice(0, -1).lastIndexOf('--network')
+    if (networkFlagIndex !== -1) {
+      Object.assign(result, { network: process.argv[networkFlagIndex + 1] })
     }
 
     return result

@@ -1,22 +1,107 @@
 import { describe, expect, test, beforeAll, afterAll } from '@jest/globals'
 import { execSync } from 'node:child_process'
+/* eslint-disable-next-line @typescript-eslint/no-var-requires */
+const { scheduler } = require('node:timers/promises')
 const CONFIG_PATH = './__tests__/__fixtures__/kuai-config-case/kuai.config.ts'
 
 describe('kuai cli', () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     execSync('npm link')
-  })
+    execSync(
+      'npx kuai node --port 9002 --detached --genesisArgs 0x0000000000000000000000000000000000000000 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+    )
+    await scheduler.wait(5000)
+  }, 30000)
 
   afterAll(() => {
+    execSync('npx kuai node stop')
     execSync('npm unlink -g @kuai/cli')
   })
 
-  test('ckb listening port', () => {
-    const output1 = execSync('npx kuai node')
-    expect(output1.toString()).toMatch(/ckb running on:\s+8114/)
+  test('ckb node listening port', async () => {
+    const res = await fetch('http://localhost:9002/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: 0,
+        jsonrpc: '2.0',
+        method: 'get_tip_header',
+        params: [],
+      }),
+    })
 
-    const output2 = execSync('npx kuai node --port 9999')
-    expect(output2.toString()).toMatch(/ckb running on:\s+9999/)
+    expect(res.status).toEqual(200)
+
+    const data = await res.json()
+    expect(typeof data.result.number).toEqual('string')
+    expect(typeof data.result.hash).toEqual('string')
+  })
+
+  test('ckb node accept genesis accounts', async () => {
+    const res = await fetch('http://localhost:9002/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([
+        {
+          id: 0,
+          jsonrpc: '2.0',
+          method: 'get_cells',
+          params: [
+            {
+              script: {
+                code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+                hash_type: 'type',
+                args: '0x0000000000000000000000000000000000000000',
+              },
+              script_type: 'lock',
+            },
+            'asc',
+            '0x64',
+          ],
+        },
+        {
+          id: 0,
+          jsonrpc: '2.0',
+          method: 'get_cells',
+          params: [
+            {
+              script: {
+                code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+                hash_type: 'type',
+                args: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+              },
+              script_type: 'lock',
+            },
+            'asc',
+            '0x64',
+          ],
+        },
+      ]),
+    })
+
+    expect(res.status).toEqual(200)
+
+    const rpcResponses = await res.json()
+
+    expect(rpcResponses.length).toEqual(2)
+
+    expect(rpcResponses[0].result.objects.length).toEqual(1)
+    expect(rpcResponses[0].result.objects.length).toEqual(1)
+    expect(rpcResponses[0].result.objects[0].output.capacity).toEqual('0x1bc16d674ec80000')
+
+    expect(rpcResponses[1].result.objects.length).toEqual(1)
+    expect(rpcResponses[1].result.objects.length).toEqual(1)
+    expect(rpcResponses[1].result.objects[0].output.capacity).toEqual('0x1bc16d674ec80000')
+  })
+
+  test('Unsupported network', async () => {
+    expect(() => {
+      execSync('npx kuai node --network test')
+    }).toThrow(/Unsupported network test./)
   })
 
   describe('--config', () => {

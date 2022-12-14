@@ -3,10 +3,16 @@ export type TaskArguments = any
 
 export interface KuaiArguments {
   configPath?: string
+  network?: string
 }
 
 export type KuaiConfig = {
   kuaiArguments?: KuaiArguments
+  network?: HttpNetworkConfig
+}
+
+export type HttpNetworkConfig = {
+  url: string
 }
 
 export type RunTaskFunction = (name: string, taskArguments?: TaskArguments) => Promise<unknown>

@@ -1,2 +1,6 @@
 *.js
 *.md
+*.txt
+dockerfile
+*.toml
+*.sh
