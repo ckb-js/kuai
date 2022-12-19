@@ -15,14 +15,20 @@ export class DuplicatedActorException extends Error {
   }
 }
 
-export class MessageQueueNotFoundException extends Error {
-  constructor() {
-    super(`message queue is not found`)
+export class SendMailException extends Error {
+  constructor(from: string, to: string) {
+    super(`failed to send mail from ${from} to ${to}`)
   }
 }
 
 export class ActorProviderException extends Error {
   constructor() {
     super(`ActorProvider is expected to be used with an Actor class`)
+  }
+}
+
+export class PayloadMissingInMessageException extends Error {
+  constructor() {
+    super(`Payload is missing in message`)
   }
 }

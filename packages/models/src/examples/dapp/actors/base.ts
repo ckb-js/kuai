@@ -1,9 +1,9 @@
 import { Actor, ActorMessage, MessagePayload } from '../../../'
 
-export const Step: Record<string, symbol> = {
-  One: Symbol('one'),
-  Two: Symbol('two'),
-  Done: Symbol('done'),
+export const Step: Record<string, string> = {
+  One: 'one',
+  Two: 'two',
+  Done: 'done',
 }
 
 /**
@@ -16,17 +16,17 @@ export class CustomActorBase<
   #value = 0
 
   handleCall = (msg: ActorMessage<Message>): void => {
-    console.info(`handle call request from ${msg.from.name.toString()} with symbol ${msg.payload?.symbol.toString()}`)
+    console.info(`handle call request from ${msg.from.name.toString()} with pattern ${msg.payload?.pattern}`)
     /**
      * delegate msg to user defined methods, will be delegated by framework
      */
     this.#handleMsg(msg)
-    this.cast(msg.from.uri, { symbol: Step.Done })
+    this.cast(msg.from.uri, { pattern: Step.Done })
     return
   }
 
   handleCast = (msg: ActorMessage<Message>): void => {
-    console.info(`handle cast request from ${msg.from.name.toString()} with symbol ${msg.payload?.symbol.toString()}`)
+    console.info(`handle cast request from ${msg.from.name.toString()} with symbol ${msg.payload?.pattern}`)
     /**
      * delegate msg to user defined methods, will be delegated by framework
      */
@@ -38,7 +38,7 @@ export class CustomActorBase<
     /**
      * will be pattern-matched by @HandleCall(Step) and @HandleCast(Step)
      */
-    switch (msg.payload?.symbol) {
+    switch (msg.payload?.pattern) {
       case Step.One: {
         console.info(`${this.ref.uri}: increment 1`)
         return this.#handleIncOne()

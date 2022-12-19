@@ -4,8 +4,19 @@
  */
 
 import type { ActorMessage, ActorURI, ActorRef, MessagePayload, CallResponse } from './interface'
-import { injectable } from 'inversify'
-import { Status, Behavior, ProviderKey, MessageQueueNotFoundException } from '../utils'
+import { injectable, Container } from 'inversify'
+import Redis from 'ioredis'
+import { ActorReference } from './actor-reference'
+import { Status, Behavior, ProviderKey, SendMailException, PayloadMissingInMessageException } from '../utils'
+
+@injectable()
+class MessageQueue {
+  instance = new Redis()
+}
+
+const MQ_SYMBOL = Symbol('mq')
+const mqContainer = new Container()
+mqContainer.bind<MessageQueue>(MQ_SYMBOL).to(MessageQueue)
 
 @injectable()
 export abstract class Actor<_State = unknown, Message extends MessagePayload = MessagePayload> {
@@ -28,6 +39,7 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
     // TODO: add explicit error message
     if (!metadata?.ref?.uri) throw new Error()
     this.#ref = metadata?.ref
+    this.receiveMail()
   }
 
   /**
@@ -35,27 +47,32 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
    * @method
    * push a `call request` to the message queue
    */
-  static call = (
+  static call = async (
     to: ActorURI,
     from: ActorRef,
     payload: MessagePayload,
     timeout?: number,
   ): Promise<CallResponse<MessagePayload>> => {
-    /**
-     * TODO: A global mq object is used in this early stage, will be replaced by a mq service.
-     */
-    if (globalThis.mq) {
-      globalThis.mq.push(to, { from, payload, behavior: Behavior.Call, timeout })
-      return Promise.resolve({
-        status: Status.ok,
-        message: null,
-      })
+    if (!payload) {
+      throw new PayloadMissingInMessageException()
     }
 
-    return Promise.resolve({
-      status: Status.error,
-      message: null,
-    })
+    try {
+      // TODO: add message hook for synchornous callback
+      Actor.sendMail(from.uri, to, Behavior.Call, payload, timeout)
+      return {
+        status: Status.ok,
+        message: payload,
+      }
+    } catch (e) {
+      if (e instanceof Error) {
+        return Promise.resolve({
+          status: Status.error,
+          message: payload,
+        })
+      }
+      throw e
+    }
   }
 
   /**
@@ -63,16 +80,42 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
    * @method
    * push a `cast request` to the message queue
    */
-  static cast(to: ActorURI, from: ActorRef, payload: MessagePayload, timeout?: number): Promise<void> | void {
-    /**
-     * TODO: A global mq object is used in this early stage, will be replaced by a mq service.
-     */
-    if (globalThis.mq) {
-      globalThis.mq.push(to, { from, payload, behavior: Behavior.Cast, timeout })
-      return
+  static cast = async (to: ActorURI, from: ActorRef, payload: MessagePayload, timeout?: number): Promise<void> => {
+    if (!payload) throw new PayloadMissingInMessageException()
+    try {
+      await Actor.sendMail(from.uri, to, Behavior.Cast, payload, timeout)
+    } catch {
+      throw new SendMailException(from.uri, to)
     }
+  }
 
-    throw new MessageQueueNotFoundException()
+  /**
+   * @private
+   * @static sendMail
+   * helper method, push a message into the message queue
+   */
+  private static sendMail = (
+    from: string,
+    to: string,
+    behavior: Behavior,
+    payload: MessagePayload,
+    timeout?: number,
+  ) => {
+    // TODO: use container to instantiate redis
+    return mqContainer
+      .get<MessageQueue>(MQ_SYMBOL)
+      .instance.xadd(
+        to,
+        '*',
+        'from',
+        from,
+        'behavior',
+        behavior.toString(),
+        'payload',
+        JSON.stringify(payload),
+        'timeout',
+        timeout ?? 0,
+      )
   }
 
   /**
@@ -107,6 +150,44 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
   handleCast = (_msg: ActorMessage<Message>): void => {
     // TODO: delegate to other inner methods decorated by @HandleCast
     return
+  }
+
+  receiveMail = async (lastId = '$'): Promise<void> => {
+    const results = await mqContainer
+      .get<MessageQueue>(MQ_SYMBOL)
+      .instance.xread('BLOCK', 0, 'STREAMS', this.ref.uri, lastId)
+
+    if (!results) {
+      return
+    }
+
+    const [_, messages] = results[0]
+    for await (const [_key, msg] of messages) {
+      if (msg.length < 6) {
+        console.warn(`Invalid payload in message, expect to have 3 field-value pairs, received [${msg.join(', ')}]`)
+        continue
+      }
+      const [_from, from, _behavior, behavior, _payload, payload, _timeout, timeout] = msg
+      const p = {
+        from: ActorReference.fromURI(from).json,
+        payload: JSON.parse(payload),
+        timeout: +(timeout ?? 0),
+      }
+      switch (behavior) {
+        case 'call': {
+          this.handleCall({ behavior: Behavior.Call, ...p })
+          break
+        }
+        case 'cast': {
+          this.handleCast({ behavior: Behavior.Cast, ...p })
+          break
+        }
+        default: {
+          console.error('Unknown behavior')
+        }
+      }
+    }
+    await this.receiveMail(messages[messages.length - 1][0])
   }
 }
 

@@ -4,5 +4,4 @@
 export * from './actor'
 export * from './actor-reference'
 export * from './interface'
-export * from './message-queue'
 export * from './registry'

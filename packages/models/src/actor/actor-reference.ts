@@ -1,7 +1,20 @@
 import type { ActorRef, ActorName, ActorURI } from './interface'
-import { InvalidPathException, PROTOCOL } from '../utils'
+import { basename } from 'node:path'
+import { InvalidActorURIException, InvalidPathException, PROTOCOL } from '../utils'
 
 export class ActorReference {
+  static fromURI = (uri: string): ActorReference => {
+    // TODO: add validation
+    const splitUri = uri.split('://')
+    if (splitUri.length < 2) {
+      throw new InvalidActorURIException(uri)
+    }
+    const protocol = splitUri[0]
+    const name = basename(uri)
+    const path = uri.slice(protocol.length + 2, -1 * name.length)
+    return new ActorReference(name, path, protocol)
+  }
+
   #name: ActorName
   #path: string
   #protocol: string
@@ -32,7 +45,7 @@ export class ActorReference {
     }
   }
 
-  constructor(name: symbol | string, path = '/', protocol: string = PROTOCOL.LOCAL) {
+  constructor(name: ActorName, path = '/', protocol: string = PROTOCOL.LOCAL) {
     // TODO: add more validation
     this.#name = name
     this.#protocol = protocol
