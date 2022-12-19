@@ -1,3 +1,5 @@
 import { KuaiArguments } from './type'
 
-export const DEFAULT_KUAI_ARGUMENTS: KuaiArguments = {}
+export const DEFAULT_KUAI_ARGUMENTS: KuaiArguments = {
+  network: 'docker-node',
+}

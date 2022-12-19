@@ -1,0 +1,17 @@
+{
+  "name": "@kuai/docker-node",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "kuai run dev node by docker",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/dockerode": "2.5.19"
+  },
+  "dependencies": {
+    "dockerode": "2.5.8"
+  }
+}

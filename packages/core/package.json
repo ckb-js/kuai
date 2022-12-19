@@ -8,6 +8,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@kuai/docker-node": "0.0.1",
     "find-up": "5.0.0"
   }
 }
