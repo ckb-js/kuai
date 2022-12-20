@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 import { NonExistentException, NonStorageInstanceException } from '../../src/exceptions'
 import { ChainStorage, JSONStore, StorageOffChain, StorageOnChain, Store, Behavior, ProviderKey } from '../../src'
+import BigNumber from 'bignumber.js'
 
 const ref = {
   name: '',
@@ -50,7 +51,7 @@ Reflect.defineMetadata(ProviderKey.Actor, { ref }, NoInstanceCustomStore)
 describe('test store', () => {
   describe('use json storage', () => {
     describe('test handleCall with add', () => {
-      const store = new JSONStore<{ data: { a: number } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>()
       it('add success', () => {
         store.handleCall({
           from: ref,
@@ -60,12 +61,12 @@ describe('test store', () => {
             value: {
               type: 'add_state',
               add: {
-                '0x1234': { data: { a: 1 } },
+                '0x1234': { data: { a: BigNumber(1) } },
               },
             },
           },
         })
-        expect(store.get('0x1234')).toStrictEqual({ data: { a: 1 } })
+        expect(store.get('0x1234')).toStrictEqual({ data: { a: BigNumber(1) } })
       })
       it('add with no add params', () => {
         store.handleCall({
@@ -88,17 +89,17 @@ describe('test store', () => {
             value: {
               type: 'add_state',
               add: {
-                '0x1234': { data: { a: 2 } },
+                '0x1234': { data: { a: BigNumber(2) } },
               },
             },
           },
         })
-        expect(store.get('0x1234')).toStrictEqual({ data: { a: 2 } })
+        expect(store.get('0x1234')).toStrictEqual({ data: { a: BigNumber(2) } })
       })
     })
 
     describe('test handleCall with sub', () => {
-      const store = new JSONStore<{ data: { a: number } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>()
       beforeEach(() => {
         store.handleCall({
           from: ref,
@@ -108,7 +109,7 @@ describe('test store', () => {
             value: {
               type: 'add_state',
               add: {
-                '0x1234': { data: { a: 1 } },
+                '0x1234': { data: { a: BigNumber(1) } },
               },
             },
           },
@@ -145,7 +146,7 @@ describe('test store', () => {
     })
 
     it('test clone', () => {
-      const store = new JSONStore<{ data: { a: number } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>()
       store.handleCall({
         from: ref,
         behavior: Behavior.Call,
@@ -154,7 +155,7 @@ describe('test store', () => {
           value: {
             type: 'add_state',
             add: {
-              '0x1234': { data: { a: 1 } },
+              '0x1234': { data: { a: BigNumber(1) } },
             },
           },
         },
@@ -165,7 +166,7 @@ describe('test store', () => {
     })
 
     describe('test get', () => {
-      const store = new JSONStore<{ data: { a: number } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>()
       store.handleCall({
         from: ref,
         behavior: Behavior.Call,
@@ -174,19 +175,19 @@ describe('test store', () => {
           value: {
             type: 'add_state',
             add: {
-              '0x1234': { data: { a: 1 } },
+              '0x1234': { data: { a: BigNumber(1) } },
             },
           },
         },
       })
       it('get success without path', () => {
-        expect(store.get('0x1234')).toStrictEqual({ data: { a: 1 } })
+        expect(store.get('0x1234')).toStrictEqual({ data: { a: BigNumber(1) } })
       })
       it('get success with first path', () => {
-        expect(store.get('0x1234', ['data'])).toStrictEqual({ a: 1 })
+        expect(store.get('0x1234', ['data'])).toStrictEqual({ a: BigNumber(1) })
       })
       it('get success with path', () => {
-        expect(store.get('0x1234', ['data', 'a'])).toEqual(1)
+        expect(store.get('0x1234', ['data', 'a'])).toEqual(BigNumber(1))
       })
       it('get with non existent exception no outpoint', () => {
         try {
@@ -205,7 +206,7 @@ describe('test store', () => {
     })
 
     describe('test set', () => {
-      const store = new JSONStore<{ data: { a: number } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>()
       beforeEach(() => {
         store.handleCall({
           from: ref,
@@ -215,23 +216,23 @@ describe('test store', () => {
             value: {
               type: 'add_state',
               add: {
-                '0x1234': { data: { a: 1 } },
+                '0x1234': { data: { a: BigNumber(1) } },
               },
             },
           },
         })
       })
       it('set success without path', () => {
-        store.set('0x1234', { data: { a: 2 } })
-        expect(store.get('0x1234')).toStrictEqual({ data: { a: 2 } })
+        store.set('0x1234', { data: { a: BigNumber(2) } })
+        expect(store.get('0x1234')).toStrictEqual({ data: { a: BigNumber(2) } })
       })
       it('set success with data path', () => {
-        store.set('0x1234', { a: 2 }, ['data'])
-        expect(store.get('0x1234')).toStrictEqual({ data: { a: 2 } })
+        store.set('0x1234', { a: BigNumber(2) }, ['data'])
+        expect(store.get('0x1234')).toStrictEqual({ data: { a: BigNumber(2) } })
       })
       it('set success with data inner path', () => {
-        store.set('0x1234', 10, ['data', 'a'])
-        expect(store.get('0x1234')).toStrictEqual({ data: { a: 10 } })
+        store.set('0x1234', BigNumber(10), ['data', 'a'])
+        expect(store.get('0x1234')).toStrictEqual({ data: { a: BigNumber(10) } })
       })
       it('get with non existent exception', () => {
         try {
@@ -243,7 +244,7 @@ describe('test store', () => {
     })
 
     describe('test remove', () => {
-      const store = new JSONStore<{ data: { a: number } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>()
       beforeEach(() => {
         store.handleCall({
           from: ref,
@@ -253,7 +254,7 @@ describe('test store', () => {
             value: {
               type: 'add_state',
               add: {
-                '0x1234': { data: { a: 1 } },
+                '0x1234': { data: { a: BigNumber(1) } },
               },
             },
           },
@@ -265,7 +266,7 @@ describe('test store', () => {
       })
       it('remove with non exist path', () => {
         store.remove('0x1234111')
-        expect(store.get('0x1234')).toStrictEqual({ data: { a: 1 } })
+        expect(store.get('0x1234')).toStrictEqual({ data: { a: BigNumber(1) } })
       })
     })
   })
