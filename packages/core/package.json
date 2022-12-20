@@ -9,6 +9,12 @@
   },
   "dependencies": {
     "@kuai/docker-node": "0.0.1",
-    "find-up": "5.0.0"
+    "chalk": "4.1.2",
+    "enquirer": "2.3.6",
+    "find-up": "5.0.0",
+    "lodash": "4.17.21"
+  },
+  "devDependencies": {
+    "@types/lodash": "4.14.191"
   }
 }
