@@ -1,31 +1,22 @@
+import BigNumber from 'bignumber.js'
 import type { StorageOnChain, StorageOffChain } from './chain-storage'
 import { NoExpectedDataException, UnexpectedMarkException, UnexpectedTypeException } from '../exceptions'
 import { ChainStorage } from './chain-storage'
 
-type JSONStorageType = string | number | boolean | bigint
+export type JSONStorageType = string | boolean | BigNumber
 export type JSONStorageOffChain =
   | JSONStorageType
+  | JSONStorageOffChain[]
   | {
-      [x: string]: JSONStorageType | JSONStorageType[] | JSONStorageOffChain
+      [x: string]: JSONStorageOffChain
     }
 
-const TYPE_MARK_LEN = 4
-const TYPE_MARK_MAP: Record<string, string> = {
-  string: '0001',
-  number: '0010',
-  boolean: '0011',
-  bigint: '0100',
-}
-
-function replacer(key: string, value: JSONStorageOffChain | JSONStorageType) {
-  const valueType = typeof value
-  if (value === null) throw new UnexpectedTypeException('null')
-  if (valueType === 'object') return value
-  const mark = TYPE_MARK_MAP[valueType]
-  if (mark) {
-    return `${mark}${value.toString()}`
-  }
-  throw new UnexpectedTypeException(valueType)
+const TYPE_MARK_LEN = 1
+const BIG_NUMBER_TYPE = 'bignumber'
+const TYPE_MARK_MAP = {
+  string: '0',
+  boolean: '1',
+  [BIG_NUMBER_TYPE]: '2',
 }
 
 function reviver(key: string, value: JSONStorageOffChain | JSONStorageType) {
@@ -41,33 +32,57 @@ function reviver(key: string, value: JSONStorageOffChain | JSONStorageType) {
   switch (mark) {
     case TYPE_MARK_MAP['string']:
       return acturalValue
-    case TYPE_MARK_MAP['number']:
-      return +acturalValue
     case TYPE_MARK_MAP['boolean']:
       return acturalValue === 'true'
-    case TYPE_MARK_MAP['bigint']:
-      return BigInt(acturalValue)
+    case TYPE_MARK_MAP['bignumber']:
+      return BigNumber(acturalValue)
     default:
       throw new UnexpectedMarkException(mark)
   }
+}
+
+function serializeSimpleType(v: string | boolean) {
+  const valueType = typeof v
+  if (v === null) throw new UnexpectedTypeException('null')
+  const mark = TYPE_MARK_MAP[valueType as keyof typeof TYPE_MARK_MAP]
+  if (mark) {
+    return `${mark}${v.toString()}`
+  }
+  throw new UnexpectedTypeException(valueType)
+}
+
+type AddMarkStorage = string | AddMarkStorage[] | { [key: string]: AddMarkStorage }
+
+export function addMarkForStorage(data?: JSONStorageOffChain): AddMarkStorage {
+  if (data === null || data === undefined) throw new UnexpectedTypeException('null or undefined')
+  if (data instanceof BigNumber) return `${TYPE_MARK_MAP[BIG_NUMBER_TYPE]}${data.toFixed()}`
+  if (typeof data !== 'object') return serializeSimpleType(data)
+  if (Array.isArray(data)) {
+    return data.map((v) => addMarkForStorage(v))
+  }
+  const newData: Record<string, AddMarkStorage> = {}
+  Object.keys(data).forEach((key: string) => {
+    newData[key] = addMarkForStorage(data[key])
+  })
+  return newData
 }
 
 export class JSONStorage<T extends StorageOffChain<JSONStorageOffChain>> extends ChainStorage<T> {
   serialize(data: T): StorageOnChain {
     if ('data' in data && 'witness' in data) {
       return {
-        data: Buffer.from(JSON.stringify(data.data, replacer)),
-        witness: Buffer.from(JSON.stringify(data.witness, replacer)),
+        data: Buffer.from(JSON.stringify(addMarkForStorage(data.data))),
+        witness: Buffer.from(JSON.stringify(addMarkForStorage(data.witness))),
       }
     }
     if ('data' in data) {
       return {
-        data: Buffer.from(JSON.stringify(data.data, replacer)),
+        data: Buffer.from(JSON.stringify(addMarkForStorage(data.data))),
       }
     }
     if ('witness' in data) {
       return {
-        witness: Buffer.from(JSON.stringify(data.witness, replacer)),
+        witness: Buffer.from(JSON.stringify(addMarkForStorage(data.witness))),
       }
     }
     throw new NoExpectedDataException()

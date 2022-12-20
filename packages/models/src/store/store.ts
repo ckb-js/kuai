@@ -1,6 +1,6 @@
 import type { ActorMessage, MessagePayload } from '../actor'
 import type { OutPointString, StoreMessage, StorePath } from './interface'
-import type { JSONStorageOffChain } from './json-storage'
+import type { JSONStorageOffChain, JSONStorageType } from './json-storage'
 import type { StorageOffChain, GetState } from './chain-storage'
 import { ChainStorage } from './chain-storage'
 import { Actor } from '../actor'
@@ -9,7 +9,8 @@ import { NonExistentException, NonStorageInstanceException } from '../exceptions
 
 type UnknownAsNever<T> = unknown extends T ? (0 extends 1 & T ? T : never) : T
 
-export class Store<StorageT extends ChainStorage> extends Actor<
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class Store<StorageT extends ChainStorage, InnerType = any> extends Actor<
   StorageT,
   MessagePayload<StoreMessage<GetState<StorageT>>>
 > {
@@ -87,8 +88,7 @@ export class Store<StorageT extends ChainStorage> extends Actor<
   set(key: OutPointString, value: GetState<StorageT>): void
   set(key: OutPointString, value: UnknownAsNever<GetState<StorageT>['data']>, paths: ['data']): void
   set(key: OutPointString, value: UnknownAsNever<GetState<StorageT>['witness']>, paths: ['witness']): void
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  set(key: OutPointString, value: any, paths: ['data' | 'witness', string, ...string[]]): void
+  set(key: OutPointString, value: InnerType, paths: ['data' | 'witness', string, ...string[]]): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   set(key: OutPointString, value: any, paths?: StorePath) {
     if (paths) {
@@ -106,6 +106,6 @@ export class Store<StorageT extends ChainStorage> extends Actor<
   }
 }
 
-export class JSONStore<T extends StorageOffChain<JSONStorageOffChain>> extends Store<JSONStorage<T>> {
+export class JSONStore<T extends StorageOffChain<JSONStorageOffChain>> extends Store<JSONStorage<T>, JSONStorageType> {
   storageInstance = new JSONStorage<T>()
 }
