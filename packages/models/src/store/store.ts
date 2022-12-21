@@ -1,6 +1,6 @@
 import type { ActorMessage, MessagePayload } from '../actor'
 import type { OutPointString, StoreMessage, StorePath } from './interface'
-import type { JSONStorageOffChain, JSONStorageType } from './json-storage'
+import type { JSONStorageOffChain } from './json-storage'
 import type { StorageOffChain, GetState } from './chain-storage'
 import { ChainStorage } from './chain-storage'
 import { Actor } from '../actor'
@@ -106,6 +106,9 @@ export class Store<StorageT extends ChainStorage, InnerType = any> extends Actor
   }
 }
 
-export class JSONStore<T extends StorageOffChain<JSONStorageOffChain>> extends Store<JSONStorage<T>, JSONStorageType> {
+export class JSONStore<T extends StorageOffChain<JSONStorageOffChain>> extends Store<
+  JSONStorage<T>,
+  JSONStorageOffChain
+> {
   storageInstance = new JSONStorage<T>()
 }
