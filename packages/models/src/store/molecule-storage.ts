@@ -39,10 +39,11 @@ type GetOneType<
   Left extends any[] = [...MoleculeFixedBasicTypeArr, ...MoleculeDynBasicTypeArr],
 > = IsOneType<T, Left> extends never ? never : T
 
+type GetFixedOffChainType<T extends MoleculeFixedBasicType> = T extends 'Uint8' | 'Uint16' | 'Uint32' ? number : BI
 type GetBasicOffChainType<T extends MoleculeFixedBasicType | MoleculeDynBasicType> = IsOneType<T> extends never
   ? never
   : T extends MoleculeFixedBasicType
-  ? BI
+  ? GetFixedOffChainType<T>
   : T extends MoleculeDynBasicType
   ? string
   : never
@@ -246,7 +247,7 @@ type GetMoleculeStorageOffChain<T extends StorageTemplate<AllMoleculeResult>> = 
   ? { witness: MoleculeStorageOffChain<T['witness']> }
   : never
 
-const UTF8String = molecule.byteVecOf<string>({
+export const UTF8String = molecule.byteVecOf<string>({
   pack: (str) => Uint8Array.from(Buffer.from(str, 'utf8')),
   unpack: (buf) => Buffer.from(bytes.bytify(buf)).toString('utf8'),
 })
@@ -272,6 +273,18 @@ export class MoleculeStorage<T extends StorageTemplate<AllMoleculeParams>> exten
       switch (moleculeType) {
         case 'Uint8':
           return number.Uint8
+        case 'Uint16':
+          return number.Uint16
+        case 'Uint32':
+          return number.Uint32
+        case 'Uint64':
+          return number.Uint64
+        case 'Uint128':
+          return number.Uint128
+        case 'Uint256':
+          return number.Uint256
+        case 'Uint512':
+          return number.Uint512
         default:
           throw new Error('no molecule for type')
       }
