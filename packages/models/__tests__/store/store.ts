@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 import { NonExistentException, NonStorageInstanceException } from '../../src/exceptions'
-import { ChainStorage, JSONStore, StorageOffChain, StorageOnChain, Store, Behavior, ProviderKey } from '../../src'
+import { StorageTemplate, ChainStorage, JSONStore, Store, Behavior, ProviderKey, StorageType } from '../../src'
 import BigNumber from 'bignumber.js'
 
 const ref = {
@@ -15,9 +15,9 @@ type CustomType = string
 const serializeMock = jest.fn()
 const deserializeMock = jest.fn()
 
-class StorageCustom<T extends StorageOffChain<CustomType>> extends ChainStorage<T> {
+class StorageCustom<T extends StorageTemplate<CustomType>> extends ChainStorage<T> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  serialize(data: T): StorageOnChain {
+  serialize(data: StorageType<T>['offChain']): StorageType<T>['onChain'] {
     serializeMock()
     return {
       data: Buffer.from(''),
@@ -26,21 +26,26 @@ class StorageCustom<T extends StorageOffChain<CustomType>> extends ChainStorage<
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  deserialize(data: StorageOnChain): T {
+  deserialize(data: StorageType<T>['onChain']): StorageType<T>['offChain'] {
     deserializeMock()
     return {
       data: '10',
-      witness: '10',
-    } as T
+      witness: '20',
+    }
   }
 }
 
-class CustomStore<T extends StorageOffChain<CustomType>> extends Store<StorageCustom<T>> {
+class CustomStore<T extends StorageTemplate<CustomType>> extends Store<StorageCustom<T>> {
   storageInstance = new StorageCustom<T>()
+  cloneConfig(): CustomStore<T> {
+    return new CustomStore<T>(this.scriptType)
+  }
 }
 
-class NoInstanceCustomStore<T extends StorageOffChain<CustomType>> extends Store<StorageCustom<T>> {
-  storageInstance = new StorageCustom<T>()
+class NoInstanceCustomStore<T extends StorageTemplate<CustomType>> extends Store<StorageCustom<T>> {
+  cloneConfig(): NoInstanceCustomStore<T> {
+    return new NoInstanceCustomStore<T>(this.scriptType)
+  }
 }
 
 Reflect.defineMetadata(ProviderKey.Actor, { ref }, Store)
@@ -51,7 +56,7 @@ Reflect.defineMetadata(ProviderKey.Actor, { ref }, NoInstanceCustomStore)
 describe('test store', () => {
   describe('use json storage', () => {
     describe('test handleCall with add', () => {
-      const store = new JSONStore<{ data: { a: BigNumber } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>('lock')
       it('add success', () => {
         store.handleCall({
           from: ref,
@@ -99,7 +104,7 @@ describe('test store', () => {
     })
 
     describe('test handleCall with sub', () => {
-      const store = new JSONStore<{ data: { a: BigNumber } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>('lock')
       beforeEach(() => {
         store.handleCall({
           from: ref,
@@ -146,7 +151,7 @@ describe('test store', () => {
     })
 
     it('test clone', () => {
-      const store = new JSONStore<{ data: { a: BigNumber } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>('lock')
       store.handleCall({
         from: ref,
         behavior: Behavior.Call,
@@ -163,10 +168,11 @@ describe('test store', () => {
       const cloneRes = store.clone()
       expect(cloneRes.get('0x1234') === store.get('0x1234')).toBeFalsy()
       expect(cloneRes.get('0x1234')).toStrictEqual(store.get('0x1234'))
+      expect(cloneRes instanceof JSONStore).toBe(true)
     })
 
     describe('test get', () => {
-      const store = new JSONStore<{ data: { a: BigNumber } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>('lock')
       store.handleCall({
         from: ref,
         behavior: Behavior.Call,
@@ -206,7 +212,7 @@ describe('test store', () => {
     })
 
     describe('test set', () => {
-      const store = new JSONStore<{ data: { a: BigNumber; b: { c: BigNumber } } }>()
+      const store = new JSONStore<{ data: { a: BigNumber; b: { c: BigNumber } } }>('lock')
       beforeEach(() => {
         store.handleCall({
           from: ref,
@@ -244,7 +250,7 @@ describe('test store', () => {
     })
 
     describe('test remove', () => {
-      const store = new JSONStore<{ data: { a: BigNumber } }>()
+      const store = new JSONStore<{ data: { a: BigNumber } }>('lock')
       beforeEach(() => {
         store.handleCall({
           from: ref,
@@ -273,7 +279,7 @@ describe('test store', () => {
 
   describe('extend store', () => {
     it('success', () => {
-      const custom = new CustomStore<{ data: string }>()
+      const custom = new CustomStore<{ data: string }>('lock')
       custom.handleCall({
         from: ref,
         behavior: Behavior.Call,
@@ -293,25 +299,21 @@ describe('test store', () => {
     })
 
     it('exception', () => {
-      try {
-        const custom = new NoInstanceCustomStore<{ data: string }>()
-        custom.handleCall({
-          from: ref,
-          behavior: Behavior.Call,
-          payload: {
-            symbol: Symbol('normal'),
-            value: {
-              type: 'add_state',
-              add: {
-                '0x1234': { data: '' },
-              },
+      const custom = new NoInstanceCustomStore<{ data: string }>('lock')
+      custom.handleCall({
+        from: ref,
+        behavior: Behavior.Call,
+        payload: {
+          symbol: Symbol('normal'),
+          value: {
+            type: 'add_state',
+            add: {
+              '0x1234': { data: '' },
             },
           },
-        })
-        custom.clone()
-      } catch (error) {
-        expect(error).toBeInstanceOf(NonStorageInstanceException)
-      }
+        },
+      })
+      expect(() => custom.clone()).toThrow(new NonStorageInstanceException())
     })
   })
 })

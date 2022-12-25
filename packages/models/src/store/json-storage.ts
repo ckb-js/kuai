@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js'
-import type { StorageOnChain, StorageOffChain } from './chain-storage'
+import type { StorageType, StorageTemplate } from './chain-storage'
 import { NoExpectedDataException, UnexpectedMarkException, UnexpectedTypeException } from '../exceptions'
 import { ChainStorage } from './chain-storage'
 
@@ -67,8 +67,8 @@ export function addMarkForStorage(data?: JSONStorageOffChain): AddMarkStorage {
   return newData
 }
 
-export class JSONStorage<T extends StorageOffChain<JSONStorageOffChain>> extends ChainStorage<T> {
-  serialize(data: T): StorageOnChain {
+export class JSONStorage<T extends StorageTemplate<JSONStorageOffChain>> extends ChainStorage<T> {
+  serialize(data: StorageType<T>['offChain']): StorageType<T>['onChain'] {
     if ('data' in data && 'witness' in data) {
       return {
         data: Buffer.from(JSON.stringify(addMarkForStorage(data.data))),
@@ -88,24 +88,22 @@ export class JSONStorage<T extends StorageOffChain<JSONStorageOffChain>> extends
     throw new NoExpectedDataException()
   }
 
-  deserialize(data: StorageOnChain): T {
-    const dataStr = data?.data?.toString()
-    const witnessStr = data?.witness?.toString()
-    if (dataStr && witnessStr) {
+  deserialize(data: StorageType<T>['onChain']): StorageType<T>['offChain'] {
+    if ('data' in data && 'witness' in data) {
       return {
-        data: JSON.parse(dataStr, reviver),
-        witness: JSON.parse(witnessStr, reviver),
-      } as T
+        data: JSON.parse(data?.data?.toString(), reviver),
+        witness: JSON.parse(data?.witness?.toString(), reviver),
+      } as StorageType<T>['offChain']
     }
-    if (dataStr) {
+    if ('data' in data) {
       return {
-        data: JSON.parse(dataStr, reviver),
-      } as T
+        data: JSON.parse(data?.data?.toString(), reviver),
+      } as StorageType<T>['offChain']
     }
-    if (witnessStr) {
+    if ('witness' in data) {
       return {
-        witness: JSON.parse(witnessStr, reviver),
-      } as T
+        witness: JSON.parse(data?.witness?.toString(), reviver),
+      } as StorageType<T>['offChain']
     }
     throw new NoExpectedDataException()
   }
