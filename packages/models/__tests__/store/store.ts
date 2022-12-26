@@ -57,7 +57,7 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            symbol: Symbol('normal'),
+            pattern: 'normal',
             value: {
               type: 'add_state',
               add: {
@@ -73,7 +73,7 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            symbol: Symbol('normal'),
+            pattern: 'normal',
             value: {
               type: 'add_state',
             },
@@ -85,7 +85,7 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            symbol: Symbol('normal'),
+            pattern: 'normal',
             value: {
               type: 'add_state',
               add: {
@@ -105,7 +105,7 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            symbol: Symbol('normal'),
+            pattern: 'normal',
             value: {
               type: 'add_state',
               add: {
@@ -120,7 +120,7 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            symbol: Symbol('normal'),
+            pattern: 'normal',
             value: {
               type: 'remove_state',
               remove: ['0x1234'],
@@ -134,7 +134,7 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            symbol: Symbol('normal'),
+            pattern: 'normal',
             value: {
               type: 'remove_state',
               remove: ['0x123411'],
@@ -151,7 +151,7 @@ describe('test store', () => {
         from: ref,
         behavior: Behavior.Call,
         payload: {
-          symbol: Symbol('normal'),
+          pattern: 'normal',
           value: {
             type: 'add_state',
             add: {
@@ -172,7 +172,7 @@ describe('test store', () => {
         from: ref,
         behavior: Behavior.Call,
         payload: {
-          symbol: Symbol('normal'),
+          pattern: 'normal',
           value: {
             type: 'add_state',
             add: {
@@ -213,7 +213,7 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            symbol: Symbol('normal'),
+            pattern: 'normal',
             value: {
               type: 'add_state',
               add: {
@@ -251,7 +251,7 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            symbol: Symbol('normal'),
+            pattern: 'normal',
             value: {
               type: 'add_state',
               add: {
@@ -279,7 +279,7 @@ describe('test store', () => {
         from: ref,
         behavior: Behavior.Call,
         payload: {
-          symbol: Symbol('normal'),
+          pattern: 'normal',
           value: {
             type: 'add_state',
             add: {
@@ -299,7 +299,7 @@ describe('test store', () => {
         from: ref,
         behavior: Behavior.Call,
         payload: {
-          symbol: Symbol('normal'),
+          pattern: 'normal',
           value: {
             type: 'add_state',
             add: {
