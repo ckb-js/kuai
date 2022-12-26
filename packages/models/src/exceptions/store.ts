@@ -22,8 +22,8 @@ export class UnexpectedMarkException extends Error {
   }
 }
 
-export class NoExpectedDataException extends Error {
-  constructor() {
-    super(`Storage does not include data or witness`)
+export class UnExpectedParamsException extends Error {
+  constructor(params: string) {
+    super(`Unexpected params with ${params} when calling deserialize`)
   }
 }

@@ -1,6 +1,5 @@
 import BigNumber from 'bignumber.js'
-import type { StorageType, StorageTemplate } from './chain-storage'
-import { NoExpectedDataException, UnexpectedMarkException, UnexpectedTypeException } from '../exceptions'
+import { UnexpectedMarkException, UnExpectedParamsException, UnexpectedTypeException } from '../exceptions'
 import { ChainStorage } from './chain-storage'
 
 export type JSONStorageType = string | boolean | BigNumber
@@ -54,7 +53,7 @@ function serializeSimpleType(v: string | boolean) {
 type AddMarkStorage = string | AddMarkStorage[] | { [key: string]: AddMarkStorage }
 
 export function addMarkForStorage(data?: JSONStorageOffChain): AddMarkStorage {
-  if (data === null || data === undefined) throw new UnexpectedTypeException('null or undefined')
+  if (data === null || data === undefined) throw new UnexpectedTypeException(`${data}`)
   if (data instanceof BigNumber) return `${TYPE_MARK_MAP[BIG_NUMBER_TYPE]}${data.toFixed()}`
   if (typeof data !== 'object') return serializeSimpleType(data)
   if (Array.isArray(data)) {
@@ -67,44 +66,13 @@ export function addMarkForStorage(data?: JSONStorageOffChain): AddMarkStorage {
   return newData
 }
 
-export class JSONStorage<T extends StorageTemplate<JSONStorageOffChain>> extends ChainStorage<T> {
-  serialize(data: StorageType<T>['offChain']): StorageType<T>['onChain'] {
-    if ('data' in data && 'witness' in data) {
-      return {
-        data: Buffer.from(JSON.stringify(addMarkForStorage(data.data))),
-        witness: Buffer.from(JSON.stringify(addMarkForStorage(data.witness))),
-      }
-    }
-    if ('data' in data) {
-      return {
-        data: Buffer.from(JSON.stringify(addMarkForStorage(data.data))),
-      }
-    }
-    if ('witness' in data) {
-      return {
-        witness: Buffer.from(JSON.stringify(addMarkForStorage(data.witness))),
-      }
-    }
-    throw new NoExpectedDataException()
+export class JSONStorage<T extends JSONStorageOffChain> extends ChainStorage<T> {
+  serialize(data: T): Uint8Array {
+    return Buffer.from(JSON.stringify(addMarkForStorage(data)))
   }
 
-  deserialize(data: StorageType<T>['onChain']): StorageType<T>['offChain'] {
-    if ('data' in data && 'witness' in data) {
-      return {
-        data: JSON.parse(data?.data?.toString(), reviver),
-        witness: JSON.parse(data?.witness?.toString(), reviver),
-      } as StorageType<T>['offChain']
-    }
-    if ('data' in data) {
-      return {
-        data: JSON.parse(data?.data?.toString(), reviver),
-      } as StorageType<T>['offChain']
-    }
-    if ('witness' in data) {
-      return {
-        witness: JSON.parse(data?.witness?.toString(), reviver),
-      } as StorageType<T>['offChain']
-    }
-    throw new NoExpectedDataException()
+  deserialize(data: Uint8Array): T {
+    if (data === null || data === undefined) throw new UnExpectedParamsException(`${data}`)
+    return JSON.parse(data.toString(), reviver)
   }
 }

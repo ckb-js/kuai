@@ -1,7 +1,7 @@
 import type { ActorMessage, MessagePayload } from '../actor'
 import type { OutPointString, StoreMessage, StorePath } from './interface'
 import type { JSONStorageOffChain } from './json-storage'
-import type { GetState, StorageTemplate } from './chain-storage'
+import type { GetState } from './chain-storage'
 import { ChainStorage } from './chain-storage'
 import { Actor } from '../actor'
 import { JSONStorage } from './json-storage'
@@ -13,11 +13,18 @@ type GetData<T> = T extends { data: any } ? T['data'] : never
 type GetWitness<T> = T extends { witness: any } ? T['witness'] : never
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export abstract class Store<StorageT extends ChainStorage, InnerType = any> extends Actor<
-  StorageT,
-  MessagePayload<StoreMessage<GetState<StorageT>>>
-> {
-  abstract cloneConfig(): Store<StorageT>
+type Data<T = any> = { data: T }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Witness<T = any> = { witness: T }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type GetStorageStruct<T = any> = Data<T> | Witness<T> | (Data<T> & Witness<T>)
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export abstract class Store<
+  StorageT extends ChainStorage,
+  StorageStruct extends GetStorageStruct<GetState<StorageT>>,
+> extends Actor<StorageStruct, MessagePayload<StoreMessage<StorageStruct>>> {
+  abstract cloneConfig(): Store<StorageT, StorageStruct>
 
   scriptType: 'lock' | 'script'
 
@@ -26,11 +33,11 @@ export abstract class Store<StorageT extends ChainStorage, InnerType = any> exte
     this.scriptType = scriptType
   }
 
-  protected states: Record<OutPointString, GetState<StorageT>> = {}
+  protected states: Record<OutPointString, StorageStruct> = {}
 
   storageInstance: StorageT | undefined
 
-  private addState(addStates: Record<OutPointString, GetState<StorageT>>) {
+  private addState(addStates: Record<OutPointString, StorageStruct>) {
     this.states = {
       ...this.states,
       ...addStates,
@@ -56,7 +63,7 @@ export abstract class Store<StorageT extends ChainStorage, InnerType = any> exte
     return result
   }
 
-  handleCall = (_msg: ActorMessage<MessagePayload<StoreMessage<GetState<StorageT>>>>): void => {
+  handleCall = (_msg: ActorMessage<MessagePayload<StoreMessage<StorageStruct>>>): void => {
     switch (_msg.payload?.value?.type) {
       case 'add_state':
         if (_msg.payload?.value?.add) {
@@ -73,19 +80,32 @@ export abstract class Store<StorageT extends ChainStorage, InnerType = any> exte
     }
   }
 
-  clone(): Store<StorageT> {
+  clone(): Store<StorageT, StorageStruct> {
     if (!this.storageInstance) throw new NonStorageInstanceException()
     const store = this.cloneConfig()
     Object.keys(this.states).forEach((key) => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      store.states[key] = this.storageInstance!.clone(this.states[key]) as GetState<StorageT>
+      const currentStateInKey = this.states[key]
+      if ('data' in currentStateInKey && 'witness' in currentStateInKey) {
+        store.states[key] = {
+          data: this.storageInstance!.clone(currentStateInKey.data),
+          witness: this.storageInstance!.clone(currentStateInKey.witness),
+        } as StorageStruct
+      } else if ('data' in currentStateInKey) {
+        store.states[key] = {
+          data: this.storageInstance!.clone(currentStateInKey.data),
+        } as StorageStruct
+      } else if ('witness' in currentStateInKey) {
+        store.states[key] = {
+          witness: this.storageInstance!.clone(currentStateInKey.witness),
+        } as StorageStruct
+      }
     })
     return store
   }
 
-  get(key: OutPointString): GetState<StorageT>
-  get(key: OutPointString, paths: ['data']): GetData<GetState<StorageT>>
-  get(key: OutPointString, paths: ['witness']): GetWitness<GetState<StorageT>>
+  get(key: OutPointString): StorageStruct
+  get(key: OutPointString, paths: ['data']): GetData<StorageStruct>
+  get(key: OutPointString, paths: ['witness']): GetWitness<StorageStruct>
   get(key: OutPointString, paths: ['data' | 'witness', string, ...string[]]): unknown
   get(key: OutPointString, paths?: StorePath) {
     try {
@@ -98,10 +118,10 @@ export abstract class Store<StorageT extends ChainStorage, InnerType = any> exte
     }
   }
 
-  set(key: OutPointString, value: GetState<StorageT>): void
-  set(key: OutPointString, value: GetData<GetState<StorageT>>, paths: ['data']): void
-  set(key: OutPointString, value: GetWitness<GetState<StorageT>>, paths: ['witness']): void
-  set(key: OutPointString, value: InnerType, paths: ['data' | 'witness', string, ...string[]]): void
+  set(key: OutPointString, value: StorageStruct): void
+  set(key: OutPointString, value: GetData<StorageStruct>, paths: ['data']): void
+  set(key: OutPointString, value: GetWitness<StorageStruct>, paths: ['witness']): void
+  set(key: OutPointString, value: GetState<StorageT>, paths: ['data' | 'witness', string, ...string[]]): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   set(key: OutPointString, value: any, paths?: StorePath) {
     if (paths) {
@@ -119,13 +139,13 @@ export abstract class Store<StorageT extends ChainStorage, InnerType = any> exte
   }
 }
 
-export class JSONStore<T extends StorageTemplate<JSONStorageOffChain>> extends Store<
-  JSONStorage<T>,
-  JSONStorageOffChain
+export class JSONStore<R extends GetStorageStruct<JSONStorageOffChain>> extends Store<
+  JSONStorage<JSONStorageOffChain>,
+  R
 > {
-  storageInstance = new JSONStorage<T>()
+  storageInstance = new JSONStorage<R>()
 
-  cloneConfig(): JSONStore<T> {
-    return new JSONStore<T>(this.scriptType)
+  cloneConfig(): JSONStore<R> {
+    return new JSONStore<R>(this.scriptType)
   }
 }

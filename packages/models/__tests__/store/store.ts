@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 import { NonExistentException, NonStorageInstanceException } from '../../src/exceptions'
-import { StorageTemplate, ChainStorage, JSONStore, Store, Behavior, ProviderKey, StorageType } from '../../src'
+import { GetStorageStruct, ChainStorage, JSONStore, Store, Behavior, ProviderKey } from '../../src'
 import BigNumber from 'bignumber.js'
 
 const ref = {
@@ -15,36 +15,28 @@ type CustomType = string
 const serializeMock = jest.fn()
 const deserializeMock = jest.fn()
 
-class StorageCustom<T extends StorageTemplate<CustomType>> extends ChainStorage<T> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  serialize(data: StorageType<T>['offChain']): StorageType<T>['onChain'] {
+class StorageCustom<T extends CustomType = CustomType> extends ChainStorage<T> {
+  serialize(data: T): Uint8Array {
     serializeMock()
-    return {
-      data: Buffer.from(''),
-      witness: Buffer.from(''),
-    }
+    return Buffer.from(data)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  deserialize(data: StorageType<T>['onChain']): StorageType<T>['offChain'] {
+  deserialize(data: Uint8Array): T {
     deserializeMock()
-    return {
-      data: '10',
-      witness: '20',
-    }
+    return data.toString() as T
   }
 }
 
-class CustomStore<T extends StorageTemplate<CustomType>> extends Store<StorageCustom<T>> {
+class CustomStore<T extends CustomType, R extends GetStorageStruct<T>> extends Store<StorageCustom, R> {
   storageInstance = new StorageCustom<T>()
-  cloneConfig(): CustomStore<T> {
-    return new CustomStore<T>(this.scriptType)
+  cloneConfig(): CustomStore<T, R> {
+    return new CustomStore<T, R>(this.scriptType)
   }
 }
 
-class NoInstanceCustomStore<T extends StorageTemplate<CustomType>> extends Store<StorageCustom<T>> {
-  cloneConfig(): NoInstanceCustomStore<T> {
-    return new NoInstanceCustomStore<T>(this.scriptType)
+class NoInstanceCustomStore<T extends CustomType, R extends GetStorageStruct<T>> extends Store<StorageCustom<T>, R> {
+  cloneConfig(): NoInstanceCustomStore<T, R> {
+    return new NoInstanceCustomStore<T, R>(this.scriptType)
   }
 }
 
@@ -151,7 +143,7 @@ describe('test store', () => {
     })
 
     it('test clone', () => {
-      const store = new JSONStore<{ data: { a: BigNumber } }>('lock')
+      const store = new JSONStore<{ data: { a: BigNumber }; witness: { b: string } }>('lock')
       store.handleCall({
         from: ref,
         behavior: Behavior.Call,
@@ -160,7 +152,7 @@ describe('test store', () => {
           value: {
             type: 'add_state',
             add: {
-              '0x1234': { data: { a: BigNumber(1) } },
+              '0x1234': { data: { a: BigNumber(1) }, witness: { b: '111' } },
             },
           },
         },
@@ -279,7 +271,7 @@ describe('test store', () => {
 
   describe('extend store', () => {
     it('success', () => {
-      const custom = new CustomStore<{ data: string }>('lock')
+      const custom = new CustomStore<string, { data: string }>('lock')
       custom.handleCall({
         from: ref,
         behavior: Behavior.Call,
@@ -299,7 +291,7 @@ describe('test store', () => {
     })
 
     it('exception', () => {
-      const custom = new NoInstanceCustomStore<{ data: string }>('lock')
+      const custom = new NoInstanceCustomStore<string, { data: string }>('lock')
       custom.handleCall({
         from: ref,
         behavior: Behavior.Call,
