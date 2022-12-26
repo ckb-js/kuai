@@ -111,7 +111,7 @@ export class Store<
   get(key: OutPointString, paths: ['lockData']): StorageStruct['lockData']
   get(key: OutPointString, paths: ['typeData']): StorageStruct['typeData']
   get(key: OutPointString, paths: ['witness']): StorageStruct['witness']
-  get(key: OutPointString, paths: ['lockData' | 'typeData' | 'witness', string, ...string[]]): unknown
+  get(key: OutPointString, paths: [StorePath[0], string, ...string[]]): unknown
   get(key: OutPointString, paths?: StorePath) {
     try {
       if (paths) {
@@ -127,7 +127,7 @@ export class Store<
   set(key: OutPointString, value: StorageStruct['lockData'], paths: ['lockData']): void
   set(key: OutPointString, value: StorageStruct['typeData'], paths: ['typeData']): void
   set(key: OutPointString, value: StorageStruct['witness'], paths: ['witness']): void
-  set(key: OutPointString, value: GetState<StorageT>, paths: ['lockData' | 'witness', string, ...string[]]): void
+  set(key: OutPointString, value: GetState<StorageT>, paths: [StorePath[0], string, ...string[]]): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   set(key: OutPointString, value: any, paths?: StorePath) {
     if (paths) {
