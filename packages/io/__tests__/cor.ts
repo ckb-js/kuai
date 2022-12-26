@@ -101,4 +101,33 @@ describe('Test CoR', () => {
     expect(mockBefore).toBeCalled()
     expect(mockAfter).toBeCalled()
   })
+
+  it(`should return ok on any middleware`, async () => {
+    const cor = new CoR()
+    const mockFn = jest.fn()
+    const mockFn1 = jest.fn()
+    const mockFn2 = jest.fn()
+
+    cor.use(async (_, next) => {
+      mockFn()
+      await next()
+    })
+    cor.use(async (ctx, next) => {
+      mockFn1()
+      ctx.ok('ok')
+      await next()
+    })
+    cor.use(async (ctx, next) => {
+      mockFn2()
+      ctx.ok('hello')
+      await next()
+    })
+
+    const result = await cor.dispatch({})
+
+    expect(result).toEqual('ok')
+    expect(mockFn).toBeCalled()
+    expect(mockFn1).toBeCalled()
+    expect(mockFn2).toBeCalled()
+  })
 })
