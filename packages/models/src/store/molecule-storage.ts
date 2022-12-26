@@ -1,8 +1,6 @@
 import { molecule, number, bytes } from '@ckb-lumos/codec'
 import { BI } from '@ckb-lumos/bi'
 import { ChainStorage } from './chain-storage'
-import type { StorageType, StorageTemplate } from './chain-storage'
-import { NoExpectedDataException } from '../exceptions'
 import { BytesCodec, FixedBytesCodec } from '@ckb-lumos/codec/lib/base'
 
 /**
@@ -185,7 +183,7 @@ type GetTableOffChainType<T extends TableResult> = {
     : never
 }
 
-type AllMoleculeParams =
+export type MoleculeParams =
   | MoleculeFixedBasicType
   | MoleculeDynBasicType
   | ArrayParam
@@ -193,7 +191,7 @@ type AllMoleculeParams =
   | VecParam
   | TableParam
   | never
-export type MoleculeStorageType<T extends AllMoleculeParams = never> = T extends
+export type MoleculeStorageType<T extends MoleculeParams = never> = T extends
   | MoleculeFixedBasicType
   | MoleculeDynBasicType
   ? GetOneType<T>
@@ -206,7 +204,7 @@ export type MoleculeStorageType<T extends AllMoleculeParams = never> = T extends
   : T extends TableParam
   ? GetTableType<T>
   : never
-type AllMoleculeResult =
+type MoleculeResult =
   | MoleculeFixedBasicType
   | MoleculeDynBasicType
   | ArrayResult
@@ -214,7 +212,7 @@ type AllMoleculeResult =
   | VecResult
   | TableResult
   | never
-type MoleculeStorageOffChain<T extends AllMoleculeResult> = T extends MoleculeFixedBasicType | MoleculeDynBasicType
+type MoleculeStorageOffChain<T extends MoleculeResult> = T extends MoleculeFixedBasicType | MoleculeDynBasicType
   ? GetBasicOffChainType<T>
   : T extends ArrayResult
   ? GetArrayOffChainType<T>
@@ -226,46 +224,19 @@ type MoleculeStorageOffChain<T extends AllMoleculeResult> = T extends MoleculeFi
   ? GetTableOffChainType<T>
   : never
 
-type GetMoleculeStorageType<T extends StorageTemplate<AllMoleculeParams>> = T extends {
-  data: AllMoleculeParams
-  witness: AllMoleculeParams
-}
-  ? { data: MoleculeStorageType<T['data']>; witness: MoleculeStorageType<T['witness']> }
-  : T extends { data: AllMoleculeParams }
-  ? { data: MoleculeStorageType<T['data']> }
-  : T extends { witness: AllMoleculeParams }
-  ? { witness: MoleculeStorageType<T['witness']> }
-  : never
-type GetMoleculeStorageOffChain<T extends StorageTemplate<AllMoleculeResult>> = T extends {
-  data: AllMoleculeResult
-  witness: AllMoleculeResult
-}
-  ? { data: MoleculeStorageOffChain<T['data']>; witness: MoleculeStorageOffChain<T['witness']> }
-  : T extends { data: AllMoleculeResult }
-  ? { data: MoleculeStorageOffChain<T['data']> }
-  : T extends { witness: AllMoleculeResult }
-  ? { witness: MoleculeStorageOffChain<T['witness']> }
-  : never
+export type GetStorageType<T extends MoleculeParams> = MoleculeStorageOffChain<MoleculeStorageType<T>>
 
 export const UTF8String = molecule.byteVecOf<string>({
   pack: (str) => Uint8Array.from(Buffer.from(str, 'utf8')),
   unpack: (buf) => Buffer.from(bytes.bytify(buf)).toString('utf8'),
 })
 
-export class MoleculeStorage<T extends StorageTemplate<AllMoleculeParams>> extends ChainStorage<
-  GetMoleculeStorageOffChain<GetMoleculeStorageType<T>>
-> {
-  dataCodec?: BytesCodec
-  witnessCodec?: BytesCodec
+export class MoleculeStorage<T extends MoleculeParams> extends ChainStorage<GetStorageType<T>> {
+  codec?: BytesCodec
 
-  constructor(moleculeType: GetMoleculeStorageType<T>) {
+  constructor(moleculeType: MoleculeStorageType<T>) {
     super()
-    if ('data' in moleculeType) {
-      this.dataCodec = this.getCodec(moleculeType.data)
-    }
-    if ('witness' in moleculeType) {
-      this.witnessCodec = this.getCodec(moleculeType.witness)
-    }
+    this.codec = this.getCodec(moleculeType)
   }
 
   private getFixedCodec(moleculeType: MoleculeFixedBasicType | ArrayResult | StructResult): FixedBytesCodec {
@@ -300,7 +271,7 @@ export class MoleculeStorage<T extends StorageTemplate<AllMoleculeParams>> exten
     return molecule.struct(structParams, keys)
   }
 
-  private getCodec(moleculeType: AllMoleculeResult): BytesCodec {
+  private getCodec(moleculeType: MoleculeResult): BytesCodec {
     if (typeof moleculeType === 'string') {
       if (moleculeType === 'string') return UTF8String
       return this.getFixedCodec(moleculeType)
@@ -319,52 +290,13 @@ export class MoleculeStorage<T extends StorageTemplate<AllMoleculeParams>> exten
     return molecule.table(structParams, keys)
   }
 
-  serialize(
-    data: StorageType<GetMoleculeStorageOffChain<GetMoleculeStorageType<T>>>['offChain'],
-  ): StorageType<GetMoleculeStorageOffChain<GetMoleculeStorageType<T>>>['onChain'] {
-    if ('data' in data && 'witness' in data) {
-      if (!this.dataCodec || !this.witnessCodec) throw new Error('no codec in instance')
-      return {
-        data: this.dataCodec.pack(data.data),
-        witness: this.witnessCodec.pack(data.witness),
-      }
-    }
-    if ('data' in data) {
-      if (!this.dataCodec) throw new Error('no codec in instance')
-      return {
-        data: this.dataCodec.pack(data.data),
-      }
-    }
-    if ('witness' in data) {
-      if (!this.witnessCodec) throw new Error('no codec in instance')
-      return {
-        witness: this.witnessCodec.pack(data.witness),
-      }
-    }
-    throw new NoExpectedDataException()
+  serialize(data: MoleculeStorageOffChain<MoleculeStorageType<T>>): Uint8Array {
+    if (!this.codec) throw new Error('no codec in instance')
+    return this.codec.pack(data)
   }
-  deserialize(
-    data: StorageType<GetMoleculeStorageOffChain<GetMoleculeStorageType<T>>>['onChain'],
-  ): StorageType<GetMoleculeStorageOffChain<GetMoleculeStorageType<T>>>['offChain'] {
-    if ('data' in data && 'witness' in data) {
-      if (!this.dataCodec || !this.witnessCodec) throw new Error('no codec in instance')
-      return {
-        data: this.dataCodec.unpack(data?.data),
-        witness: this.witnessCodec.unpack(data?.witness),
-      } as StorageType<GetMoleculeStorageOffChain<GetMoleculeStorageType<T>>>['offChain']
-    }
-    if ('data' in data) {
-      if (!this.dataCodec) throw new Error('no codec in instance')
-      return {
-        data: this.dataCodec.unpack(data?.data),
-      } as StorageType<GetMoleculeStorageOffChain<GetMoleculeStorageType<T>>>['offChain']
-    }
-    if ('witness' in data) {
-      if (!this.witnessCodec) throw new Error('no codec in instance')
-      return {
-        witness: this.witnessCodec.unpack(data?.witness),
-      } as StorageType<GetMoleculeStorageOffChain<GetMoleculeStorageType<T>>>['offChain']
-    }
-    throw new NoExpectedDataException()
+
+  deserialize(data: Uint8Array): MoleculeStorageOffChain<MoleculeStorageType<T>> {
+    if (!this.codec) throw new Error('no codec in instance')
+    return this.codec.unpack(data)
   }
 }
