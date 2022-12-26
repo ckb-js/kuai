@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { describe, it, expect } from '@jest/globals'
 import { addMarkForStorage, JSONStorage } from '../../src'
-import { NoExpectedDataException, UnexpectedTypeException } from '../../src/exceptions'
+import { UnExpectedParamsException, UnexpectedTypeException } from '../../src/exceptions'
 
 describe('test json storage', () => {
   describe('only data exist', () => {
@@ -94,50 +94,33 @@ describe('test json storage', () => {
   describe('some exception withnot type', () => {
     const storage = new JSONStorage()
     it('serialize with empty', () => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        storage.serialize({} as any)
-      } catch (error) {
-        expect(error).toBeInstanceOf(NoExpectedDataException)
-      }
+      const res = storage.serialize({})
+      expect(res).toStrictEqual(Buffer.from(JSON.stringify({})))
     })
-    it('data serialize with null', () => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        storage.serialize({ data: { a: null } } as any)
-      } catch (error) {
-        expect(error).toBeInstanceOf(UnexpectedTypeException)
-      }
+    it('serialize with null in data', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => storage.serialize({ a: null } as any)).toThrow(new UnexpectedTypeException('null'))
     })
-    it('witness serialize with null', () => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        storage.serialize({ witness: { a: null } } as any)
-      } catch (error) {
-        expect(error).toBeInstanceOf(UnexpectedTypeException)
-      }
+    it('serialize with null', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => (storage.serialize as any)(null)).toThrow(new UnexpectedTypeException('null'))
     })
-    it('deserialize data with null', () => {
-      try {
-        storage.deserialize({ data: Buffer.from(JSON.stringify({ a: null })) })
-      } catch (error) {
-        expect(error).toBeInstanceOf(UnexpectedTypeException)
-      }
+    it('serialize with undefined', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => (storage.serialize as any)()).toThrow(new UnexpectedTypeException('undefined'))
     })
-    it('deserialize witness with null', () => {
-      try {
-        storage.deserialize({ witness: Buffer.from(JSON.stringify({ a: null })) })
-      } catch (error) {
-        expect(error).toBeInstanceOf(UnexpectedTypeException)
-      }
+    it('deserialize with null in data', () => {
+      expect(() => storage.deserialize(Buffer.from(JSON.stringify({ a: null })))).toThrow(
+        new UnexpectedTypeException('null'),
+      )
     })
-    it('deserialize witness with empty', () => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        storage.deserialize({} as any)
-      } catch (error) {
-        expect(error).toBeInstanceOf(NoExpectedDataException)
-      }
+    it('deserialize with null', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => (storage.deserialize as any)(null)).toThrow(new UnExpectedParamsException('null'))
+    })
+    it('deserialize with undefined', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => (storage.deserialize as any)()).toThrow(new UnExpectedParamsException('undefined'))
     })
   })
 
