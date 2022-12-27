@@ -117,10 +117,9 @@ describe('Test CoR', () => {
       ctx.ok('ok')
       await next()
     })
-    cor.use(async (ctx, next) => {
+    cor.use(async (ctx) => {
       mockFn2()
       ctx.ok('hello')
-      await next()
     })
 
     const result = await cor.dispatch({})

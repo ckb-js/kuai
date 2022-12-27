@@ -6,19 +6,16 @@ describe('test KuaiRouter', () => {
   it(`should use kuaiRouter`, async () => {
     const cor = new CoR()
     const kuaiRouter = new KuaiRouter()
-    kuaiRouter.get('/', async (ctx, next) => {
+    kuaiRouter.get('/', async (ctx) => {
       ctx.ok('hello root')
-      await next()
     })
 
-    kuaiRouter.get('/parent', async (ctx, next) => {
+    kuaiRouter.get('/parent', async (ctx) => {
       ctx.ok('hello parent')
-      await next()
     })
 
-    kuaiRouter.get('/parent/children', async (ctx, next) => {
+    kuaiRouter.get('/parent/children', async (ctx) => {
       ctx.ok('hello children')
-      await next()
     })
 
     cor.use(kuaiRouter.middleware())
