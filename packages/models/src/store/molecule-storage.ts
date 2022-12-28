@@ -1,247 +1,174 @@
-import { molecule, number, bytes } from '@ckb-lumos/codec'
+import { molecule, number } from '@ckb-lumos/codec'
 import { BI } from '@ckb-lumos/bi'
 import { ChainStorage } from './chain-storage'
 import { BytesCodec, FixedBytesCodec } from '@ckb-lumos/codec/lib/base'
+import { OneOfRecord, UTF8String, wrapUnion } from './customer-molecule'
+import { NoCodecForMolecueException, UnexpectedMoleculeTypeException } from '../exceptions'
 
 /**
  * Comm types define
  */
 type Tuple<T, N extends number, R extends T[] = []> = R['length'] extends N ? R : Tuple<T, N, [T, ...R]>
 /** slice tuple types */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SliceType<T extends any[]> = T extends [infer _, ...infer Left] ? Left : never
+type SliceType<T extends unknown[]> = T extends [infer _, ...infer Left] ? Left : never
 type ExpandToRecord<T extends number | string> = T extends T ? Record<T, T> : never
 /** If the type is union type, return never, or return it */
 type ExcludeUnionType<T extends number | string> = ExpandToRecord<T> extends Record<T, T> ? T : never
 /** Valid is a const number */
 type IsConstNumber<N extends number> = [1] extends [N] ? ([N] extends [1] ? N : never) : ExcludeUnionType<N>
+type DeepLength = [never, 0, 1, 2, 3, 4, 5, 6]
+type GetPreDeep<Deep extends DeepLength[number]> = DeepLength[Deep]
 
 /**
  * Basic types define
  */
-type MoleculeFixedBasicTypeArr = ['Uint8', 'Uint16', 'Uint32', 'Uint64', 'Uint128', 'Uint256', 'Uint512']
-type MoleculeFixedBasicType = MoleculeFixedBasicTypeArr[number]
+type FixedBasicTypeArr = ['Uint8', 'Uint16', 'Uint32', 'Uint64', 'Uint128', 'Uint256', 'Uint512']
+type FixedBasic = FixedBasicTypeArr[number]
 
-type MoleculeDynBasicTypeArr = ['string']
-type MoleculeDynBasicType = MoleculeDynBasicTypeArr[number]
+type DynBasicTypeArr = ['string']
+type DynamicBasic = DynBasicTypeArr[number]
 
 type IsOneType<
-  T extends MoleculeFixedBasicType | MoleculeDynBasicType,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Left extends any[] = [...MoleculeFixedBasicTypeArr, ...MoleculeDynBasicTypeArr],
-> = Left[0] extends never ? never : [T] extends [Left[0]] ? Left[0] : IsOneType<T, SliceType<Left>>
+  T extends FixedBasic | DynamicBasic,
+  Left extends unknown[] = [...FixedBasicTypeArr, ...DynBasicTypeArr],
+> = Left['length'] extends 0 ? never : [T] extends [Left[0]] ? Left[0] : IsOneType<T, SliceType<Left>>
 
 type GetOneType<
-  T extends MoleculeFixedBasicType | MoleculeDynBasicType,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Left extends any[] = [...MoleculeFixedBasicTypeArr, ...MoleculeDynBasicTypeArr],
+  T extends FixedBasic | DynamicBasic,
+  Left extends unknown[] = [...FixedBasicTypeArr, ...DynBasicTypeArr],
 > = IsOneType<T, Left> extends never ? never : T
 
-type GetFixedOffChainType<T extends MoleculeFixedBasicType> = T extends 'Uint8' | 'Uint16' | 'Uint32' ? number : BI
-type GetBasicOffChainType<T extends MoleculeFixedBasicType | MoleculeDynBasicType> = IsOneType<T> extends never
+type GetFixedBasicOffChain<T extends FixedBasic> = T extends 'Uint8' | 'Uint16' | 'Uint32' ? number : BI
+type GetBasicOffChain<T extends FixedBasic | DynamicBasic> = IsOneType<T> extends never
   ? never
-  : T extends MoleculeFixedBasicType
-  ? GetFixedOffChainType<T>
-  : T extends MoleculeDynBasicType
+  : T extends FixedBasic
+  ? GetFixedBasicOffChain<T>
+  : T extends DynamicBasic
   ? string
   : never
 /**
  * types template parameter
  */
 
-type ArrayParamType = MoleculeFixedBasicType | StructParam | ArrayParam
-type ArrayParam = { _type: 'array'; _params: [ArrayParamType, number] }
-type ArrayResult = MoleculeFixedBasicType[] | StructResult[] | ArrayResult[]
+const moleculeTypes = {
+  array: 'array',
+  struct: 'struct',
+  vec: 'vec',
+  table: 'table',
+  option: 'option',
+  union: 'union',
+} as const
+type GetMoleculeType<T extends keyof typeof moleculeTypes> = typeof moleculeTypes[T]
 
-type StructValueType = MoleculeFixedBasicType | ArrayParam | StructParam
-type StructParam = { _type: 'struct'; _params: Record<string, StructValueType> }
-type StructResult = { molecule: 'struct'; type: Record<string, MoleculeFixedBasicType | StructResult | ArrayResult> }
+type FixedParam = FixedBasic | ArrayParam | StructParam
+type FixedCodecConfig = FixedBasic | StructCodecConfig | ArrayCodecConfig
 
-type VecParamType = MoleculeFixedBasicType | MoleculeDynBasicType | StructParam | ArrayParam | TableParam
-type VecParam = { _type: 'vec'; _params: VecParamType }
-type VecResult = {
-  molecule: 'vec'
-  type: MoleculeFixedBasicType | MoleculeDynBasicType | ArrayResult | StructResult | VecResult | TableResult
-}
+type ArrayParam = { type: GetMoleculeType<'array'>; value: [FixedParam, number] }
+type ArrayCodecConfig = { type: GetMoleculeType<'array'>; value: FixedCodecConfig[] }
 
-type TableValueType = MoleculeFixedBasicType | ArrayParam | StructParam | VecParam | TableParam
-type TableParam = { _type: 'table'; _params: Record<string, TableValueType> }
-type TableResult = { molecule: 'table'; type: Record<string, ArrayResult | StructResult | VecResult | TableResult> }
+type StructParam = { type: GetMoleculeType<'struct'>; value: Record<string, FixedParam> }
+type StructCodecConfig = { type: GetMoleculeType<'struct'>; value: Record<string, FixedCodecConfig> }
 
-/**
- * Array type define
- */
+type VecParam = { type: GetMoleculeType<'vec'>; value: DynamicParam }
+type VecCodecConfig = { type: GetMoleculeType<'vec'>; value: CodecConfig }
 
-type GetArrayType<T extends ArrayParam> = IsConstNumber<T['_params'][1]> extends never
+type TableParam = { type: GetMoleculeType<'table'>; value: Record<string, DynamicParam> }
+type TableCodecConfig = { type: GetMoleculeType<'table'>; value: Record<string, CodecConfig> }
+
+type OptionParam = { type: GetMoleculeType<'option'>; value: DynamicParam }
+type OptionCodecConfig = { type: GetMoleculeType<'option'>; value: CodecConfig }
+
+type UnionParam = { type: GetMoleculeType<'union'>; value: Record<string, DynamicParam> }
+type UnionCodecConfig = { type: GetMoleculeType<'union'>; value: Record<string, CodecConfig> }
+
+export type DynamicParam = FixedParam | DynamicBasic | VecParam | OptionParam | UnionParam | TableParam
+export type CodecConfig =
+  | FixedCodecConfig
+  | DynamicBasic
+  | VecCodecConfig
+  | TableCodecConfig
+  | OptionCodecConfig
+  | UnionCodecConfig
+
+type GetFixedCodecConfig<T extends FixedParam, Deep extends DeepLength[number] = 6> = Deep extends never
   ? never
-  : T['_params'][0] extends ArrayParam
-  ? Tuple<GetArrayType<T['_params'][0]>, T['_params'][1]>
-  : T['_params'][0] extends StructParam
-  ? Tuple<GetStructType<T['_params'][0]>, T['_params'][1]>
-  : T['_params'][0] extends MoleculeFixedBasicType
-  ? IsOneType<T['_params'][0]> extends never
-    ? never
-    : Tuple<T['_params'][0], T['_params'][1]>
-  : never
-
-type GetArrayOffChainType<T extends ArrayResult> = Tuple<
-  T[number] extends MoleculeFixedBasicType
-    ? GetBasicOffChainType<T[number]>
-    : T[number] extends ArrayResult
-    ? GetArrayOffChainType<T[number]>
-    : T[number] extends StructResult
-    ? GetStructOffChainType<T[number]>
-    : never,
-  T['length']
->
-
-/**
- * Struct type define
- */
-
-type GetStructType<T extends StructParam> = {
-  molecule: 'struct'
-  type: {
-    [P in keyof T['_params']]: T['_params'][P] extends MoleculeFixedBasicType
-      ? T['_params'][P]
-      : T['_params'][P] extends ArrayParam
-      ? GetArrayType<T['_params'][P]>
-      : T['_params'][P] extends StructParam
-      ? GetStructType<T['_params'][P]>
-      : never
-  }
-}
-
-type GetStructOffChainType<T extends StructResult> = {
-  [P in keyof T['type']]: T['type'][P] extends MoleculeFixedBasicType
-    ? GetBasicOffChainType<T['type'][P]>
-    : T['type'][P] extends StructResult
-    ? GetStructOffChainType<T['type'][P]>
-    : T['type'][P] extends ArrayResult
-    ? GetArrayOffChainType<T['type'][P]>
-    : never
-}
-
-/**
- * vec type define
- */
-
-type GetVectorType<T extends VecParam> = {
-  molecule: 'vec'
-  type: T['_params'] extends MoleculeFixedBasicType | MoleculeDynBasicType
-    ? T
-    : T['_params'] extends StructParam
-    ? GetStructType<T['_params']>
-    : T['_params'] extends ArrayParam
-    ? GetArrayType<T['_params']>
-    : T['_params'] extends TableParam
-    ? GetTableType<T['_params']>
-    : never
-}
-
-type GetVecOffChainType<T extends VecResult> = T['type'] extends MoleculeFixedBasicType | MoleculeDynBasicType
-  ? GetBasicOffChainType<T['type']>
-  : T['type'] extends ArrayResult
-  ? GetArrayOffChainType<T['type']>
-  : T['type'] extends StructResult
-  ? GetStructOffChainType<T['type']>
-  : T['type'] extends VecResult
-  ? GetVecOffChainType<T['type']>
-  : T['type'] extends TableResult
-  ? GetTableOffChainType<T['type']>
-  : never
-/**
- * table type define
- */
-
-type GetTableType<T extends TableParam> = {
-  molecule: 'table'
-  type: {
-    [P in keyof T['_params']]: T['_params'][P] extends MoleculeFixedBasicType | MoleculeDynBasicType
-      ? T['_params'][P]
-      : T['_params'][P] extends ArrayParam
-      ? GetArrayType<T['_params'][P]>
-      : T['_params'][P] extends StructParam
-      ? GetStructType<T['_params'][P]>
-      : T['_params'][P] extends VecParam
-      ? GetVectorType<T['_params'][P]>
-      : T['_params'][P] extends TableParam
-      ? GetTableType<T['_params'][P]>
-      : never
-  }
-}
-
-type GetTableOffChainType<T extends TableResult> = {
-  [P in keyof T['type']]: T['type'][P] extends MoleculeFixedBasicType
-    ? MoleculeFixedBasicType
-    : T['type'][P] extends StructResult
-    ? GetStructOffChainType<T['type'][P]>
-    : T['type'][P] extends ArrayResult
-    ? GetArrayOffChainType<T['type'][P]>
-    : T['type'][P] extends TableResult
-    ? GetTableOffChainType<T['type'][P]>
-    : never
-}
-
-export type MoleculeParams =
-  | MoleculeFixedBasicType
-  | MoleculeDynBasicType
-  | ArrayParam
-  | StructParam
-  | VecParam
-  | TableParam
-  | never
-export type MoleculeStorageType<T extends MoleculeParams = never> = T extends
-  | MoleculeFixedBasicType
-  | MoleculeDynBasicType
+  : T extends FixedBasic
   ? GetOneType<T>
   : T extends ArrayParam
-  ? GetArrayType<T>
+  ? {
+      type: GetMoleculeType<'array'>
+      value: IsConstNumber<T['value'][1]> extends never
+        ? never
+        : GetFixedCodecConfig<T['value'][0], GetPreDeep<Deep>> extends never
+        ? never
+        : Tuple<GetFixedCodecConfig<T['value'][0], GetPreDeep<Deep>>, T['value'][1]>
+    }
   : T extends StructParam
-  ? GetStructType<T>
+  ? {
+      type: GetMoleculeType<'struct'>
+      value: { [P in keyof T['value']]: GetFixedCodecConfig<T['value'][P], GetPreDeep<Deep>> }
+    }
+  : never
+
+export type GetCodecConfig<T extends DynamicParam, Deep extends DeepLength[number] = 6> = Deep extends never
+  ? never
+  : T extends FixedBasic | DynamicBasic
+  ? GetOneType<T>
+  : T extends FixedParam
+  ? GetFixedCodecConfig<T, GetPreDeep<Deep>>
   : T extends VecParam
-  ? GetVectorType<T>
+  ? { type: GetMoleculeType<'vec'>; value: GetCodecConfig<T['value'], GetPreDeep<Deep>> }
   : T extends TableParam
-  ? GetTableType<T>
-  : never
-type MoleculeResult =
-  | MoleculeFixedBasicType
-  | MoleculeDynBasicType
-  | ArrayResult
-  | StructResult
-  | VecResult
-  | TableResult
-  | never
-type MoleculeStorageOffChain<T extends MoleculeResult> = T extends MoleculeFixedBasicType | MoleculeDynBasicType
-  ? GetBasicOffChainType<T>
-  : T extends ArrayResult
-  ? GetArrayOffChainType<T>
-  : T extends StructResult
-  ? GetStructOffChainType<T>
-  : T extends VecResult
-  ? GetVecOffChainType<T>
-  : T extends TableResult
-  ? GetTableOffChainType<T>
+  ? {
+      type: GetMoleculeType<'table'>
+      value: { [P in keyof T['value']]: GetCodecConfig<T['value'][P], GetPreDeep<Deep>> }
+    }
+  : T extends OptionParam
+  ? { type: GetMoleculeType<'option'>; value: GetCodecConfig<T['value'], GetPreDeep<Deep>> }
+  : T extends UnionParam
+  ? {
+      type: GetMoleculeType<'union'>
+      value: { [P in keyof T['value']]: GetCodecConfig<T['value'][P], GetPreDeep<Deep>> }
+    }
   : never
 
-export type GetStorageType<T extends MoleculeParams> = MoleculeStorageOffChain<MoleculeStorageType<T>>
+type GetFixedOffChain<T extends FixedParam, Deep extends DeepLength[number] = 6> = Deep extends never
+  ? never
+  : T extends FixedBasic
+  ? GetBasicOffChain<T>
+  : T extends StructParam
+  ? { [P in keyof T['value']]: GetFixedOffChain<T['value'][P], GetPreDeep<Deep>> }
+  : T extends ArrayParam
+  ? Tuple<GetFixedOffChain<T['value'][0], GetPreDeep<Deep>>, T['value'][1]>
+  : never
 
-export const UTF8String = molecule.byteVecOf<string>({
-  pack: (str) => Uint8Array.from(Buffer.from(str, 'utf8')),
-  unpack: (buf) => Buffer.from(bytes.bytify(buf)).toString('utf8'),
-})
+export type GetMoleculeOffChain<T extends DynamicParam, Deep extends DeepLength[number] = 6> = Deep extends never
+  ? never
+  : T extends FixedBasic | DynamicBasic
+  ? GetBasicOffChain<T>
+  : T extends FixedParam
+  ? GetFixedOffChain<T, GetPreDeep<Deep>>
+  : T extends VecParam
+  ? GetMoleculeOffChain<T['value'], GetPreDeep<Deep>>[]
+  : T extends TableParam
+  ? { [P in keyof T['value']]: GetMoleculeOffChain<T['value'][P], GetPreDeep<Deep>> }
+  : T extends OptionParam
+  ? GetMoleculeOffChain<T['value'], GetPreDeep<Deep>>
+  : T extends UnionParam
+  ? OneOfRecord<{ [P in keyof T['value']]: GetMoleculeOffChain<T['value'][P], GetPreDeep<Deep>> }>
+  : never
 
-export class MoleculeStorage<T extends MoleculeParams> extends ChainStorage<GetStorageType<T>> {
+export class MoleculeStorage<T extends DynamicParam> extends ChainStorage<GetMoleculeOffChain<T>> {
   codec?: BytesCodec
 
-  constructor(moleculeType: MoleculeStorageType<T>) {
+  constructor(moleculeType: GetCodecConfig<T>) {
     super()
     this.codec = this.getCodec(moleculeType)
   }
 
-  private getFixedCodec(moleculeType: MoleculeFixedBasicType | ArrayResult | StructResult): FixedBytesCodec {
-    if (typeof moleculeType === 'string') {
-      switch (moleculeType) {
+  private getFixedCodec(codecConfig: FixedCodecConfig): FixedBytesCodec {
+    if (typeof codecConfig === 'string') {
+      switch (codecConfig) {
         case 'Uint8':
           return number.Uint8
         case 'Uint16':
@@ -257,46 +184,59 @@ export class MoleculeStorage<T extends MoleculeParams> extends ChainStorage<GetS
         case 'Uint512':
           return number.Uint512
         default:
-          throw new Error('no molecule for type')
+          throw new UnexpectedMoleculeTypeException(codecConfig)
       }
     }
-    if (Array.isArray(moleculeType)) {
-      return molecule.array(this.getFixedCodec(moleculeType[0]), moleculeType.length)
+    if (codecConfig.type === moleculeTypes.array) {
+      return molecule.array(this.getFixedCodec(codecConfig.value[0]), codecConfig.value.length)
     }
-    const keys = Object.keys(moleculeType.type)
+    const keys = Object.keys(codecConfig.value)
     const structParams: Record<string, FixedBytesCodec> = {}
     for (let i = 0; i < keys.length; i++) {
-      structParams[keys[i]] = this.getFixedCodec(moleculeType.type[keys[i]])
+      structParams[keys[i]] = this.getFixedCodec(codecConfig.value[keys[i]])
     }
     return molecule.struct(structParams, keys)
   }
 
-  private getCodec(moleculeType: MoleculeResult): BytesCodec {
-    if (typeof moleculeType === 'string') {
-      if (moleculeType === 'string') return UTF8String
-      return this.getFixedCodec(moleculeType)
+  private getCodec(codecConfig: CodecConfig): BytesCodec {
+    if (typeof codecConfig === 'string') {
+      if (codecConfig === 'string') return UTF8String
+      return this.getFixedCodec(codecConfig)
     }
-    if (Array.isArray(moleculeType) || moleculeType.molecule === 'struct') {
-      return this.getFixedCodec(moleculeType)
+    const codecParams: Record<string, BytesCodec> = {}
+    let keys: string[] = []
+    switch (codecConfig.type) {
+      case moleculeTypes.array:
+      case moleculeTypes.struct:
+        return this.getFixedCodec(codecConfig)
+      case moleculeTypes.vec:
+        return molecule.vector(this.getCodec(codecConfig.value))
+      case moleculeTypes.option:
+        return molecule.option(this.getCodec(codecConfig.value))
+      case moleculeTypes.table:
+        keys = Object.keys(codecConfig.value)
+        for (let i = 0; i < keys.length; i++) {
+          codecParams[keys[i]] = this.getCodec(codecConfig.value[keys[i]])
+        }
+        return molecule.table(codecParams, keys)
+      case moleculeTypes.union:
+        keys = Object.keys(codecConfig.value)
+        for (let i = 0; i < keys.length; i++) {
+          codecParams[keys[i]] = this.getCodec(codecConfig.value[keys[i]])
+        }
+        return wrapUnion(codecParams, keys)
+      default:
+        throw new UnexpectedMoleculeTypeException('unknown')
     }
-    if (moleculeType.molecule === 'vec') {
-      return molecule.vector(this.getCodec(moleculeType.type))
-    }
-    const keys = Object.keys(moleculeType.type)
-    const structParams: Record<string, BytesCodec> = {}
-    for (let i = 0; i < keys.length; i++) {
-      structParams[keys[i]] = this.getCodec(moleculeType.type[keys[i]])
-    }
-    return molecule.table(structParams, keys)
   }
 
-  serialize(data: MoleculeStorageOffChain<MoleculeStorageType<T>>): Uint8Array {
-    if (!this.codec) throw new Error('no codec in instance')
+  serialize(data: GetMoleculeOffChain<T>): Uint8Array {
+    if (!this.codec) throw new NoCodecForMolecueException()
     return this.codec.pack(data)
   }
 
-  deserialize(data: Uint8Array): MoleculeStorageOffChain<MoleculeStorageType<T>> {
-    if (!this.codec) throw new Error('no codec in instance')
+  deserialize(data: Uint8Array): GetMoleculeOffChain<T> {
+    if (!this.codec) throw new NoCodecForMolecueException()
     return this.codec.unpack(data)
   }
 }

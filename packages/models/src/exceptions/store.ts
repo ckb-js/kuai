@@ -27,3 +27,15 @@ export class UnExpectedParamsException extends Error {
     super(`Unexpected params with ${params} when calling deserialize`)
   }
 }
+
+export class UnexpectedMoleculeTypeException extends Error {
+  constructor(type: string) {
+    super(`Unexpected molecule type with ${type} when create codec`)
+  }
+}
+
+export class NoCodecForMolecueException extends Error {
+  constructor() {
+    super(`No codec for serialize or deserialize`)
+  }
+}
