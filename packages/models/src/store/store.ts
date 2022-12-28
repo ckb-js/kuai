@@ -1,5 +1,5 @@
 import type { ActorMessage, MessagePayload } from '../actor'
-import type { OutPointString, StoreMessage, StorePath, GetStorageStruct } from './interface'
+import type { OutPointString, StoreMessage, StorePath, GetStorageStruct, StorageLocation } from './interface'
 import type { JSONStorageOffChain } from './json-storage'
 import type { GetState } from './chain-storage'
 import { ChainStorage } from './chain-storage'
@@ -65,15 +65,7 @@ export class Store<
     }
   }
 
-  get lockDataStorage(): StorageT | undefined {
-    return undefined
-  }
-
-  get typeDataStorage(): StorageT | undefined {
-    return undefined
-  }
-
-  get witnessStorage(): StorageT | undefined {
+  getStorage(_storeKey: StorageLocation): StorageT | undefined {
     return undefined
   }
 
@@ -87,20 +79,15 @@ export class Store<
     const states: Record<OutPointString, StorageStruct> = {}
     Object.keys(this.states).forEach((key) => {
       const currentStateInKey = this.states[key]
-      if ('typeData' in currentStateInKey && currentStateInKey.typeData !== undefined) {
-        this.assetStorage(this.typeDataStorage)
+      if ('data' in currentStateInKey && currentStateInKey.data !== undefined) {
+        this.assetStorage(this.getStorage('data'))
         states[key] = (states[key] || {}) as StorageStruct
-        states[key].typeData = this.typeDataStorage?.clone(currentStateInKey.typeData)
-      }
-      if ('lockData' in currentStateInKey && currentStateInKey.lockData !== undefined) {
-        this.assetStorage(this.lockDataStorage)
-        states[key] = (states[key] || {}) as StorageStruct
-        states[key].lockData = this.lockDataStorage?.clone(currentStateInKey.lockData)
+        states[key].data = this.getStorage('data')?.clone(currentStateInKey.data)
       }
       if ('witness' in currentStateInKey && currentStateInKey.witness !== undefined) {
-        this.assetStorage(this.witnessStorage)
+        this.assetStorage(this.getStorage('witness'))
         states[key] = (states[key] || {}) as StorageStruct
-        states[key].witness = this.witnessStorage?.clone(currentStateInKey.witness)
+        states[key].witness = this.getStorage('witness')?.clone(currentStateInKey.witness)
       }
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,8 +95,7 @@ export class Store<
   }
 
   get(key: OutPointString): StorageStruct
-  get(key: OutPointString, paths: ['lockData']): StorageStruct['lockData']
-  get(key: OutPointString, paths: ['typeData']): StorageStruct['typeData']
+  get(key: OutPointString, paths: ['data']): StorageStruct['data']
   get(key: OutPointString, paths: ['witness']): StorageStruct['witness']
   get(key: OutPointString, paths: [StorePath[0], string, ...string[]]): unknown
   get(key: OutPointString, paths?: StorePath) {
@@ -124,8 +110,7 @@ export class Store<
   }
 
   set(key: OutPointString, value: StorageStruct): void
-  set(key: OutPointString, value: StorageStruct['lockData'], paths: ['lockData']): void
-  set(key: OutPointString, value: StorageStruct['typeData'], paths: ['typeData']): void
+  set(key: OutPointString, value: StorageStruct['data'], paths: ['data']): void
   set(key: OutPointString, value: StorageStruct['witness'], paths: ['witness']): void
   set(key: OutPointString, value: GetState<StorageT>, paths: [StorePath[0], string, ...string[]]): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -147,33 +132,19 @@ export class Store<
 
 type IsUnknownOrNever<T> = T extends never ? true : unknown extends T ? (0 extends 1 & T ? false : true) : false
 
-type GetStorageStructByTemplate<T extends GetStorageStruct> = IsUnknownOrNever<T['lockData']> extends true
-  ? IsUnknownOrNever<T['typeData']> extends true
-    ? IsUnknownOrNever<T['witness']> extends true
-      ? never
-      : { witness: T['witness'] }
-    : IsUnknownOrNever<T['witness']> extends true
-    ? { typeData: T['typeData'] }
-    : { typeData: T['typeData']; witness: T['witness'] }
-  : IsUnknownOrNever<T['typeData']> extends true
+type GetStorageStructByTemplate<T extends GetStorageStruct> = IsUnknownOrNever<T['data']> extends true
   ? IsUnknownOrNever<T['witness']> extends true
-    ? { lockData: T['lockData'] }
-    : { lockData: T['lockData']; witness: T['witness'] }
+    ? never
+    : { witness: T['witness'] }
   : IsUnknownOrNever<T['witness']> extends true
-  ? { lockData: T['lockData']; typeData: T['typeData'] }
-  : { lockData: T['lockData']; typeData: T['typeData']; witness: T['witness'] }
+  ? { data: T['data'] }
+  : { data: T['data']; witness: T['witness'] }
 
 export class JSONStore<R extends GetStorageStruct<JSONStorageOffChain>> extends Store<
   JSONStorage<JSONStorageOffChain>,
   GetStorageStructByTemplate<R>
 > {
-  get lockDataStorage(): JSONStorage<JSONStorageOffChain> {
-    return new JSONStorage()
-  }
-  get typeDataStorage(): JSONStorage<JSONStorageOffChain> {
-    return new JSONStorage()
-  }
-  get witnessStorage(): JSONStorage<JSONStorageOffChain> {
+  getStorage(_storeKey: StorageLocation): JSONStorage<JSONStorageOffChain> {
     return new JSONStorage()
   }
 }

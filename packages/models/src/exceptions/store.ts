@@ -22,7 +22,7 @@ export class UnexpectedMarkException extends Error {
   }
 }
 
-export class UnExpectedParamsException extends Error {
+export class UnexpectedParamsException extends Error {
   constructor(params: string) {
     super(`Unexpected params with ${params} when calling deserialize`)
   }

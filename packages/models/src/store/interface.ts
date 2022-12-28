@@ -1,6 +1,6 @@
 export type OutPointString = string
 
-type StorageLocation = 'lockData' | 'witness' | 'typeData'
+export type StorageLocation = 'data' | 'witness'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type GetStorageStruct<T = any> = Partial<Record<StorageLocation, T>>
