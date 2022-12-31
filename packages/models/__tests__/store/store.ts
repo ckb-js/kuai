@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 import { NonExistentException, NonStorageInstanceException } from '../../src/exceptions'
-import { ChainStorage, JSONStore, Store, Behavior, ProviderKey, GetStorageStruct, StorageLocation } from '../../src'
+import { ChainStorage, JSONStore, Store, Behavior, ProviderKey, StorageLocation, StorageSchema } from '../../src'
 import BigNumber from 'bignumber.js'
 
 const ref = {
@@ -27,13 +27,13 @@ class StorageCustom<T extends CustomType = CustomType> extends ChainStorage<T> {
   }
 }
 
-class CustomStore<R extends GetStorageStruct<CustomType>> extends Store<StorageCustom<CustomType>, R> {
+class CustomStore<R extends StorageSchema<CustomType>> extends Store<StorageCustom<CustomType>, R> {
   getStorage(_storeKey: StorageLocation): StorageCustom<string> {
     return new StorageCustom()
   }
 }
 
-class NoInstanceCustomStore<R extends GetStorageStruct<CustomType>> extends Store<StorageCustom<CustomType>, R> {}
+class NoInstanceCustomStore<R extends StorageSchema<CustomType>> extends Store<StorageCustom<CustomType>, R> {}
 
 Reflect.defineMetadata(ProviderKey.Actor, { ref }, Store)
 Reflect.defineMetadata(ProviderKey.Actor, { ref }, JSONStore)
@@ -88,6 +88,63 @@ describe('test store', () => {
         })
         expect(store.get('0x1234')).toStrictEqual({ data: { a: BigNumber(2) } })
       })
+      it('add lock without offset', () => {
+        const lockStore = new JSONStore<{ lock: { args: BigNumber } }>()
+        lockStore.handleCall({
+          from: ref,
+          behavior: Behavior.Call,
+          payload: {
+            pattern: 'normal',
+            value: {
+              type: 'add_state',
+              add: {
+                '0x1234': { lock: { args: BigNumber(1) } },
+              },
+            },
+          },
+        })
+        expect(lockStore.get('0x1234')).toStrictEqual({ lock: { args: BigNumber(1) } })
+      })
+      it('add lock with offset', () => {
+        const lockStore = new JSONStore<{ lock: { args: { offset: 10; schema: BigNumber } } }>({
+          schemaOption: { lock: { args: { offset: 10 } } },
+        })
+        lockStore.handleCall({
+          from: ref,
+          behavior: Behavior.Call,
+          payload: {
+            pattern: 'normal',
+            value: {
+              type: 'add_state',
+              add: {
+                '0x1234': { lock: { args: BigNumber(1) } },
+              },
+            },
+          },
+        })
+        expect(lockStore.get('0x1234')).toStrictEqual({ lock: { args: BigNumber(1) } })
+      })
+      it('add lock codehash/hashtype with offset', () => {
+        const lockStore = new JSONStore<{ lock: { codeHash: { offset: 10; schema: BigNumber }; hashType: BigNumber } }>(
+          {
+            schemaOption: { lock: { codeHash: { offset: 10 } } },
+          },
+        )
+        lockStore.handleCall({
+          from: ref,
+          behavior: Behavior.Call,
+          payload: {
+            pattern: 'normal',
+            value: {
+              type: 'add_state',
+              add: {
+                '0x1234': { lock: { codeHash: BigNumber(1), hashType: BigNumber(1) } },
+              },
+            },
+          },
+        })
+        expect(lockStore.get('0x1234')).toStrictEqual({ lock: { codeHash: BigNumber(1), hashType: BigNumber(1) } })
+      })
     })
 
     describe('test handleCall with sub', () => {
@@ -137,25 +194,49 @@ describe('test store', () => {
       })
     })
 
-    it('test clone', () => {
-      const store = new JSONStore<{ data: { a: BigNumber }; witness: { b: string } }>()
-      store.handleCall({
-        from: ref,
-        behavior: Behavior.Call,
-        payload: {
-          pattern: 'normal',
-          value: {
-            type: 'add_state',
-            add: {
-              '0x1234': { data: { a: BigNumber(1) }, witness: { b: '111' } },
+    describe('test clone', () => {
+      it('normal', () => {
+        const store = new JSONStore<{ data: { a: BigNumber }; witness: { b: string } }>()
+        store.handleCall({
+          from: ref,
+          behavior: Behavior.Call,
+          payload: {
+            pattern: 'normal',
+            value: {
+              type: 'add_state',
+              add: {
+                '0x1234': { data: { a: BigNumber(1) }, witness: { b: '111' } },
+              },
             },
           },
-        },
+        })
+        const cloneRes = store.clone()
+        expect(cloneRes.get('0x1234') === store.get('0x1234')).toBeFalsy()
+        expect(cloneRes.get('0x1234')).toStrictEqual(store.get('0x1234'))
+        expect(cloneRes instanceof JSONStore).toBe(true)
       })
-      const cloneRes = store.clone()
-      expect(cloneRes.get('0x1234') === store.get('0x1234')).toBeFalsy()
-      expect(cloneRes.get('0x1234')).toStrictEqual(store.get('0x1234'))
-      expect(cloneRes instanceof JSONStore).toBe(true)
+      it('clone with lock and type', () => {
+        const store = new JSONStore<{ type: { args: BigNumber }; lock: { codeHash: string } }>()
+        store.handleCall({
+          from: ref,
+          behavior: Behavior.Call,
+          payload: {
+            pattern: 'normal',
+            value: {
+              type: 'add_state',
+              add: {
+                '0x1234': { type: { args: BigNumber(1) }, lock: { codeHash: '111' } },
+              },
+            },
+          },
+        })
+        const cloneRes = store.clone()
+        expect(cloneRes.get('0x1234') === store.get('0x1234')).toBeFalsy()
+        expect(cloneRes.get('0x1234')).toStrictEqual(store.get('0x1234'))
+        expect(cloneRes.get('0x1234', ['lock', 'codeHash'])).toEqual('111')
+        expect(cloneRes.get('0x1234', ['type', 'args'])).toStrictEqual(BigNumber(1))
+        expect(cloneRes instanceof JSONStore).toBe(true)
+      })
     })
 
     describe('test get', () => {
@@ -196,6 +277,23 @@ describe('test store', () => {
           expect(error).toBeInstanceOf(NonExistentException)
         }
       })
+      it('get lock args', () => {
+        const lockStore = new JSONStore<{ lock: { args: BigNumber } }>()
+        lockStore.handleCall({
+          from: ref,
+          behavior: Behavior.Call,
+          payload: {
+            pattern: 'normal',
+            value: {
+              type: 'add_state',
+              add: {
+                '0x1234': { lock: { args: BigNumber(1) } },
+              },
+            },
+          },
+        })
+        expect(lockStore.get('0x1234', ['lock', 'args'])).toStrictEqual(BigNumber(1))
+      })
     })
 
     describe('test set', () => {
@@ -227,12 +325,23 @@ describe('test store', () => {
         store.set('0x1234', { c: BigNumber(10) }, ['data', 'b'])
         expect(store.get('0x1234')).toStrictEqual({ data: { a: BigNumber(1), b: { c: BigNumber(10) } } })
       })
-      it('get with non existent exception', () => {
-        try {
-          store.get('0x1234', ['data', 'a111'])
-        } catch (error) {
-          expect(error).toBeInstanceOf(NonExistentException)
-        }
+      it('set lock args', () => {
+        const lockStore = new JSONStore<{ lock: { args: BigNumber } }>()
+        lockStore.handleCall({
+          from: ref,
+          behavior: Behavior.Call,
+          payload: {
+            pattern: 'normal',
+            value: {
+              type: 'add_state',
+              add: {
+                '0x1234': { lock: { args: BigNumber(1) } },
+              },
+            },
+          },
+        })
+        lockStore.set('0x1234', BigNumber(10), ['lock', 'args'])
+        expect(lockStore.get('0x1234', ['lock', 'args'])).toStrictEqual(BigNumber(10))
       })
     })
 
