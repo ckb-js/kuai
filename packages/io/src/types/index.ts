@@ -36,6 +36,7 @@ export interface ChainSource {
   getTipBlockNumber: () => Promise<CKBComponents.BlockNumber>
   getTipHeader: () => Promise<CKBComponents.BlockHeader>
   getCurrentEpoch: () => Promise<CKBComponents.Epoch>
+  getCurrentBlock: () => Promise<CKBComponents.Block>
 }
 
 export type Path = string
