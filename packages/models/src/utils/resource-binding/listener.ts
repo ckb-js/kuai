@@ -1,10 +1,9 @@
 import { Block } from '@ckb-lumos/base'
-import { Listener } from '../../../../io/src/listener'
-import { ChainSource } from '../../../../io/src/types'
+import { Listener, types } from '@kuai/io'
 import { Observable } from 'rxjs'
 
 export class TransactionListener extends Listener<Block> {
-  constructor(private source: ChainSource, pollingInterval = 1000) {
+  constructor(private source: types.ChainSource, pollingInterval = 1000) {
     super(pollingInterval)
   }
 
