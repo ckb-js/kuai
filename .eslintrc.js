@@ -12,6 +12,6 @@ module.exports = {
       },
     ],
     '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/explicit-module-boundary-types': 'error',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
   },
 }
