@@ -1,21 +1,39 @@
-import { Block, Output, Input, HexString, utils, OutPoint } from '@ckb-lumos/base'
+import { Block, Header, Output, Input, HexString, utils, OutPoint } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
-import { TransactionListener } from './listener'
 import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
 import { TypescriptHash, LockscriptHash } from './types'
 import { ResourceBindingRegistry, ResourceBindingManagerMessage } from './interface'
 import { outpointToOutPointString } from './utils'
-import { types } from '@kuai/io'
+import { Listener } from '@kuai/io'
 import { OutPointString } from '..'
 import type { Subscription } from 'rxjs'
+import { ChainSource } from '@kuai/io/lib/types'
 
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
   #registry: Map<TypescriptHash, Map<LockscriptHash, ResourceBindingRegistry>> = new Map()
   #registryOutpoint: Map<OutPointString, ResourceBindingRegistry> = new Map()
   #registryReverse: Map<ActorURI, [TypescriptHash, LockscriptHash]> = new Map()
   #lastBlock: Block | undefined = undefined
+  #topBlockNumber = BI.from(0)
 
-  onListenBlock = (block: Block) => this.updateStore(block)
+  constructor(private _listener: Listener<Header>, private _dataSource: ChainSource) {
+    super()
+  }
+
+  onListenBlock = (blockHeader: Header) => {
+    const currentBlockNumber = BI.from(blockHeader.number)
+    if (currentBlockNumber.gt(this.topBlockNumber)) {
+      this.topBlockNumber = currentBlockNumber
+    }
+  }
+
+  private update(pollingInterval = 1000) {
+    return setInterval(async () => {
+      if (this.#topBlockNumber.gt(0) && this.#topBlockNumber.gt(BI.from(this.#lastBlock?.header.number ?? 0))) {
+        this.updateStore(await this._dataSource.getBlock(this.#topBlockNumber.toHexString()))
+      }
+    }, pollingInterval)
+  }
 
   private updateStore(block: Block) {
     if (!this.#lastBlock || BI.from(block.header.number).gt(BI.from(this.#lastBlock.header.number))) {
@@ -81,9 +99,8 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }
   }
 
-  listen(dataSource: types.ChainSource, pollingInterval?: number): Subscription {
-    const listener = new TransactionListener(dataSource, pollingInterval)
-    return listener.on(this.onListenBlock)
+  listen(pollingInterval = 1000): { subscription: Subscription; updator: NodeJS.Timer } {
+    return { subscription: this._listener.on(this.onListenBlock), updator: this.update(pollingInterval) }
   }
 
   private removeFromInput(input: Input) {
@@ -139,5 +156,13 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
 
   get lastBlock(): Block | undefined {
     return this.#lastBlock
+  }
+
+  set topBlockNumber(blockNumber: BI) {
+    this.#topBlockNumber = blockNumber
+  }
+
+  get topBlockNumber(): BI {
+    return this.#topBlockNumber
   }
 }

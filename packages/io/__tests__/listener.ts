@@ -50,7 +50,7 @@ describe('test Listener', () => {
         number: '0x' + new Date().getSeconds().toString(16).padStart(2, '0'),
       }),
     getCurrentEpoch: () => Promise.resolve(mockEpoch),
-    getCurrentBlock: () => Promise.resolve(mockBlock),
+    getBlock: () => Promise.resolve(mockBlock),
   }
 
   it(`distinctUntilChanged pipe `, async () => {
