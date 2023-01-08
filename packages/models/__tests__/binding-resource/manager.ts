@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import { ProviderKey, Behavior, outpointToOutPointString } from '../../src'
 import { Manager } from '../../src'
-import { utils, Input, Output } from '@ckb-lumos/base'
+import { utils, Input, Output, Block, Epoch, Header } from '@ckb-lumos/base'
+import { ChainSource } from '@kuai/io/lib/types'
+import { TipHeaderListener } from '@kuai/io'
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 const mockXRead = jest.fn<() => any>()
@@ -33,10 +35,27 @@ Reflect.defineMetadata(
   Manager,
 )
 
+const mockSource: ChainSource = {
+  getTipBlockNumber: function (): Promise<string> {
+    throw new Error('Function not implemented.')
+  },
+  getTipHeader: function (): Promise<Header> {
+    throw new Error('Function not implemented.')
+  },
+  getCurrentEpoch: function (): Promise<Epoch> {
+    throw new Error('Function not implemented.')
+  },
+  getBlock: function (): Promise<Block> {
+    throw new Error('Function not implemented.')
+  },
+}
+
+const mockListener = new TipHeaderListener(mockSource)
+
 describe('Test resource binding', () => {
   describe('test handleCall with register', () => {
     it('register success', () => {
-      const manager = new Manager()
+      const manager = new Manager(mockListener, mockSource)
       manager.handleCall({
         from: ref,
         behavior: Behavior.Call,
@@ -58,7 +77,7 @@ describe('Test resource binding', () => {
   })
   describe('test handleCall with revoke', () => {
     it('revoke success', () => {
-      const manager = new Manager()
+      const manager = new Manager(mockListener, mockSource)
       manager.handleCall({
         from: ref,
         behavior: Behavior.Call,
@@ -91,14 +110,52 @@ describe('Test resource binding', () => {
       expect(manager.registryReverse.get(ref.uri)).toBeUndefined()
     })
   })
+  describe('test new block header arrived', () => {
+    it('update top block number success', () => {
+      const manager = new Manager(mockListener, mockSource)
+      const mockHeader = {
+        timestamp: '0x',
+        number: '0x01',
+        epoch: '0x',
+        compactTarget: '0x',
+        dao: '0x',
+        hash: '0x',
+        nonce: '0x',
+        parentHash: '0x',
+        proposalsHash: '0x',
+        transactionsRoot: '0x',
+        extraHash: '0x',
+        version: '0x',
+      }
+      manager.onListenBlock(mockHeader)
+      expect(manager.topBlockNumber.toHexString()).toEqual('0x1')
+      mockHeader.number = '0x02'
+      manager.onListenBlock(mockHeader)
+      expect(manager.topBlockNumber.toHexString()).toEqual('0x2')
+    })
+  })
   describe('test update store when latest block arrived', () => {
-    const manager = new Manager()
+    const mockSource: ChainSource = {
+      getTipBlockNumber: function (): Promise<string> {
+        throw new Error('Function not implemented.')
+      },
+      getTipHeader: function (): Promise<Header> {
+        throw new Error('Function not implemented.')
+      },
+      getCurrentEpoch: function (): Promise<Epoch> {
+        throw new Error('Function not implemented.')
+      },
+      getBlock: function (): Promise<Block> {
+        throw new Error('Function not implemented.')
+      },
+    }
+    const manager = new Manager(new TipHeaderListener(mockSource), mockSource)
 
     afterEach(() => {
       mockXAdd.mockClear()
     })
 
-    it('cell update success', () => {
+    it('cell update success', async () => {
       const output: Output = {
         capacity: '0x01',
         lock: {
@@ -142,9 +199,12 @@ describe('Test resource binding', () => {
         uncles: [],
         proposals: [],
       }
+      mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
+      const { subscription, updator } = manager.listen()
+      mockSource.getBlock = () => Promise.resolve(mockBlock)
       /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
       manager.register(utils.computeScriptHash(output.lock), utils.computeScriptHash(output.type!), ref.uri)
-      manager.onListenBlock(mockBlock)
+      await new Promise((resolve) => setTimeout(resolve, 2000))
       expect(mockXAdd).toBeCalled()
       expect(manager.lastBlock?.header.number).toEqual('0x01')
       expect(
@@ -155,9 +215,11 @@ describe('Test resource binding', () => {
           }),
         ),
       ).toEqual({ uri: ref.uri })
+      subscription.unsubscribe()
+      clearInterval(updator)
     })
 
-    it('cell remove success', () => {
+    it('cell remove success', async () => {
       const output: Output = {
         capacity: '0x01',
         lock: {
@@ -211,7 +273,10 @@ describe('Test resource binding', () => {
         proposals: [],
       }
 
-      manager.onListenBlock(mockBlock)
+      mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
+      const { subscription, updator } = manager.listen()
+      mockSource.getBlock = () => Promise.resolve(mockBlock)
+      await new Promise((resolve) => setTimeout(resolve, 2000))
       expect(mockXAdd).toBeCalledTimes(2)
       expect(manager.lastBlock?.header.number).toEqual('0x02')
       expect(
@@ -230,6 +295,8 @@ describe('Test resource binding', () => {
           }),
         ),
       ).toEqual({ uri: ref.uri })
+      subscription.unsubscribe()
+      clearInterval(updator)
     })
   })
 })
