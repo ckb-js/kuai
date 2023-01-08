@@ -27,3 +27,21 @@ export class UnexpectedParamsException extends Error {
     super(`Unexpected params with ${params} when calling deserialize`)
   }
 }
+
+export class NoSchemaException extends Error {
+  constructor(type: string) {
+    super(`No schema setting with ${type}`)
+  }
+}
+
+export class NonExistentCellException extends Error {
+  constructor(outPoint: string) {
+    super(`${outPoint} cell is not exist in store`)
+  }
+}
+
+export class UnmatchLengthException extends Error {
+  constructor(type: string, actural: number, expect: number) {
+    super(`Actural length is ${actural}, but expect length is ${expect} in ${type}`)
+  }
+}

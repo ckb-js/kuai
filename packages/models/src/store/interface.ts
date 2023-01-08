@@ -1,3 +1,5 @@
+import type { Cell, HexString } from '@ckb-lumos/base'
+
 export type OutPointString = string
 
 type FieldSchema<T = unknown> =
@@ -10,7 +12,6 @@ type FieldSchema<T = unknown> =
 
 export interface ScriptSchema<T = unknown> {
   codeHash?: FieldSchema<T>
-  hashType?: FieldSchema<T>
   args?: FieldSchema<T>
 }
 export interface StorageSchema<T = unknown> {
@@ -31,8 +32,6 @@ type IsKeysExist<T, K extends keyof T> = T & { _add: never } extends {
 type IsEmptyScriptSchemaNever<T extends ScriptSchema> = IsKeysExist<T, 'args'> extends true
   ? T
   : IsKeysExist<T, 'codeHash'> extends true
-  ? T
-  : IsKeysExist<T, 'hashType'> extends true
   ? T
   : never
 
@@ -73,29 +72,58 @@ type GetScriptOption<T extends ScriptSchema> = IsEmptyScriptSchemaNever<
   OmitByValue<{
     [P in keyof T]: T[P] extends { offset?: number; length?: number; schema: unknown }
       ? PickExist<T[P], 'offset' | 'length'>
-      : never
+      : true
   }>
 >
 
 export type GetStorageOption<T extends StorageSchema> = IfEmptyStorageSchemaNever<
   OmitByValue<{
-    data: T extends { data: infer Option extends { offset?: number; length?: number; schema: unknown } }
-      ? PickExist<Option, 'offset' | 'length'>
+    [P in keyof T]: P extends 'data'
+      ? T extends { data: infer Option extends { offset?: number; length?: number; schema: unknown } }
+        ? PickExist<Option, 'offset' | 'length'>
+        : true
+      : P extends 'witness'
+      ? T extends { witness: infer Option extends { offset?: number; length?: number; schema: unknown } }
+        ? PickExist<Option, 'offset' | 'length'>
+        : true
+      : P extends 'lock'
+      ? T extends { lock: infer Lock extends ScriptSchema }
+        ? GetScriptOption<Lock>
+        : never
+      : P extends 'type'
+      ? T extends { type: infer Type extends ScriptSchema }
+        ? GetScriptOption<Type>
+        : never
       : never
-    witness: T extends { witness: infer Option extends { offset?: number; length?: number; schema: unknown } }
-      ? PickExist<Option, 'offset' | 'length'>
-      : never
-    lock: T extends { lock: infer Lock extends ScriptSchema } ? GetScriptOption<Lock> : never
-    type: T extends { type: infer Type extends ScriptSchema } ? GetScriptOption<Type> : never
   }>
 >
+
+export type GetOnChainStorage<T extends StorageSchema> = {
+  data: IsKeysExist<T, 'data'> extends true ? string : never
+  witness: IsKeysExist<T, 'witness'> extends true ? string : never
+  lock: T extends { lock: infer Lock extends ScriptSchema }
+    ? IsEmptyScriptSchemaNever<{ [P in keyof Lock]: string }>
+    : never
+  type: T extends { type: infer Type extends ScriptSchema }
+    ? IsEmptyScriptSchemaNever<{ [P in keyof Type]: string }>
+    : never
+}
 
 export type StorageLocation = 'data' | 'witness' | ['lock' | 'type', keyof ScriptSchema]
 
 export type StorePath<K = StorageLocation> = K extends string[] ? [...K, ...string[]] : [K, ...string[]]
 
-export interface StoreMessage<State> {
-  type: 'add_state' | 'remove_state'
-  add?: Record<OutPointString, State>
-  remove?: OutPointString[]
+export type UpdateStorageValue = {
+  witness: HexString
+  cell: Cell
 }
+
+export type StoreMessage =
+  | {
+      type: 'remove_cell'
+      value: OutPointString[]
+    }
+  | {
+      type: 'update_cell'
+      value: UpdateStorageValue
+    }
