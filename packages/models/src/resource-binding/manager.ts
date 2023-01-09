@@ -66,7 +66,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
       case 'register': {
         const register = _msg.payload?.value?.register
         if (register) {
-          this.register(register.lockscriptHash, register.typescriptHash, register.uri)
+          this.register(register.lockscriptHash, register.typescriptHash, register.uri, register.pattern)
         }
         break
       }
@@ -82,11 +82,11 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }
   }
 
-  async register(lock: LockscriptHash, type: TypescriptHash, uri: ActorURI) {
+  async register(lock: LockscriptHash, type: TypescriptHash, uri: ActorURI, pattern: string) {
     if (!this.#registry.get(type)) {
       this.#registry.set(type, new Map())
     }
-    this.#registry.get(type)?.set(lock, { uri })
+    this.#registry.get(type)?.set(lock, { uri, pattern })
     this.#registryReverse.set(uri, [type, lock])
   }
 
@@ -108,7 +108,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     const store = this.#registryOutpoint.get(outpoint)
     if (store) {
       this.call(store.uri, {
-        pattern: 'normal',
+        pattern: store.pattern,
         value: {
           type: 'remove_state',
           remove: outpoint,
@@ -123,7 +123,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     const store = this.#registry.get(typeHash)?.get(utils.computeScriptHash(output.lock))
     if (store) {
       this.call(store.uri, {
-        pattern: 'normal',
+        pattern: store.pattern,
         value: {
           type: 'update_cell',
           update: {
@@ -138,7 +138,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
           },
         },
       })
-      this.registryOutpoint.set(outpointToOutPointString(outpoint), { uri: store.uri })
+      this.registryOutpoint.set(outpointToOutPointString(outpoint), { uri: store.uri, pattern: store.pattern })
     }
   }
 

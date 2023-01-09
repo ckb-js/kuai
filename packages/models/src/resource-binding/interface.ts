@@ -3,6 +3,7 @@ import { LockscriptHash, TypescriptHash } from './types'
 
 export interface ResourceBindingRegistry {
   uri: ActorURI
+  pattern: string
 }
 
 export interface ResourceBindingManagerMessage {
