@@ -244,6 +244,13 @@ describe('Test resource binding', () => {
           args: '0x01',
         },
       }
+      const input: Input = {
+        previousOutput: {
+          txHash: '0x12',
+          index: '0x2',
+        },
+        since: '',
+      }
       const mockBlock = {
         header: {
           timestamp: '0x',
@@ -264,7 +271,7 @@ describe('Test resource binding', () => {
             cellDeps: [],
             hash: '0x01',
             headerDeps: [],
-            inputs: [],
+            inputs: [input],
             outputs: [output],
             outputsData: ['0x01'],
             version: '0x01',
