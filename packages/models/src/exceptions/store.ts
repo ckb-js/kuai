@@ -41,7 +41,7 @@ export class NonExistentCellException extends Error {
 }
 
 export class UnmatchLengthException extends Error {
-  constructor(type: string, actural: number, expect: number) {
-    super(`Actural length is ${actural}, but expect length is ${expect} in ${type}`)
+  constructor(type: string, actual: number, expected: number) {
+    super(`Actual length is ${actual}, but expected length is ${expected} in ${type}`)
   }
 }

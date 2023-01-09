@@ -1,5 +1,5 @@
 import { bytes } from '@ckb-lumos/codec'
-import { Cell, HexString, Script } from '@ckb-lumos/base'
+import type { Cell, HexString, Script } from '@ckb-lumos/base'
 import BigNumber from 'bignumber.js'
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 import { NonExistentException, NonStorageInstanceException } from '../../src/exceptions'
