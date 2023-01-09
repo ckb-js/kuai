@@ -111,25 +111,33 @@ describe('Test resource binding', () => {
     })
   })
   describe('test new block header arrived', () => {
+    const manager = new Manager(mockListener, mockSource)
+
+    const mockHeader = {
+      timestamp: '0x',
+      number: '0x01',
+      epoch: '0x',
+      compactTarget: '0x',
+      dao: '0x',
+      hash: '0x',
+      nonce: '0x',
+      parentHash: '0x',
+      proposalsHash: '0x',
+      transactionsRoot: '0x',
+      extraHash: '0x',
+      version: '0x',
+    }
+
     it('update top block number success', () => {
-      const manager = new Manager(mockListener, mockSource)
-      const mockHeader = {
-        timestamp: '0x',
-        number: '0x01',
-        epoch: '0x',
-        compactTarget: '0x',
-        dao: '0x',
-        hash: '0x',
-        nonce: '0x',
-        parentHash: '0x',
-        proposalsHash: '0x',
-        transactionsRoot: '0x',
-        extraHash: '0x',
-        version: '0x',
-      }
       manager.onListenBlock(mockHeader)
       expect(manager.topBlockNumber.toHexString()).toEqual('0x1')
       mockHeader.number = '0x02'
+      manager.onListenBlock(mockHeader)
+      expect(manager.topBlockNumber.toHexString()).toEqual('0x2')
+    })
+
+    it("dont't update when block arrived is behind the top", () => {
+      mockHeader.number = '0x01'
       manager.onListenBlock(mockHeader)
       expect(manager.topBlockNumber.toHexString()).toEqual('0x2')
     })
