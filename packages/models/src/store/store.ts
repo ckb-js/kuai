@@ -14,6 +14,7 @@ import type {
   GetStorageOption,
   UpdateStorageValue,
   GetOnChainStorage,
+  ByteLength,
 } from './interface'
 import type { JSONStorageOffChain } from './json-storage'
 import type { GetState } from './chain-storage'
@@ -25,13 +26,17 @@ import {
   NonExistentException,
   NonStorageInstanceException,
   NoSchemaException,
+  UnexpectedSchemaOptException,
   UnmatchLengthException,
 } from '../exceptions'
 
 type GetKeyType<T, K extends keyof T> = T & { _add: never } extends { [P in K]: T[P] } ? T[K] : never
+const ByteCharLen = 2
 
-export function getUint8ArrayfromHex(value: string, offset: number, length: number) {
-  return bytes.bytify(`0x${value.slice(2 + offset, length ? 2 + offset + length : undefined)}`)
+export function getUint8ArrayfromHex(value: string, offset: ByteLength, length: ByteLength) {
+  return bytes.bytify(
+    `0x${value.slice(2 + offset * ByteCharLen, length ? 2 + offset * ByteCharLen + length * ByteCharLen : undefined)}`,
+  )
 }
 
 export class Store<
@@ -61,23 +66,11 @@ export class Store<
     this.options = params?.options
   }
 
-  private getOffsetAndLength(option: unknown): [number, number] {
+  private getOffsetAndLength(option: unknown): [ByteLength, ByteLength] {
     if (typeof option !== 'object' || option === null) return [0, 0]
-    if (
-      'offset' in option &&
-      typeof option.offset === 'number' &&
-      'length' in option &&
-      typeof option.length === 'number'
-    ) {
-      return [option.offset || 0, option.length || 0]
-    }
-    if ('offset' in option && typeof option.offset === 'number') {
-      return [option.offset || 0, 0]
-    }
-    if ('length' in option && typeof option.length === 'number') {
-      return [0, option.length || 0]
-    }
-    return [0, 0]
+    const offset = 'offset' in option && typeof option.offset === 'number' ? option.offset : 0
+    const length = 'length' in option && typeof option.length === 'number' ? option.length : 0
+    return [offset, length]
   }
 
   private deserializeScript<T extends 'lock' | 'type'>(
@@ -85,7 +78,7 @@ export class Store<
     scriptOption: unknown,
     type: T,
   ): GetFullStorageStruct<StructSchema>[T] {
-    if (typeof scriptOption !== 'object' || scriptOption === null) throw new Error()
+    if (typeof scriptOption !== 'object' || scriptOption === null) throw new UnexpectedSchemaOptException()
     const res = {} as GetFullStorageStruct<StructSchema>[T]
     if ('args' in scriptOption) {
       this.assetStorage(this.getStorage([type, 'args']))
@@ -216,29 +209,29 @@ export class Store<
       const { offset, length, hexString } = this.serializeField(type, newValue)
       if (type === 'data') {
         cellInfo.cell.data =
-          cellInfo.cell.data.slice(0, 2 + offset) +
+          cellInfo.cell.data.slice(0, 2 + offset * ByteCharLen) +
           hexString.slice(2) +
-          (length ? cellInfo.cell.data.slice(2 + offset + length) : '')
-      } else {
+          (length ? cellInfo.cell.data.slice(2 + offset * ByteCharLen + length * ByteCharLen) : '')
+      } else if (type === 'witness') {
         cellInfo.witness =
-          cellInfo.witness.slice(0, 2 + offset) +
+          cellInfo.witness.slice(0, 2 + offset * ByteCharLen) +
           hexString.slice(2) +
-          (length ? cellInfo.witness.slice(2 + offset + length) : '')
+          (length ? cellInfo.witness.slice(2 + offset * ByteCharLen + length * ByteCharLen) : '')
       }
     } else {
       const { offset, length, hexString } = this.serializeField(type, newValue)
       if (type[0] === 'lock') {
         const originalValue = cellInfo.cell.cellOutput.lock[type[1]]
         cellInfo.cell.cellOutput.lock[type[1]] =
-          originalValue.slice(0, 2 + offset) +
+          originalValue.slice(0, 2 + offset * ByteCharLen) +
           hexString.slice(2) +
-          (length ? originalValue.slice(2 + offset + length) : '')
+          (length ? originalValue.slice(2 + offset * ByteCharLen + length * ByteCharLen) : '')
       } else if (cellInfo.cell.cellOutput.type) {
         const originalValue = cellInfo.cell.cellOutput.type[type[1]]
         cellInfo.cell.cellOutput.type[type[1]] =
-          originalValue.slice(0, 2 + offset) +
+          originalValue.slice(0, 2 + offset * ByteCharLen) +
           hexString.slice(2) +
-          (length ? originalValue.slice(2 + offset + length) : '')
+          (length ? originalValue.slice(2 + offset * ByteCharLen + length * ByteCharLen) : '')
       }
     }
   }
@@ -288,30 +281,30 @@ export class Store<
     const res: StorageSchema<string> = {}
     if ('data' in value) {
       const { offset, hexString } = this.serializeField('data', value.data)
-      res.data = `0x${offset ? '0'.repeat(offset) : ''}${hexString.slice(2)}`
+      res.data = `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}`
     }
     if ('witness' in value) {
       const { offset, hexString } = this.serializeField('witness', value.witness)
-      res.witness = `0x${offset ? '0'.repeat(offset) : ''}${hexString.slice(2)}`
+      res.witness = `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}`
     }
     if ('lock' in value && value.lock && typeof value.lock === 'object') {
       if ('args' in value.lock) {
         const { offset, hexString } = this.serializeField(['lock', 'args'], value.lock.args)
-        res.lock = { args: `0x${offset ? '0'.repeat(offset) : ''}${hexString.slice(2)}` }
+        res.lock = { args: `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}` }
       }
       if ('codeHash' in value.lock) {
         const { offset, hexString } = this.serializeField(['lock', 'codeHash'], value.lock.codeHash)
-        res.lock = { ...res.lock, codeHash: `0x${offset ? '0'.repeat(offset) : ''}${hexString.slice(2)}` }
+        res.lock = { ...res.lock, codeHash: `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}` }
       }
     }
     if ('type' in value && value.type && typeof value.type === 'object') {
       if ('args' in value.type) {
         const { offset, hexString } = this.serializeField(['type', 'args'], value.type.args)
-        res.type = { args: `0x${offset ? '0'.repeat(offset) : ''}${hexString.slice(2)}` }
+        res.type = { args: `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}` }
       }
       if ('codeHash' in value.type) {
         const { offset, hexString } = this.serializeField(['type', 'codeHash'], value.type.codeHash)
-        res.type = { ...res.type, codeHash: `0x${offset ? '0'.repeat(offset) : ''}${hexString.slice(2)}` }
+        res.type = { ...res.type, codeHash: `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}` }
       }
     }
     return res as GetOnChainStorage<StructSchema>

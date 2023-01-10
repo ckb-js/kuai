@@ -45,3 +45,9 @@ export class UnmatchLengthException extends Error {
     super(`Actual length is ${actual}, but expected length is ${expected} in ${type}`)
   }
 }
+
+export class UnexpectedSchemaOptException extends Error {
+  constructor() {
+    super(`Unexpected schema options without object`)
+  }
+}

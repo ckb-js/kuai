@@ -1,12 +1,13 @@
 import type { Cell, HexString } from '@ckb-lumos/base'
 
 export type OutPointString = string
+export type ByteLength = number
 
 type FieldSchema<T = unknown> =
   | T
   | {
-      offset?: number
-      length?: number
+      offset?: ByteLength
+      length?: ByteLength
       schema: T
     }
 
@@ -70,7 +71,7 @@ type PickExist<T, K extends keyof T> = OmitByValue<{
 
 type GetScriptOption<T extends ScriptSchema> = IsEmptyScriptSchemaNever<
   OmitByValue<{
-    [P in keyof T]: T[P] extends { offset?: number; length?: number; schema: unknown }
+    [P in keyof T]: T[P] extends { offset?: ByteLength; length?: ByteLength; schema: unknown }
       ? PickExist<T[P], 'offset' | 'length'>
       : true
   }>
@@ -79,11 +80,11 @@ type GetScriptOption<T extends ScriptSchema> = IsEmptyScriptSchemaNever<
 export type GetStorageOption<T extends StorageSchema> = IfEmptyStorageSchemaNever<
   OmitByValue<{
     [P in keyof T]: P extends 'data'
-      ? T extends { data: infer Option extends { offset?: number; length?: number; schema: unknown } }
+      ? T extends { data: infer Option extends { offset?: ByteLength; length?: ByteLength; schema: unknown } }
         ? PickExist<Option, 'offset' | 'length'>
         : true
       : P extends 'witness'
-      ? T extends { witness: infer Option extends { offset?: number; length?: number; schema: unknown } }
+      ? T extends { witness: infer Option extends { offset?: ByteLength; length?: ByteLength; schema: unknown } }
         ? PickExist<Option, 'offset' | 'length'>
         : true
       : P extends 'lock'
