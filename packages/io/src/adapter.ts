@@ -1,5 +1,6 @@
 import KoaRouter from 'koa-router'
 import { CoR } from './cor'
+import { JsonValue } from './types'
 
 export class KoaRouterAdapter extends KoaRouter {
   constructor(private readonly cor: CoR) {
@@ -15,10 +16,9 @@ export class KoaRouterAdapter extends KoaRouter {
       ctx.body = await this.cor.dispatch({
         method: ctx.method,
         path: ctx.path,
-        params: ctx.params,
-        // todo: support body & query
-        // query: ctx.query,
-        // body: ctx.request.body,
+        query: ctx.query as JsonValue,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        body: (ctx.request as any)?.body || undefined,
       })
       await next()
     }
