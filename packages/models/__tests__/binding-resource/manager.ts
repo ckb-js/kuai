@@ -111,6 +111,23 @@ describe('Test resource binding', () => {
       expect(manager.registry.get('0x11')?.get('0x22')).toBeUndefined()
       expect(manager.registryReverse.get(ref.uri)).toBeUndefined()
     })
+
+    it('will to nothing when no registry', () => {
+      const manager = new Manager(mockListener, mockSource)
+      manager.handleCall({
+        from: ref,
+        behavior: Behavior.Call,
+        payload: {
+          pattern: 'normal',
+          value: {
+            type: 'revoke',
+            revoke: {
+              uri: ref.uri,
+            },
+          },
+        },
+      })
+    })
   })
   describe('test new block header arrived', () => {
     const manager = new Manager(mockListener, mockSource)
