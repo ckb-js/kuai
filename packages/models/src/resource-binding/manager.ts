@@ -48,7 +48,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
               {
                 /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
                 txHash: tx.hash!,
-                index: outputIndex,
+                index: BI.from(outputIndex).toHexString(),
               },
               tx.outputsData[outputIndex],
               tx.witnesses[outputIndex],
