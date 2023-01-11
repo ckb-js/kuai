@@ -1,4 +1,4 @@
-import { task, subtask, KuaiConfig, paramTypes } from '@kuai/core'
+import { task, subtask, KuaiConfig, paramTypes } from '@ckb-js/kuai-core'
 
 task('demo-task1')
   .addParam('paramA', 'a custom param', 'default value')

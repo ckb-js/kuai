@@ -1,5 +1,5 @@
 {
-  "name": "@kuai/docker-node",
+  "name": "@ckb-js/kuai-docker-node",
   "version": "0.0.1",
   "license": "MIT",
   "description": "kuai run dev node by docker",

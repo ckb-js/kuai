@@ -1,5 +1,5 @@
 {
-  "name": "@kuai/typeorm",
+  "name": "@ckb-js/kuai-typeorm",
   "version": "0.0.1",
   "description": "Inject TypeOrm by InversifyJs",
   "author": "felicityin <yinjingping2022@gmail.com>",

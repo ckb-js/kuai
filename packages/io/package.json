@@ -1,5 +1,5 @@
 {
-  "name": "@kuai/io",
+  "name": "@ckb-js/kuai-io",
   "version": "0.0.1",
   "description": "kuai io layer",
   "homepage": "https://github.com/ckb-js/kuai#readme",
