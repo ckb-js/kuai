@@ -110,7 +110,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
       this.call(store.uri, {
         pattern: store.pattern,
         value: {
-          type: 'remove_state',
+          type: 'remove_cell',
           remove: outpoint,
         },
       })
