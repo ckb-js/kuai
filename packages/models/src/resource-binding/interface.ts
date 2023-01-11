@@ -1,5 +1,5 @@
-import { ActorURI } from '../actor'
-import { LockScriptHash, TypeScriptHash } from './types'
+import type { ActorURI } from '../actor'
+import type { LockScriptHash, TypeScriptHash } from './types'
 
 export interface ResourceBindingRegistry {
   uri: ActorURI
