@@ -1,4 +1,4 @@
 import { Hash } from '@ckb-lumos/base'
 
-export type TypescriptHash = Hash | 'null'
-export type LockscriptHash = Hash
+export type TypeScriptHash = Hash | 'null'
+export type LockScriptHash = Hash
