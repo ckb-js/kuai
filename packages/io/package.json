@@ -4,8 +4,12 @@
   "description": "kuai io layer",
   "homepage": "https://github.com/ckb-js/kuai#readme",
   "license": "MIT",
+  "main": "lib/index.js",
   "exports": {
-    ".": "./lib/index.js"
+    ".": {
+      "import": "./lib/index.js",
+      "types": "./lib/index.d.ts"
+    }
   },
   "directories": {
     "lib": "lib",
