@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
-import { ProviderKey, Behavior, outpointToOutPointString } from '../../src'
+import { ProviderKey, Behavior, outPointToOutPointString } from '../../src'
 import { Manager } from '../../src'
 import { utils, Input, Output, Block, Epoch, Header } from '@ckb-lumos/base'
 import { ChainSource } from '@kuai/io/lib/types'
@@ -149,16 +149,16 @@ describe('Test resource binding', () => {
 
     it('update top block number success', () => {
       manager.onListenBlock(mockHeader)
-      expect(manager.topBlockNumber.toHexString()).toEqual('0x1')
+      expect(manager.tipBlockNumber.toHexString()).toEqual('0x1')
       mockHeader.number = '0x02'
       manager.onListenBlock(mockHeader)
-      expect(manager.topBlockNumber.toHexString()).toEqual('0x2')
+      expect(manager.tipBlockNumber.toHexString()).toEqual('0x2')
     })
 
     it("dont't update when block arrived is behind the top", () => {
       mockHeader.number = '0x01'
       manager.onListenBlock(mockHeader)
-      expect(manager.topBlockNumber.toHexString()).toEqual('0x2')
+      expect(manager.tipBlockNumber.toHexString()).toEqual('0x2')
     })
   })
 
@@ -237,7 +237,7 @@ describe('Test resource binding', () => {
       expect(manager.lastBlock?.header.number).toEqual('0x01')
       expect(
         manager.registryOutpoint.get(
-          outpointToOutPointString({
+          outPointToOutPointString({
             txHash: '0x01',
             index: '0x00',
           }),
@@ -371,7 +371,7 @@ describe('Test resource binding', () => {
       expect(manager.lastBlock?.header.number).toEqual('0x03')
       expect(
         manager.registryOutpoint.get(
-          outpointToOutPointString({
+          outPointToOutPointString({
             txHash: '0x01',
             index: '0x00',
           }),
@@ -379,7 +379,7 @@ describe('Test resource binding', () => {
       ).toBeUndefined()
       expect(
         manager.registryOutpoint.get(
-          outpointToOutPointString({
+          outPointToOutPointString({
             txHash: '0x02',
             index: '0x00',
           }),

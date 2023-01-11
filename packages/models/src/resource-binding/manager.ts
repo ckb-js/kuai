@@ -1,20 +1,20 @@
 import { Block, Header, Output, Input, HexString, utils, OutPoint } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
-import { TypescriptHash, LockscriptHash } from './types'
+import { TypeScriptHash, LockScriptHash } from './types'
 import { ResourceBindingRegistry, ResourceBindingManagerMessage } from './interface'
-import { outpointToOutPointString } from './utils'
+import { outPointToOutPointString } from './utils'
 import { Listener } from '@kuai/io'
 import { OutPointString } from '..'
 import type { Subscription } from 'rxjs'
 import { ChainSource } from '@kuai/io/lib/types'
 
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
-  #registry: Map<TypescriptHash, Map<LockscriptHash, ResourceBindingRegistry>> = new Map()
+  #registry: Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> = new Map()
   #registryOutpoint: Map<OutPointString, ResourceBindingRegistry> = new Map()
-  #registryReverse: Map<ActorURI, [TypescriptHash, LockscriptHash]> = new Map()
+  #registryReverse: Map<ActorURI, [TypeScriptHash, LockScriptHash]> = new Map()
   #lastBlock: Block | undefined = undefined
-  #topBlockNumber = BI.from(0)
+  #tipBlockNumber = BI.from(0)
 
   constructor(private _listener: Listener<Header>, private _dataSource: ChainSource) {
     super()
@@ -22,15 +22,15 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
 
   onListenBlock = (blockHeader: Header) => {
     const currentBlockNumber = BI.from(blockHeader.number)
-    if (currentBlockNumber.gt(this.topBlockNumber)) {
-      this.topBlockNumber = currentBlockNumber
+    if (currentBlockNumber.gt(this.tipBlockNumber)) {
+      this.tipBlockNumber = currentBlockNumber
     }
   }
 
   private update(pollingInterval = 1000) {
     return setInterval(async () => {
-      if (this.#topBlockNumber.gt(0) && this.#topBlockNumber.gt(BI.from(this.#lastBlock?.header.number ?? 0))) {
-        this.updateStore(await this._dataSource.getBlock(this.#topBlockNumber.toHexString()))
+      if (this.#tipBlockNumber.gt(0) && this.#tipBlockNumber.gt(BI.from(this.#lastBlock?.header.number ?? 0))) {
+        this.updateStore(await this._dataSource.getBlock(this.#tipBlockNumber.toHexString()))
       }
     }, pollingInterval)
   }
@@ -82,7 +82,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }
   }
 
-  async register(lock: LockscriptHash, type: TypescriptHash, uri: ActorURI, pattern: string) {
+  async register(lock: LockScriptHash, type: TypeScriptHash, uri: ActorURI, pattern: string) {
     if (!this.#registry.get(type)) {
       this.#registry.set(type, new Map())
     }
@@ -104,7 +104,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   }
 
   private removeFromInput(input: Input) {
-    const outpoint = outpointToOutPointString(input.previousOutput)
+    const outpoint = outPointToOutPointString(input.previousOutput)
     const store = this.#registryOutpoint.get(outpoint)
     if (store) {
       this.call(store.uri, {
@@ -138,11 +138,11 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
           },
         },
       })
-      this.registryOutpoint.set(outpointToOutPointString(outpoint), { uri: store.uri, pattern: store.pattern })
+      this.registryOutpoint.set(outPointToOutPointString(outpoint), { uri: store.uri, pattern: store.pattern })
     }
   }
 
-  get registry(): Map<TypescriptHash, Map<LockscriptHash, ResourceBindingRegistry>> {
+  get registry(): Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> {
     return this.#registry
   }
 
@@ -150,7 +150,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return this.#registryOutpoint
   }
 
-  get registryReverse(): Map<ActorURI, [TypescriptHash, LockscriptHash]> {
+  get registryReverse(): Map<ActorURI, [TypeScriptHash, LockScriptHash]> {
     return this.#registryReverse
   }
 
@@ -158,11 +158,11 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return this.#lastBlock
   }
 
-  set topBlockNumber(blockNumber: BI) {
-    this.#topBlockNumber = blockNumber
+  set tipBlockNumber(blockNumber: BI) {
+    this.#tipBlockNumber = blockNumber
   }
 
-  get topBlockNumber(): BI {
-    return this.#topBlockNumber
+  get tipBlockNumber(): BI {
+    return this.#tipBlockNumber
   }
 }

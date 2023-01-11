@@ -1,5 +1,5 @@
 import { ActorURI } from '../actor'
-import { LockscriptHash, TypescriptHash } from './types'
+import { LockScriptHash, TypeScriptHash } from './types'
 
 export interface ResourceBindingRegistry {
   uri: ActorURI
@@ -9,8 +9,8 @@ export interface ResourceBindingRegistry {
 export interface ResourceBindingManagerMessage {
   type: 'register' | 'revoke'
   register?: {
-    typescriptHash: TypescriptHash
-    lockscriptHash: LockscriptHash
+    typescriptHash: TypeScriptHash
+    lockscriptHash: LockScriptHash
   } & ResourceBindingRegistry
   revoke?: {
     uri: ActorURI
