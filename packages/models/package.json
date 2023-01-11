@@ -1,5 +1,5 @@
 {
-  "name": "@kuai/models",
+  "name": "@ckb-js/kuai-models",
   "version": "0.0.1",
   "description": "Models of Kuai runtime",
   "author": "Keith <keithwhisper@gmail.com>",

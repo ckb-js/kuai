@@ -1,4 +1,4 @@
-import { KuaiConfig } from '@kuai/core';
+import { KuaiConfig } from '@ckb-js/kuai-core';
 
 const config: KuaiConfig = {};
 

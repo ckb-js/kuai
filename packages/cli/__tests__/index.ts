@@ -15,7 +15,7 @@ describe('kuai cli', () => {
 
   afterAll(() => {
     execSync('npx kuai node stop')
-    execSync('npm unlink -g @kuai/cli')
+    execSync('npm unlink -g @ckb-js/kuai-cli')
   })
 
   test('ckb node listening port', async () => {
