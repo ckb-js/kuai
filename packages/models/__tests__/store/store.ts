@@ -3,6 +3,15 @@ import { NonExistentException, NonStorageInstanceException } from '../../src/exc
 import { ChainStorage, JSONStore, Store, Behavior, ProviderKey, StorageLocation, StorageSchema } from '../../src'
 import BigNumber from 'bignumber.js'
 
+const mockXAdd = jest.fn()
+const mockXRead = jest.fn<() => void>()
+jest.mock('ioredis', () => {
+  return class Redis {
+    xread = mockXRead
+    xadd = mockXAdd
+  }
+})
+
 const ref = {
   name: '',
   protocol: '',
