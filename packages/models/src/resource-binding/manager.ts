@@ -4,10 +4,10 @@ import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
 import { TypeScriptHash, LockScriptHash } from './types'
 import { ResourceBindingRegistry, ResourceBindingManagerMessage } from './interface'
 import { outPointToOutPointString } from './utils'
-import { Listener } from '@kuai/io'
+import { Listener } from '@ckb-js/kuai-io'
 import { OutPointString } from '..'
 import type { Subscription } from 'rxjs'
-import { ChainSource } from '@kuai/io/lib/types'
+import { ChainSource } from '@ckb-js/kuai-io/lib/types'
 
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
   #registry: Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> = new Map()

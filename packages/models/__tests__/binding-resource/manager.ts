@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import { ProviderKey, Behavior, outPointToOutPointString } from '../../src'
 import { Manager } from '../../src'
 import { utils, Input, Output, Block, Epoch, Header } from '@ckb-lumos/base'
-import { ChainSource } from '@kuai/io/lib/types'
-import { TipHeaderListener } from '@kuai/io'
+import { ChainSource } from '@ckb-js/kuai-io/lib/types'
+import { TipHeaderListener } from '@ckb-js/kuai-io'
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 const mockXRead = jest.fn<() => any>()
