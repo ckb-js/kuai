@@ -23,15 +23,6 @@ jest.mock('ioredis', () => {
   }
 })
 
-const mockXAdd = jest.fn()
-const mockXRead = jest.fn<() => void>()
-jest.mock('ioredis', () => {
-  return class Redis {
-    xread = mockXRead
-    xadd = mockXAdd
-  }
-})
-
 const ref = {
   name: '',
   protocol: '',
