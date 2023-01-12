@@ -1,13 +1,13 @@
-import { Block, Header, Output, Input, HexString, utils, OutPoint } from '@ckb-lumos/base'
+import { Block, Header, Input, HexString, utils, Cell } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
 import { TypeScriptHash, LockScriptHash } from './types'
 import { ResourceBindingRegistry, ResourceBindingManagerMessage } from './interface'
 import { outPointToOutPointString } from './utils'
 import { Listener } from '@ckb-js/kuai-io'
-import { OutPointString } from '..'
 import type { Subscription } from 'rxjs'
 import { ChainSource } from '@ckb-js/kuai-io/lib/types'
+import { OutPointString } from '../store'
 
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
   #registry: Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> = new Map()
@@ -37,28 +37,82 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
 
   private updateStore(block: Block) {
     if (!this.#lastBlock || BI.from(block.header.number).gt(BI.from(this.#lastBlock.header.number))) {
-      for (const tx of block.transactions) {
-        for (const input of tx.inputs) {
-          this.removeFromInput(input)
-        }
-        for (const outputIndex in tx.outputs) {
-          if (tx.hash) {
-            this.AddFromOutput(
-              tx.outputs[outputIndex],
-              {
-                /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-                txHash: tx.hash!,
-                index: BI.from(outputIndex).toHexString(),
-              },
-              tx.outputsData[outputIndex],
-              tx.witnesses[outputIndex],
-              block,
-            )
+      const changes = this.filterCells(block)
+      for (const [store, input, data] of changes) {
+        const upgrade: { witness: HexString; cell: Cell }[] = []
+        for (const [cell, witness] of data) {
+          upgrade.push({ witness, cell })
+          const outPoint = cell.outPoint
+          if (outPoint) {
+            this.#registryOutpoint.set(outPointToOutPointString(outPoint), store)
           }
         }
+        this.sendMessage(store, 'update_cell', upgrade)
+
+        this.sendMessage(
+          store,
+          'remove_cell',
+          input.map((v) => v.previousOutput),
+        )
       }
       this.#lastBlock = block
     }
+  }
+
+  private filterCells(block: Block): [ResourceBindingRegistry, Input[], [Cell, string][]][] {
+    const changes: Map<ActorURI, [ResourceBindingRegistry, Input[], [Cell, string][]]> = new Map()
+    const outputs = new Map<OutPointString, [Cell, string]>()
+    for (const tx of block.transactions) {
+      for (const outputIndex in tx.outputs) {
+        if (tx.hash) {
+          const outPoint = {
+            txHash: tx.hash,
+            index: BI.from(outputIndex).toHexString(),
+          }
+          outputs.set(outPointToOutPointString(outPoint), [
+            {
+              cellOutput: tx.outputs[outputIndex],
+              data: tx.outputsData[outputIndex],
+              outPoint,
+              blockHash: block.header.hash,
+              blockNumber: block.header.number,
+            },
+            tx.witnesses[outputIndex],
+          ])
+        }
+      }
+      for (const input of tx.inputs) {
+        const outPointString = outPointToOutPointString(input.previousOutput)
+        if (outputs.has(outPointString)) {
+          outputs.delete(outPointString)
+        } else {
+          const registry = this.#registryOutpoint.get(outPointString)
+          if (registry) {
+            let change = changes.get(registry.uri)
+            if (!change) {
+              change = [registry, [], []]
+            }
+            change[1].push(input)
+            this.#registryOutpoint.delete(outPointString)
+          }
+        }
+      }
+    }
+
+    for (const output of outputs.values()) {
+      const typeHash = output[0].cellOutput.type ? utils.computeScriptHash(output[0].cellOutput.type) : 'null'
+      const registry = this.#registry.get(typeHash)?.get(utils.computeScriptHash(output[0].cellOutput.lock))
+      if (registry) {
+        let change = changes.get(registry.uri)
+        if (!change) {
+          change = [registry, [], []]
+        }
+        change[2].push(output)
+        changes.set(registry.uri, change)
+      }
+    }
+
+    return Array.from(changes.values())
   }
 
   handleCall = (_msg: ActorMessage<MessagePayload<ResourceBindingManagerMessage>>): void => {
@@ -103,43 +157,15 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return { subscription: this._listener.on(this.onListenBlock), updator: this.update(pollingInterval) }
   }
 
-  private removeFromInput(input: Input) {
-    const outpoint = outPointToOutPointString(input.previousOutput)
-    const store = this.#registryOutpoint.get(outpoint)
-    if (store) {
-      this.call(store.uri, {
-        pattern: store.pattern,
-        value: {
-          type: 'remove_cell',
-          remove: outpoint,
-        },
-      })
-    }
-    this.#registryOutpoint.delete(outpoint)
-  }
-
-  private AddFromOutput(output: Output, outpoint: OutPoint, data: HexString, witness: HexString, block: Block) {
-    const typeHash = output.type ? utils.computeScriptHash(output.type) : 'null'
-    const store = this.#registry.get(typeHash)?.get(utils.computeScriptHash(output.lock))
-    if (store) {
-      this.call(store.uri, {
-        pattern: store.pattern,
-        value: {
-          type: 'update_cell',
-          update: {
-            witness: witness,
-            cell: {
-              cellOutput: output,
-              data: data,
-              outPoint: outpoint,
-              blockHash: block.header.hash,
-              blockNumber: block.header.number,
-            },
-          },
-        },
-      })
-      this.registryOutpoint.set(outPointToOutPointString(outpoint), { uri: store.uri, pattern: store.pattern })
-    }
+  private sendMessage(store: ResourceBindingRegistry, type: 'remove_cell' | 'update_cell', payload: object) {
+    this.call(store.uri, {
+      pattern: store.pattern,
+      value: {
+        type,
+        remove: type == 'remove_cell' ? payload : undefined,
+        update: type == 'update_cell' ? payload : undefined,
+      },
+    })
   }
 
   get registry(): Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> {
