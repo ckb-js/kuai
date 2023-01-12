@@ -1,7 +1,16 @@
 import BigNumber from 'bignumber.js'
-import { describe, it, expect } from '@jest/globals'
+import { describe, it, expect, jest } from '@jest/globals'
 import { addMarkForStorage, JSONStorage } from '../../src'
 import { UnexpectedParamsException, UnexpectedTypeException } from '../../src/exceptions'
+
+const mockXAdd = jest.fn()
+const mockXRead = jest.fn<() => void>()
+jest.mock('ioredis', () => {
+  return class Redis {
+    xread = mockXRead
+    xadd = mockXAdd
+  }
+})
 
 describe('test json storage', () => {
   describe('only data exist', () => {
