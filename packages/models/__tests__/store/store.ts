@@ -159,6 +159,28 @@ describe('test store', () => {
         })
         expect(store.get(defaultOutpoint)).toStrictEqual({ data: initValue })
       })
+      it('add data with array success', () => {
+        const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
+        const initValue = { a: BigNumber(1) }
+        const onchainData = store.initOnChain({ data: initValue })
+        store.handleCall({
+          from: ref,
+          behavior: Behavior.Call,
+          payload: {
+            pattern: 'normal',
+            value: {
+              type: 'update_cell',
+              value: [
+                {
+                  cell: createCell({ data: onchainData.data }),
+                  witness: '',
+                },
+              ],
+            },
+          },
+        })
+        expect(store.get(defaultOutpoint)).toStrictEqual({ data: initValue })
+      })
       it('add witness success', () => {
         const store = new JSONStore<{ witness: { a: BigNumber } }>({ witness: true })
         const initValue = { a: BigNumber(1) }

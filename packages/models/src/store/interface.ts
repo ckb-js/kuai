@@ -126,5 +126,5 @@ export type StoreMessage =
     }
   | {
       type: 'update_cell'
-      value: UpdateStorageValue
+      value: UpdateStorageValue | UpdateStorageValue[]
     }
