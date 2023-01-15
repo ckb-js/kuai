@@ -1,4 +1,4 @@
-import { Block, Header, Input, HexString, utils, Cell } from '@ckb-lumos/base'
+import { Transaction, Block, Header, Input, HexString, utils, Cell } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
 import { TypeScriptHash, LockScriptHash } from './types'
@@ -59,28 +59,35 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }
   }
 
+  private filterOutputs(tx: Transaction, block: Block): Map<OutPointString, [Cell, string]> {
+    const outputs = new Map<OutPointString, [Cell, string]>()
+    for (const outputIndex in tx.outputs) {
+      if (tx.hash) {
+        const outPoint = {
+          txHash: tx.hash,
+          index: BI.from(outputIndex).toHexString(),
+        }
+        outputs.set(outPointToOutPointString(outPoint), [
+          {
+            cellOutput: tx.outputs[outputIndex],
+            data: tx.outputsData[outputIndex],
+            outPoint,
+            blockHash: block.header.hash,
+            blockNumber: block.header.number,
+          },
+          tx.witnesses[outputIndex],
+        ])
+      }
+    }
+
+    return outputs
+  }
+
   private filterCells(block: Block): [ResourceBindingRegistry, Input[], [Cell, string][]][] {
     const changes: Map<ActorURI, [ResourceBindingRegistry, Input[], [Cell, string][]]> = new Map()
-    const outputs = new Map<OutPointString, [Cell, string]>()
+    let outputs = new Map<OutPointString, [Cell, string]>()
     for (const tx of block.transactions) {
-      for (const outputIndex in tx.outputs) {
-        if (tx.hash) {
-          const outPoint = {
-            txHash: tx.hash,
-            index: BI.from(outputIndex).toHexString(),
-          }
-          outputs.set(outPointToOutPointString(outPoint), [
-            {
-              cellOutput: tx.outputs[outputIndex],
-              data: tx.outputsData[outputIndex],
-              outPoint,
-              blockHash: block.header.hash,
-              blockNumber: block.header.number,
-            },
-            tx.witnesses[outputIndex],
-          ])
-        }
-      }
+      outputs = new Map([...outputs, ...this.filterOutputs(tx, block)])
       for (const input of tx.inputs) {
         const outPointString = outPointToOutPointString(input.previousOutput)
         if (outputs.has(outPointString)) {
@@ -145,9 +152,9 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   }
 
   revoke(uri: ActorURI) {
-    if (this.#registryReverse.has(uri)) {
-      /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-      const [type, lock] = this.#registryReverse.get(uri)!
+    const registry = this.#registryReverse.get(uri)
+    if (registry) {
+      const [type, lock] = registry
       this.#registry.get(type)?.delete(lock)
       this.#registryReverse.delete(uri)
     }
