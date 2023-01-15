@@ -1,4 +1,3 @@
-import type { Script } from '@ckb-lumos/base'
 import { bytes } from '@ckb-lumos/codec'
 import type { ActorMessage, MessagePayload } from '../actor'
 import type {
@@ -9,7 +8,6 @@ import type {
   StorageLocation,
   GetStorageStruct,
   GetFullStorageStruct,
-  ScriptSchema,
   OmitByValue,
   GetStorageOption,
   UpdateStorageValue,
@@ -26,11 +24,9 @@ import {
   NonExistentException,
   NonStorageInstanceException,
   NoSchemaException,
-  UnexpectedSchemaOptException,
   UnmatchLengthException,
 } from '../exceptions'
 
-type GetKeyType<T, K extends keyof T> = T & { _add: never } extends { [P in K]: T[P] } ? T[K] : never
 const ByteCharLen = 2
 
 export function getUint8ArrayfromHex(value: string, offset: ByteLength, length: ByteLength) {
@@ -73,45 +69,25 @@ export class Store<
     return [offset, length]
   }
 
-  private deserializeScript<T extends 'lock' | 'type'>(
-    scriptValue: Script,
-    scriptOption: unknown,
-    type: T,
-  ): GetFullStorageStruct<StructSchema>[T] {
-    if (typeof scriptOption !== 'object' || scriptOption === null) throw new UnexpectedSchemaOptException()
-    const res = {} as GetFullStorageStruct<StructSchema>[T]
-    if ('args' in scriptOption) {
-      this.assetStorage(this.getStorage([type, 'args']))
-      const [offset, length] = this.getOffsetAndLength(scriptOption.args)
-      res['args'] = this.getStorage([type, 'args'])?.deserialize(getUint8ArrayfromHex(scriptValue.args, offset, length))
-    }
-    if ('codeHash' in scriptOption) {
-      this.assetStorage(this.getStorage([type, 'codeHash']))
-      const [offset, length] = this.getOffsetAndLength(scriptOption.codeHash)
-      res['codeHash'] = this.getStorage([type, 'codeHash'])?.deserialize(
-        getUint8ArrayfromHex(scriptValue.codeHash, offset, length),
-      )
-    }
-    return res
+  private deserializeField(type: StorageLocation, option: unknown, value: string) {
+    this.assetStorage(this.getStorage(type))
+    const [offset, length] = this.getOffsetAndLength(option)
+    return this.getStorage(type)?.deserialize(getUint8ArrayfromHex(value, offset, length))
   }
 
   private deserializeCell({ cell, witness }: UpdateStorageValue): GetStorageStruct<StructSchema> {
-    const res: Record<string, unknown> = {}
+    const res: Partial<Record<StorageLocation, unknown>> = {}
     if ('data' in this.schemaOption) {
-      this.assetStorage(this.getStorage('data'))
-      const [offset, length] = this.getOffsetAndLength(this.schemaOption.data)
-      res.data = this.getStorage('data')?.deserialize(getUint8ArrayfromHex(cell.data, offset, length))
+      res.data = this.deserializeField('data', this.schemaOption.data, cell.data)
     }
     if ('witness' in this.schemaOption) {
-      this.assetStorage(this.getStorage('witness'))
-      const [offset, length] = this.getOffsetAndLength(this.schemaOption.witness)
-      res.witness = this.getStorage('witness')?.deserialize(getUint8ArrayfromHex(witness, offset, length))
+      res.witness = this.deserializeField('witness', this.schemaOption.witness, witness)
     }
-    if ('lock' in this.schemaOption) {
-      res.lock = this.deserializeScript<'lock'>(cell.cellOutput.lock, this.schemaOption.lock, 'lock')
+    if ('lockArgs' in this.schemaOption) {
+      res.lockArgs = this.deserializeField('lockArgs', this.schemaOption.lockArgs, cell.cellOutput.lock.args)
     }
-    if ('type' in this.schemaOption && cell.cellOutput.type) {
-      res.type = this.deserializeScript<'type'>(cell.cellOutput.type, this.schemaOption.type, 'type')
+    if ('typeArgs' in this.schemaOption && cell.cellOutput.type) {
+      res.typeArgs = this.deserializeField('typeArgs', this.schemaOption.typeArgs, cell.cellOutput.type.args)
     }
     return res as GetStorageStruct<StructSchema>
   }
@@ -144,20 +120,6 @@ export class Store<
     return result
   }
 
-  private cloneScript<T extends 'lock' | 'type'>(scriptValue: unknown, type: T): GetFullStorageStruct<StructSchema>[T] {
-    if (typeof scriptValue !== 'object' || scriptValue === null) throw new Error()
-    const res = {} as GetFullStorageStruct<StructSchema>[T]
-    if ('args' in scriptValue) {
-      this.assetStorage(this.getStorage([type, 'args']))
-      res['args'] = this.getStorage([type, 'args'])?.clone(scriptValue.args)
-    }
-    if ('codeHash' in scriptValue) {
-      this.assetStorage(this.getStorage([type, 'codeHash']))
-      res['codeHash'] = this.getStorage([type, 'codeHash'])?.clone(scriptValue.codeHash)
-    }
-    return res
-  }
-
   private updateChainData(key: OutPointString, paths?: StorePath) {
     if (!paths) {
       const value = this.get(key)
@@ -167,72 +129,53 @@ export class Store<
       if ('witness' in value) {
         this.updateValueInCell('witness', key, value.witness)
       }
-      if ('lock' in value) {
-        this.updateScriptInCell('lock', key, value.lock)
+      if ('lockArgs' in value) {
+        this.updateValueInCell('lockArgs', key, value.lockArgs)
       }
-      if ('type' in value) {
-        this.updateScriptInCell('type', key, value.type)
+      if ('typeArgs' in value) {
+        this.updateValueInCell('typeArgs', key, value.typeArgs)
       }
     } else {
-      switch (paths[0]) {
-        case 'data':
-        case 'witness':
-          this.updateValueInCell(paths[0], key, this.get(key, [paths[0]]))
-          break
-        case 'lock':
-        case 'type':
-          this.updateScriptInCell(paths[0], key, this.get(key)[paths[0]])
-          break
-        default:
-          break
-      }
-    }
-  }
-
-  private updateScriptInCell(
-    type: 'lock' | 'type',
-    key: OutPointString,
-    newValue: GetFullStorageStruct<StructSchema>['lock'] | GetFullStorageStruct<StructSchema>['type'],
-  ) {
-    if ('args' in newValue) {
-      this.updateValueInCell([type, 'args'], key, newValue.args)
-    }
-    if ('codeHash' in newValue) {
-      this.updateValueInCell([type, 'codeHash'], key, newValue.codeHash)
+      this.updateValueInCell(paths[0], key, this.get(key, [paths[0]]))
     }
   }
 
   private updateValueInCell(type: StorageLocation, key: OutPointString, newValue: unknown) {
     const cellInfo = this.chainData[key]
     if (!cellInfo) throw new NonExistentCellException(key)
-    if (typeof type === 'string') {
-      const { offset, length, hexString } = this.serializeField(type, newValue)
-      if (type === 'data') {
+    const { offset, length, hexString } = this.serializeField(type, newValue)
+    let originalValue: string | undefined
+    switch (type) {
+      case 'data':
         cellInfo.cell.data =
           cellInfo.cell.data.slice(0, 2 + offset * ByteCharLen) +
           hexString.slice(2) +
           (length ? cellInfo.cell.data.slice(2 + offset * ByteCharLen + length * ByteCharLen) : '')
-      } else if (type === 'witness') {
+        return
+      case 'witness':
         cellInfo.witness =
           cellInfo.witness.slice(0, 2 + offset * ByteCharLen) +
           hexString.slice(2) +
           (length ? cellInfo.witness.slice(2 + offset * ByteCharLen + length * ByteCharLen) : '')
-      }
-    } else {
-      const { offset, length, hexString } = this.serializeField(type, newValue)
-      if (type[0] === 'lock') {
-        const originalValue = cellInfo.cell.cellOutput.lock[type[1]]
-        cellInfo.cell.cellOutput.lock[type[1]] =
+        return
+      case 'lockArgs':
+        originalValue = cellInfo.cell.cellOutput.lock.args
+        cellInfo.cell.cellOutput.lock.args =
           originalValue.slice(0, 2 + offset * ByteCharLen) +
           hexString.slice(2) +
           (length ? originalValue.slice(2 + offset * ByteCharLen + length * ByteCharLen) : '')
-      } else if (cellInfo.cell.cellOutput.type) {
-        const originalValue = cellInfo.cell.cellOutput.type[type[1]]
-        cellInfo.cell.cellOutput.type[type[1]] =
-          originalValue.slice(0, 2 + offset * ByteCharLen) +
-          hexString.slice(2) +
-          (length ? originalValue.slice(2 + offset * ByteCharLen + length * ByteCharLen) : '')
-      }
+        return
+      case 'typeArgs':
+        if (cellInfo.cell.cellOutput.type) {
+          originalValue = cellInfo.cell.cellOutput.type.args
+          cellInfo.cell.cellOutput.type.args =
+            originalValue.slice(0, 2 + offset * ByteCharLen) +
+            hexString.slice(2) +
+            (length ? originalValue.slice(2 + offset * ByteCharLen + length * ByteCharLen) : '')
+        }
+        return
+      default:
+        break
     }
   }
 
@@ -287,25 +230,13 @@ export class Store<
       const { offset, hexString } = this.serializeField('witness', value.witness)
       res.witness = `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}`
     }
-    if ('lock' in value && value.lock && typeof value.lock === 'object') {
-      if ('args' in value.lock) {
-        const { offset, hexString } = this.serializeField(['lock', 'args'], value.lock.args)
-        res.lock = { args: `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}` }
-      }
-      if ('codeHash' in value.lock) {
-        const { offset, hexString } = this.serializeField(['lock', 'codeHash'], value.lock.codeHash)
-        res.lock = { ...res.lock, codeHash: `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}` }
-      }
+    if ('lockArgs' in value) {
+      const { offset, hexString } = this.serializeField('lockArgs', value.lockArgs)
+      res.lockArgs = `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}`
     }
-    if ('type' in value && value.type && typeof value.type === 'object') {
-      if ('args' in value.type) {
-        const { offset, hexString } = this.serializeField(['type', 'args'], value.type.args)
-        res.type = { args: `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}` }
-      }
-      if ('codeHash' in value.type) {
-        const { offset, hexString } = this.serializeField(['type', 'codeHash'], value.type.codeHash)
-        res.type = { ...res.type, codeHash: `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}` }
-      }
+    if ('typeArgs' in value) {
+      const { offset, hexString } = this.serializeField('typeArgs', value.typeArgs)
+      res.typeArgs = `0x${offset ? '0'.repeat(offset * ByteCharLen) : ''}${hexString.slice(2)}`
     }
     return res as GetOnChainStorage<StructSchema>
   }
@@ -346,11 +277,13 @@ export class Store<
         this.assetStorage(this.getStorage('witness'))
         states[key].witness = this.getStorage('witness')?.clone(currentStateInKey.witness)
       }
-      if ('lock' in currentStateInKey && (currentStateInKey.lock ?? false) !== false) {
-        states[key].lock = this.cloneScript<'lock'>(currentStateInKey.lock, 'lock')
+      if ('lockArgs' in currentStateInKey && (currentStateInKey.lockArgs ?? false) !== false) {
+        this.assetStorage(this.getStorage('lockArgs'))
+        states[key].lockArgs = this.getStorage('lockArgs')?.clone(currentStateInKey.lockArgs)
       }
-      if ('type' in currentStateInKey && (currentStateInKey.type ?? false) !== false) {
-        states[key].type = this.cloneScript<'type'>(currentStateInKey.type, 'type')
+      if ('typeArgs' in currentStateInKey && (currentStateInKey.typeArgs ?? false) !== false) {
+        this.assetStorage(this.getStorage('typeArgs'))
+        states[key].typeArgs = this.getStorage('typeArgs')?.clone(currentStateInKey.typeArgs)
       }
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -364,18 +297,9 @@ export class Store<
   get(key: OutPointString): GetFullStorageStruct<StructSchema>
   get(key: OutPointString, paths: ['data']): GetFullStorageStruct<StructSchema>['data']
   get(key: OutPointString, paths: ['witness']): GetFullStorageStruct<StructSchema>['witness']
-  get(key: OutPointString, paths: ['lock', 'args']): GetKeyType<GetFullStorageStruct<StructSchema>['lock'], 'args'>
-  get(
-    key: OutPointString,
-    paths: ['lock', 'codeHash'],
-  ): GetKeyType<GetFullStorageStruct<StructSchema>['lock'], 'codeHash'>
-  get(key: OutPointString, paths: ['type', 'args']): GetKeyType<GetFullStorageStruct<StructSchema>['type'], 'args'>
-  get(
-    key: OutPointString,
-    paths: ['type', 'codeHash'],
-  ): GetKeyType<GetFullStorageStruct<StructSchema>['type'], 'codeHash'>
-  get(key: OutPointString, paths: ['data' | 'witness', ...string[]]): unknown
-  get(key: OutPointString, paths: ['type' | 'lock', keyof ScriptSchema, ...string[]]): unknown
+  get(key: OutPointString, paths: ['lockArgs']): GetFullStorageStruct<StructSchema>['lockArgs']
+  get(key: OutPointString, paths: ['typeArgs']): GetFullStorageStruct<StructSchema>['typeArgs']
+  get(key: OutPointString, paths: [StorageLocation, ...string[]]): unknown
   get(key: OutPointString, paths?: StorePath) {
     if (paths) {
       return this.getAndValidTargetKey(key, paths)
@@ -386,32 +310,9 @@ export class Store<
   set(key: OutPointString, value: GetStorageStruct<StructSchema>): void
   set(key: OutPointString, value: GetFullStorageStruct<StructSchema>['data'], paths: ['data']): void
   set(key: OutPointString, value: GetFullStorageStruct<StructSchema>['witness'], paths: ['witness']): void
-  set(
-    key: OutPointString,
-    value: GetKeyType<GetFullStorageStruct<StructSchema>['lock'], 'args'>,
-    paths: ['lock', 'args'],
-  ): void
-  set(
-    key: OutPointString,
-    value: GetKeyType<GetFullStorageStruct<StructSchema>['lock'], 'codeHash'>,
-    paths: ['lock', 'codeHash'],
-  ): void
-  set(
-    key: OutPointString,
-    value: GetKeyType<GetFullStorageStruct<StructSchema>['type'], 'args'>,
-    paths: ['type', 'args'],
-  ): void
-  set(
-    key: OutPointString,
-    value: GetKeyType<GetFullStorageStruct<StructSchema>['type'], 'codeHash'>,
-    paths: ['type', 'codeHash'],
-  ): void
-  set(key: OutPointString, value: GetState<StorageT>, paths: ['data' | 'witness', string, ...string[]]): void
-  set(
-    key: OutPointString,
-    value: GetState<StorageT>,
-    paths: ['type' | 'lock', keyof ScriptSchema, string, ...string[]],
-  ): void
+  set(key: OutPointString, value: GetFullStorageStruct<StructSchema>['lockArgs'], paths: ['lockArgs']): void
+  set(key: OutPointString, value: GetFullStorageStruct<StructSchema>['typeArgs'], paths: ['typeArgs']): void
+  set(key: OutPointString, value: GetState<StorageT>, paths: [StorageLocation, string, ...string[]]): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   set(key: OutPointString, value: any, paths?: StorePath) {
     if (paths) {
@@ -436,8 +337,8 @@ type IsUnknownOrNever<T> = T extends never ? true : unknown extends T ? (0 exten
 type GetStorageStructByTemplate<T extends StorageSchema> = OmitByValue<{
   data: IsUnknownOrNever<T['data']> extends true ? never : T['data']
   witness: IsUnknownOrNever<T['witness']> extends true ? never : T['witness']
-  lock: IsUnknownOrNever<T['lock']> extends true ? never : T['lock']
-  type: IsUnknownOrNever<T['type']> extends true ? never : T['type']
+  lockArgs: IsUnknownOrNever<T['lockArgs']> extends true ? never : T['lockArgs']
+  typeArgs: IsUnknownOrNever<T['typeArgs']> extends true ? never : T['typeArgs']
 }>
 
 export class JSONStore<R extends StorageSchema<JSONStorageOffChain>> extends Store<

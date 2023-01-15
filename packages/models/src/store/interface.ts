@@ -11,15 +11,11 @@ type FieldSchema<T = unknown> =
       schema: T
     }
 
-export interface ScriptSchema<T = unknown> {
-  codeHash?: FieldSchema<T>
-  args?: FieldSchema<T>
-}
 export interface StorageSchema<T = unknown> {
   data?: FieldSchema<T>
   witness?: FieldSchema<T>
-  lock?: ScriptSchema<T>
-  type?: ScriptSchema<T>
+  lockArgs?: FieldSchema<T>
+  typeArgs?: FieldSchema<T>
 }
 
 type GetFieldStruct<T extends FieldSchema | unknown> = T extends { schema: unknown } ? T['schema'] : T
@@ -30,16 +26,6 @@ type IsKeysExist<T, K extends keyof T> = T & { _add: never } extends {
   ? true
   : false
 
-type IsEmptyScriptSchemaNever<T extends ScriptSchema> = IsKeysExist<T, 'args'> extends true
-  ? T
-  : IsKeysExist<T, 'codeHash'> extends true
-  ? T
-  : never
-
-type GetScriptStruct<T extends ScriptSchema> = IsEmptyScriptSchemaNever<{
-  [P in keyof T as T[P] extends FieldSchema ? P : never]: GetFieldStruct<T[P]>
-}>
-
 export type OmitByValue<T, R = never> = {
   [P in keyof T as T[P] extends R ? never : P]: T[P]
 }
@@ -48,17 +34,17 @@ type IfEmptyStorageSchemaNever<T extends StorageSchema> = IsKeysExist<T, 'data'>
   ? T
   : IsKeysExist<T, 'witness'> extends true
   ? T
-  : IsKeysExist<T, 'lock'> extends true
+  : IsKeysExist<T, 'lockArgs'> extends true
   ? T
-  : IsKeysExist<T, 'type'> extends true
+  : IsKeysExist<T, 'typeArgs'> extends true
   ? T
   : never
 
 export type GetFullStorageStruct<T extends StorageSchema> = {
   data: IsKeysExist<T, 'data'> extends true ? GetFieldStruct<T['data']> : never
   witness: IsKeysExist<T, 'witness'> extends true ? GetFieldStruct<T['witness']> : never
-  lock: T extends { lock: infer Lock extends ScriptSchema } ? GetScriptStruct<Lock> : never
-  type: T extends { type: infer Type extends ScriptSchema } ? GetScriptStruct<Type> : never
+  lockArgs: IsKeysExist<T, 'lockArgs'> extends true ? GetFieldStruct<T['lockArgs']> : never
+  typeArgs: IsKeysExist<T, 'typeArgs'> extends true ? GetFieldStruct<T['typeArgs']> : never
 }
 
 export type GetStorageStruct<T extends StorageSchema> = IfEmptyStorageSchemaNever<T> extends true
@@ -68,14 +54,6 @@ export type GetStorageStruct<T extends StorageSchema> = IfEmptyStorageSchemaNeve
 type PickExist<T, K extends keyof T> = OmitByValue<{
   [P in K as P extends keyof T ? P : never]: T[P]
 }>
-
-type GetScriptOption<T extends ScriptSchema> = IsEmptyScriptSchemaNever<
-  OmitByValue<{
-    [P in keyof T]: T[P] extends { offset?: ByteLength; length?: ByteLength; schema: unknown }
-      ? PickExist<T[P], 'offset' | 'length'>
-      : true
-  }>
->
 
 export type GetStorageOption<T extends StorageSchema> = IfEmptyStorageSchemaNever<
   OmitByValue<{
@@ -87,14 +65,14 @@ export type GetStorageOption<T extends StorageSchema> = IfEmptyStorageSchemaNeve
       ? T extends { witness: infer Option extends { offset?: ByteLength; length?: ByteLength; schema: unknown } }
         ? PickExist<Option, 'offset' | 'length'>
         : true
-      : P extends 'lock'
-      ? T extends { lock: infer Lock extends ScriptSchema }
-        ? GetScriptOption<Lock>
-        : never
-      : P extends 'type'
-      ? T extends { type: infer Type extends ScriptSchema }
-        ? GetScriptOption<Type>
-        : never
+      : P extends 'lockArgs'
+      ? T extends { lockArgs: infer Option extends { offset?: ByteLength; length?: ByteLength; schema: unknown } }
+        ? PickExist<Option, 'offset' | 'length'>
+        : true
+      : P extends 'typeArgs'
+      ? T extends { typeArgs: infer Option extends { offset?: ByteLength; length?: ByteLength; schema: unknown } }
+        ? PickExist<Option, 'offset' | 'length'>
+        : true
       : never
   }>
 >
@@ -102,17 +80,13 @@ export type GetStorageOption<T extends StorageSchema> = IfEmptyStorageSchemaNeve
 export type GetOnChainStorage<T extends StorageSchema> = {
   data: IsKeysExist<T, 'data'> extends true ? string : never
   witness: IsKeysExist<T, 'witness'> extends true ? string : never
-  lock: T extends { lock: infer Lock extends ScriptSchema }
-    ? IsEmptyScriptSchemaNever<{ [P in keyof Lock]: string }>
-    : never
-  type: T extends { type: infer Type extends ScriptSchema }
-    ? IsEmptyScriptSchemaNever<{ [P in keyof Type]: string }>
-    : never
+  lockArgs: IsKeysExist<T, 'lockArgs'> extends true ? string : never
+  typeArgs: IsKeysExist<T, 'typeArgs'> extends true ? string : never
 }
 
-export type StorageLocation = 'data' | 'witness' | ['lock' | 'type', keyof ScriptSchema]
+export type StorageLocation = keyof StorageSchema
 
-export type StorePath<K = StorageLocation> = K extends string[] ? [...K, ...string[]] : [K, ...string[]]
+export type StorePath = [StorageLocation, ...string[]]
 
 export type UpdateStorageValue = {
   witness: HexString
