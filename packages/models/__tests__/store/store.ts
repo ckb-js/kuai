@@ -149,27 +149,7 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ data: onchainData.data }),
-                witness: '',
-              },
-            },
-          },
-        })
-        expect(store.get(defaultOutpoint)).toStrictEqual({ data: initValue })
-      })
-      it('add data with array success', () => {
-        const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
-        const initValue = { a: BigNumber(1) }
-        const onchainData = store.initOnChain({ data: initValue })
-        store.handleCall({
-          from: ref,
-          behavior: Behavior.Call,
-          payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cell',
+              type: 'update_cells',
               value: [
                 {
                   cell: createCell({ data: onchainData.data }),
@@ -191,11 +171,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell(),
-                witness: onchainData.witness,
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell(),
+                  witness: onchainData.witness,
+                },
+              ],
             },
           },
         })
@@ -209,11 +191,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ data: store.initOnChain({ data: { a: BigNumber(1) } }).data }),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ data: store.initOnChain({ data: { a: BigNumber(1) } }).data }),
+                  witness: '',
+                },
+              ],
             },
           },
         })
@@ -225,11 +209,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ data: onchainData.data }),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ data: onchainData.data }),
+                  witness: '',
+                },
+              ],
             },
           },
         })
@@ -245,11 +231,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ lock: { args: onchainData.lock.args, codeHash: '', hashType: 'data' } }),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ lock: { args: onchainData.lock.args, codeHash: '', hashType: 'data' } }),
+                  witness: '',
+                },
+              ],
             },
           },
         })
@@ -267,11 +255,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ lock: { args: onchainData.lock.args, codeHash: '', hashType: 'data' } }),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ lock: { args: onchainData.lock.args, codeHash: '', hashType: 'data' } }),
+                  witness: '',
+                },
+              ],
             },
           },
         })
@@ -289,11 +279,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ lock: { args: '0x0', codeHash: onchainData.lock.codeHash, hashType: 'data' } }),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ lock: { args: '0x0', codeHash: onchainData.lock.codeHash, hashType: 'data' } }),
+                  witness: '',
+                },
+              ],
             },
           },
         })
@@ -309,11 +301,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ type: { args: onchainData.type.args, codeHash: '', hashType: 'data' } }),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ type: { args: onchainData.type.args, codeHash: '', hashType: 'data' } }),
+                  witness: '',
+                },
+              ],
             },
           },
         })
@@ -331,11 +325,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ type: { args: onchainData.type.args, codeHash: '', hashType: 'data' } }),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ type: { args: onchainData.type.args, codeHash: '', hashType: 'data' } }),
+                  witness: '',
+                },
+              ],
             },
           },
         })
@@ -353,11 +349,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ type: { args: '0x0', codeHash: onchainData.type.codeHash, hashType: 'data' } }),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ type: { args: '0x0', codeHash: onchainData.type.codeHash, hashType: 'data' } }),
+                  witness: '',
+                },
+              ],
             },
           },
         })
@@ -376,11 +374,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ data: onchainData.data }),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ data: onchainData.data }),
+                  witness: '',
+                },
+              ],
             },
           },
         })
@@ -425,11 +425,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ data: onchainData.data }),
-                witness: onchainData.witness,
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ data: onchainData.data }),
+                  witness: onchainData.witness,
+                },
+              ],
             },
           },
         })
@@ -451,11 +453,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ lock: { ...onchainData.lock, hashType: 'type' } }),
-                witness: onchainData.witness,
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ lock: { ...onchainData.lock, hashType: 'type' } }),
+                  witness: onchainData.witness,
+                },
+              ],
             },
           },
         })
@@ -479,11 +483,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell({ type: { ...onchainData.type, hashType: 'type' } }),
-                witness: onchainData.witness,
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell({ type: { ...onchainData.type, hashType: 'type' } }),
+                  witness: onchainData.witness,
+                },
+              ],
             },
           },
         })
@@ -523,15 +529,17 @@ describe('test store', () => {
         payload: {
           pattern: 'normal',
           value: {
-            type: 'update_cell',
-            value: {
-              cell: createCell({
-                type: { ...onchainData.type, hashType: 'type' },
-                data: onchainData.data,
-                lock: { ...onchainData.lock, hashType: 'type' },
-              }),
-              witness: onchainData.witness,
-            },
+            type: 'update_cells',
+            value: [
+              {
+                cell: createCell({
+                  type: { ...onchainData.type, hashType: 'type' },
+                  data: onchainData.data,
+                  lock: { ...onchainData.lock, hashType: 'type' },
+                }),
+                witness: onchainData.witness,
+              },
+            ],
           },
         },
       })
@@ -592,15 +600,17 @@ describe('test store', () => {
         payload: {
           pattern: 'normal',
           value: {
-            type: 'update_cell',
-            value: {
-              cell: createCell({
-                type: { ...onchainData.type, hashType: 'type' },
-                data: onchainData.data,
-                lock: { ...onchainData.lock, hashType: 'type' },
-              }),
-              witness: onchainData.witness,
-            },
+            type: 'update_cells',
+            value: [
+              {
+                cell: createCell({
+                  type: { ...onchainData.type, hashType: 'type' },
+                  data: onchainData.data,
+                  lock: { ...onchainData.lock, hashType: 'type' },
+                }),
+                witness: onchainData.witness,
+              },
+            ],
           },
         },
       })
@@ -674,11 +684,13 @@ describe('test store', () => {
         payload: {
           pattern: 'normal',
           value: {
-            type: 'update_cell',
-            value: {
-              cell: createCell(),
-              witness: '',
-            },
+            type: 'update_cells',
+            value: [
+              {
+                cell: createCell(),
+                witness: '',
+              },
+            ],
           },
         },
       })
@@ -696,11 +708,13 @@ describe('test store', () => {
           payload: {
             pattern: 'normal',
             value: {
-              type: 'update_cell',
-              value: {
-                cell: createCell(),
-                witness: '',
-              },
+              type: 'update_cells',
+              value: [
+                {
+                  cell: createCell(),
+                  witness: '',
+                },
+              ],
             },
           },
         }),

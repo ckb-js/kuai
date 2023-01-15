@@ -125,6 +125,6 @@ export type StoreMessage =
       value: OutPointString[]
     }
   | {
-      type: 'update_cell'
-      value: UpdateStorageValue | UpdateStorageValue[]
+      type: 'update_cells'
+      value: UpdateStorageValue[]
     }

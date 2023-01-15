@@ -312,14 +312,10 @@ export class Store<
 
   handleCall = (_msg: ActorMessage<MessagePayload<StoreMessage>>): void => {
     switch (_msg.payload?.value?.type) {
-      case 'update_cell':
-        if (Array.isArray(_msg.payload.value.value)) {
-          _msg.payload.value.value.forEach((cellInfo) => {
-            this.addState(cellInfo)
-          })
-        } else {
-          this.addState(_msg.payload.value.value)
-        }
+      case 'update_cells':
+        _msg.payload.value.value.forEach((cellInfo) => {
+          this.addState(cellInfo)
+        })
         break
       case 'remove_cell':
         this.removeState(_msg.payload.value.value)
