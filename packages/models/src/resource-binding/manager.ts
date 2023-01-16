@@ -59,10 +59,10 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }
   }
 
-  private filterOutputs(tx: Transaction, block: Block): Map<OutPointString, [Cell, string]> {
+  private mapOutputs(tx: Transaction, block: Block): Map<OutPointString, [Cell, string]> {
     const outputs = new Map<OutPointString, [Cell, string]>()
-    for (const outputIndex in tx.outputs) {
-      if (tx.hash) {
+    if (tx.hash) {
+      for (const outputIndex in tx.outputs) {
         const outPoint = {
           txHash: tx.hash,
           index: BI.from(outputIndex).toHexString(),
@@ -87,7 +87,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     const changes: Map<ActorURI, [ResourceBindingRegistry, Input[], [Cell, string][]]> = new Map()
     let outputs = new Map<OutPointString, [Cell, string]>()
     for (const tx of block.transactions) {
-      outputs = new Map([...outputs, ...this.filterOutputs(tx, block)])
+      outputs = new Map([...outputs, ...this.mapOutputs(tx, block)])
       for (const input of tx.inputs) {
         const outPointString = outPointToOutPointString(input.previousOutput)
         if (outputs.has(outPointString)) {
