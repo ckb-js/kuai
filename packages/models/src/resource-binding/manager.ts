@@ -101,6 +101,11 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
             }
             change[1].push(input)
             this.#registryOutPoint.delete(outPointString)
+          } else {
+            // To be ignored
+            // For an input cell, if the current block doesn't output it, it must be output by a former block.
+            // If it isn't registered by any Stores, then it certainly belongs to any other applications.
+            // So this input cell could be ignored.
           }
         }
       }
