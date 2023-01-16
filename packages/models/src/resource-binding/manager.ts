@@ -11,7 +11,7 @@ import { OutPointString } from '../store'
 
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
   #registry: Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> = new Map()
-  #registryOutpoint: Map<OutPointString, ResourceBindingRegistry> = new Map()
+  #registryOutPoint: Map<OutPointString, ResourceBindingRegistry> = new Map()
   #registryReverse: Map<ActorURI, [TypeScriptHash, LockScriptHash]> = new Map()
   #lastBlock: Block | undefined = undefined
   #tipBlockNumber = BI.from(0)
@@ -44,7 +44,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
           upgrade.push({ witness, cell })
           const outPoint = cell.outPoint
           if (outPoint) {
-            this.#registryOutpoint.set(outPointToOutPointString(outPoint), store)
+            this.#registryOutPoint.set(outPointToOutPointString(outPoint), store)
           }
         }
         this.sendMessage(store, 'update_cells', upgrade)
@@ -93,14 +93,14 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
         if (outputs.has(outPointString)) {
           outputs.delete(outPointString)
         } else {
-          const registry = this.#registryOutpoint.get(outPointString)
+          const registry = this.#registryOutPoint.get(outPointString)
           if (registry) {
             let change = changes.get(registry.uri)
             if (!change) {
               change = [registry, [], []]
             }
             change[1].push(input)
-            this.#registryOutpoint.delete(outPointString)
+            this.#registryOutPoint.delete(outPointString)
           }
         }
       }
@@ -179,8 +179,8 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return this.#registry
   }
 
-  get registryOutpoint(): Map<OutPointString, ResourceBindingRegistry> {
-    return this.#registryOutpoint
+  get registryOutPoint(): Map<OutPointString, ResourceBindingRegistry> {
+    return this.#registryOutPoint
   }
 
   get registryReverse(): Map<ActorURI, [TypeScriptHash, LockScriptHash]> {

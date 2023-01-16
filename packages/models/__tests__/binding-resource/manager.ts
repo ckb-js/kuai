@@ -236,7 +236,7 @@ describe('Test resource binding', () => {
       expect(mockXAdd).toBeCalled()
       expect(manager.lastBlock?.header.number).toEqual('0x01')
       expect(
-        manager.registryOutpoint.get(
+        manager.registryOutPoint.get(
           outPointToOutPointString({
             txHash: '0x01',
             index: '0x0',
@@ -370,7 +370,7 @@ describe('Test resource binding', () => {
       expect(mockXAdd).toBeCalledTimes(2)
       expect(manager.lastBlock?.header.number).toEqual('0x03')
       expect(
-        manager.registryOutpoint.get(
+        manager.registryOutPoint.get(
           outPointToOutPointString({
             txHash: '0x01',
             index: '0x00',
@@ -378,7 +378,7 @@ describe('Test resource binding', () => {
         ),
       ).toBeUndefined()
       expect(
-        manager.registryOutpoint.get(
+        manager.registryOutPoint.get(
           outPointToOutPointString({
             txHash: '0x02',
             index: '0x0',
