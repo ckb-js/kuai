@@ -6,13 +6,19 @@ export interface ResourceBindingRegistry {
   pattern: string
 }
 
-export interface ResourceBindingManagerMessage {
-  type: 'register' | 'revoke'
-  register?: {
-    typescriptHash: TypeScriptHash
-    lockscriptHash: LockScriptHash
+interface RegisterMessage {
+  type: 'register'
+  register: {
+    typeScriptHash: TypeScriptHash
+    lockScriptHash: LockScriptHash
   } & ResourceBindingRegistry
-  revoke?: {
+}
+
+interface RevokeMessage {
+  type: 'revoke'
+  revoke: {
     uri: ActorURI
   }
 }
+
+export type ResourceBindingManagerMessage = RegisterMessage | RevokeMessage

@@ -64,8 +64,8 @@ describe('Test resource binding', () => {
           value: {
             type: 'register',
             register: {
-              typescriptHash: '0x11',
-              lockscriptHash: '0x22',
+              typeScriptHash: '0x11',
+              lockScriptHash: '0x22',
               uri: ref.uri,
               pattern: 'normal',
             },
@@ -87,8 +87,8 @@ describe('Test resource binding', () => {
           value: {
             type: 'register',
             register: {
-              typescriptHash: '0x11',
-              lockscriptHash: '0x22',
+              typeScriptHash: '0x11',
+              lockScriptHash: '0x22',
               uri: ref.uri,
               pattern: 'normal',
             },
@@ -239,7 +239,7 @@ describe('Test resource binding', () => {
         manager.registryOutpoint.get(
           outPointToOutPointString({
             txHash: '0x01',
-            index: '0x00',
+            index: '0x0',
           }),
         ),
       ).toEqual({ uri: ref.uri, pattern: 'normal' })
@@ -381,7 +381,7 @@ describe('Test resource binding', () => {
         manager.registryOutpoint.get(
           outPointToOutPointString({
             txHash: '0x02',
-            index: '0x00',
+            index: '0x0',
           }),
         ),
       ).toEqual({ uri: ref.uri, pattern: 'normal' })

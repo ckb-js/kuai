@@ -127,7 +127,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
       case 'register': {
         const register = _msg.payload?.value?.register
         if (register) {
-          this.register(register.lockscriptHash, register.typescriptHash, register.uri, register.pattern)
+          this.register(register.lockScriptHash, register.typeScriptHash, register.uri, register.pattern)
         }
         break
       }
