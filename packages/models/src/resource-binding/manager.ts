@@ -42,18 +42,22 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
         const upgrade: { witness: HexString; cell: Cell }[] = []
         for (const [cell, witness] of data) {
           upgrade.push({ witness, cell })
-          const outPoint = cell.outPoint
-          if (outPoint) {
-            this.#registryOutPoint.set(outPointToOutPointString(outPoint), store)
+          if (cell.outPoint) {
+            this.#registryOutPoint.set(outPointToOutPointString(cell.outPoint), store)
           }
         }
-        this.sendMessage(store, 'update_cells', upgrade)
 
-        this.sendMessage(
-          store,
-          'remove_cell',
-          input.map((v) => v.previousOutput),
-        )
+        if (upgrade.length > 0) {
+          this.sendMessage(store, 'update_cells', upgrade)
+        }
+
+        if (input.length > 0) {
+          this.sendMessage(
+            store,
+            'remove_cell',
+            input.map((v) => v.previousOutput),
+          )
+        }
       }
       this.#lastBlock = block
     }
@@ -100,6 +104,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
               change = [registry, [], []]
             }
             change[1].push(input)
+            changes.set(registry.uri, change)
             this.#registryOutPoint.delete(outPointString)
           } else {
             // To be ignored
