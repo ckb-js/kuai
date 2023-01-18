@@ -4,6 +4,7 @@ import { Manager } from '../../src'
 import { utils, Input, Output, Block, Epoch, Header, Transaction } from '@ckb-lumos/base'
 import { ChainSource } from '@ckb-js/kuai-io/lib/types'
 import { TipHeaderListener } from '@ckb-js/kuai-io'
+import type { Subscription } from 'rxjs'
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 const mockXRead = jest.fn<() => any>()
@@ -178,9 +179,12 @@ describe('Test resource binding', () => {
       },
     }
     const manager = new Manager(new TipHeaderListener(mockSource), mockSource)
+    let listener: { subscription: Subscription; updator: NodeJS.Timer }
 
     afterEach(() => {
       mockXAdd.mockClear()
+      listener.subscription.unsubscribe()
+      clearInterval(listener.updator)
     })
 
     // This test is to test whether batch cell-update is ok.
@@ -360,7 +364,7 @@ describe('Test resource binding', () => {
         outputs: [outputF, outputG, outputH, outputI],
         outputsData: [],
         version: '',
-        witnesses: [],
+        witnesses: ['0x', '0x', '0x', '0x'],
       }
 
       const inputF: Input = {
@@ -453,7 +457,7 @@ describe('Test resource binding', () => {
         outputs: [outputJ, outputK, outputL],
         outputsData: [],
         version: '',
-        witnesses: [],
+        witnesses: ['0x', '0x', '0x'],
       }
 
       const inputJ: Input = {
@@ -517,26 +521,28 @@ describe('Test resource binding', () => {
         },
       }
 
+      const witnesses = ['0x01', '0x02', '0x03']
+      const outputsData = ['0x04', '0x05', '0x06']
       const tx3: Transaction = {
         hash: '0xfeb8784185ed6880e318610333989db5a4bb9fdaca054564859bd2b66e18eac3',
         cellDeps: [],
         headerDeps: [],
         inputs: [inputJ, inputK, inputL, inputI],
         outputs: [outputN, outputO, outputM],
-        outputsData: [],
+        outputsData,
         version: '',
-        witnesses: [],
+        witnesses,
       }
 
       const mockBlock: Block = {
         header: {
           timestamp: '0x',
-          number: '0x01',
+          number: '0x896211',
           epoch: '0x',
           compactTarget: '0x',
           dao: '0x',
-          hash: '0x',
-          nonce: '0x',
+          hash: '0x4009f0b85dcba1bf23fe8dcb4a9de9e8d77f816ae8afceac1e56432b50239fb2',
+          nonce: '0x71da0b841524ee070000000296000800',
           parentHash: '0x',
           proposalsHash: '0x',
           transactionsRoot: '0x',
@@ -563,7 +569,7 @@ describe('Test resource binding', () => {
       }
 
       mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
-      const { subscription, updator } = manager.listen()
+      listener = manager.listen()
       mockSource.getBlock = () => Promise.resolve(mockBlock)
       manager.register(
         utils.computeScriptHash(outputA.lock),
@@ -592,11 +598,60 @@ describe('Test resource binding', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 2000))
       expect(mockXAdd).toBeCalledTimes(2)
-      expect(JSON.parse(mockXAdd.mock.calls[0][7] as string).value.update).toHaveLength(2)
-      expect(JSON.parse(mockXAdd.mock.calls[1][7] as string).value.update).toHaveLength(1)
-      expect(manager.lastBlock?.header.number).toEqual('0x01')
-      subscription.unsubscribe()
-      clearInterval(updator)
+      expect(mockXAdd.mock.calls[0][0]).toEqual(ref2.uri)
+      expect(mockXAdd.mock.calls[0][3]).toEqual('local://resource')
+      expect(mockXAdd.mock.calls[1][0]).toEqual(ref1.uri)
+      expect(mockXAdd.mock.calls[1][3]).toEqual('local://resource')
+      expect(JSON.parse(mockXAdd.mock.calls[0][7] as string).value).toEqual({
+        type: 'update_cells',
+        value: [
+          {
+            witness: witnesses[0],
+            cell: {
+              cellOutput: outputN,
+              data: outputsData[0],
+              outPoint: {
+                txHash: tx3.hash,
+                index: '0x0',
+              },
+              blockHash: mockBlock.header.hash,
+              blockNumber: mockBlock.header.number,
+            },
+          },
+          {
+            witness: witnesses[1],
+            cell: {
+              cellOutput: outputO,
+              data: outputsData[1],
+              outPoint: {
+                txHash: tx3.hash,
+                index: '0x1',
+              },
+              blockHash: mockBlock.header.hash,
+              blockNumber: mockBlock.header.number,
+            },
+          },
+        ],
+      })
+      expect(JSON.parse(mockXAdd.mock.calls[1][7] as string).value).toEqual({
+        type: 'update_cells',
+        value: [
+          {
+            witness: witnesses[2],
+            cell: {
+              cellOutput: outputM,
+              data: outputsData[2],
+              outPoint: {
+                txHash: tx3.hash,
+                index: '0x2',
+              },
+              blockHash: mockBlock.header.hash,
+              blockNumber: mockBlock.header.number,
+            },
+          },
+        ],
+      })
+      expect(manager.lastBlock?.header.number).toEqual(mockBlock.header.number)
     })
 
     it('cell remove success', async () => {
@@ -627,12 +682,12 @@ describe('Test resource binding', () => {
       const mockBlock = {
         header: {
           timestamp: '0x',
-          number: '0x03',
+          number: '0x896212',
           epoch: '0x',
           compactTarget: '0x',
           dao: '0x',
-          hash: '0x',
-          nonce: '0x',
+          hash: '0x3bc111c63c591a5850c91b64673caeb8390333e8d2fed01498d118aaa6aaa1f6',
+          nonce: '0xc18fe08b8a0d000000000007c996dcf0',
           parentHash: '0x',
           proposalsHash: '0x',
           transactionsRoot: '0x',
@@ -656,15 +711,21 @@ describe('Test resource binding', () => {
       }
 
       mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
-      const { subscription, updator } = manager.listen()
+      listener = manager.listen()
       mockSource.getBlock = () => Promise.resolve(mockBlock)
       await new Promise((resolve) => setTimeout(resolve, 2000))
       expect(mockXAdd).toBeCalledTimes(2)
-      expect(manager.lastBlock?.header.number).toEqual('0x03')
+      expect(JSON.parse(mockXAdd.mock.calls[0][7] as string).value).toEqual({
+        type: 'remove_cell',
+        value: [outPointToOutPointString(inputN.previousOutput), outPointToOutPointString(inputO.previousOutput)],
+      })
+      expect(JSON.parse(mockXAdd.mock.calls[1][7] as string).value).toEqual({
+        type: 'remove_cell',
+        value: [outPointToOutPointString(inputM.previousOutput)],
+      })
+      expect(manager.lastBlock?.header.number).toEqual(mockBlock.header.number)
       expect(manager.registryOutPoint.get(outPointToOutPointString(inputN.previousOutput))).toBeUndefined()
       expect(manager.registryOutPoint.get(outPointToOutPointString(inputM.previousOutput))).toBeUndefined()
-      subscription.unsubscribe()
-      clearInterval(updator)
     })
   })
 })

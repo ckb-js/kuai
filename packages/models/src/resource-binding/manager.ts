@@ -55,7 +55,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
           this.sendMessage(
             store,
             'remove_cell',
-            input.map((v) => v.previousOutput),
+            input.map((v) => outPointToOutPointString(v.previousOutput)),
           )
         }
       }
@@ -174,13 +174,16 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return { subscription: this._listener.on(this.onListenBlock), updator: this.update(pollingInterval) }
   }
 
-  private sendMessage(store: ResourceBindingRegistry, type: 'remove_cell' | 'update_cells', payload: object) {
+  private sendMessage<T extends 'remove_cell' | 'update_cells'>(
+    store: ResourceBindingRegistry,
+    type: T,
+    payload: T extends 'remove_cell' ? OutPointString[] : { cell: Cell; witness: HexString }[],
+  ) {
     this.call(store.uri, {
       pattern: store.pattern,
       value: {
         type,
-        remove: type == 'remove_cell' ? payload : undefined,
-        update: type == 'update_cells' ? payload : undefined,
+        value: payload,
       },
     })
   }
