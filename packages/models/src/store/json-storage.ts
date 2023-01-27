@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js'
-import { UnexpectedMarkException, UnExpectedParamsException, UnexpectedTypeException } from '../exceptions'
+import { UnexpectedMarkException, UnexpectedParamsException, UnexpectedTypeException } from '../exceptions'
 import { ChainStorage } from './chain-storage'
 
 export type JSONStorageType = string | boolean | BigNumber
@@ -72,7 +72,7 @@ export class JSONStorage<T extends JSONStorageOffChain> extends ChainStorage<T> 
   }
 
   deserialize(data: Uint8Array): T {
-    if (data === null || data === undefined) throw new UnExpectedParamsException(`${data}`)
-    return JSON.parse(data.toString(), reviver)
+    if (data === null || data === undefined) throw new UnexpectedParamsException(`${data}`)
+    return JSON.parse(Buffer.from(data).toString(), reviver)
   }
 }

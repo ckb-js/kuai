@@ -9,7 +9,7 @@ We assume that you are familiar with [TypeOrm](https://github.com/typeorm/typeor
 Install the required dependencies.
 
 ```
-npm install --save @kuai/typeorm
+npm install --save @ckb-js/kuai-typeorm
 ```
 
 We need at least one entity, so we define the `User` entity firstly.
@@ -36,7 +36,7 @@ To use `Datasource` and `EntityManager`, we need to bind them to the container u
 ```
 // app.ts
 
-import { TypeOrmManager } from '@kuai/typeorm'
+import { TypeOrmManager } from '@ckb-js/kuai-typeorm'
 import { User } from './user.entity'
 
 await TypeOrmManager.importRoot({
@@ -78,7 +78,7 @@ And the `UserService` also needed to be bounded to the container by `@Service()`
 // user.service.ts
 
 import { DataSource, EntityManager, Repository } from 'typeorm'
-import { InjectDataSource, InjectRepository, InjectEntityManager, Service } from '@kuai/typeorm'
+import { InjectDataSource, InjectRepository, InjectEntityManager, Service } from '@ckb-js/kuai-typeorm'
 import { User } from './user.entity'
 
 @Service()
@@ -127,7 +127,7 @@ It's time to get the created `UserService` from the container by `container.get<
 ```
 // app.ts
 
-import { contanier } from '@kuai/typeorm'
+import { contanier } from '@ckb-js/kuai-typeorm'
 
 const userOne = new User()
 userOne.id = 1

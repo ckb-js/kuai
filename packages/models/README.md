@@ -1,11 +1,11 @@
-# `@kuai/models`
+# `@ckb-js/kuai-models`
 
 > TODO: description
 
 ## Usage
 
 ```
-const models = require('@kuai/models');
+const models = require('@ckb-js/kuai-models');
 
 // TODO: DEMONSTRATE API
 ```

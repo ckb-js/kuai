@@ -22,9 +22,33 @@ export class UnexpectedMarkException extends Error {
   }
 }
 
-export class UnExpectedParamsException extends Error {
+export class UnexpectedParamsException extends Error {
   constructor(params: string) {
     super(`Unexpected params with ${params} when calling deserialize`)
+  }
+}
+
+export class NoSchemaException extends Error {
+  constructor(type: string) {
+    super(`No schema setting with ${type}`)
+  }
+}
+
+export class NonExistentCellException extends Error {
+  constructor(outPoint: string) {
+    super(`${outPoint} cell is not exist in store`)
+  }
+}
+
+export class UnmatchLengthException extends Error {
+  constructor(type: string, actual: number, expected: number) {
+    super(`Actual length is ${actual}, but expected length is ${expected} in ${type}`)
+  }
+}
+
+export class UnexpectedSchemaOptException extends Error {
+  constructor() {
+    super(`Unexpected schema options without object`)
   }
 }
 

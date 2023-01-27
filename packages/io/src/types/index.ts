@@ -1,3 +1,5 @@
+import type { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
+
 export interface Listener<T> {
   on(listen: (obj: T) => void): void
 }
@@ -24,4 +26,31 @@ export interface CoR {
   use(plugin: Middleware): void
 
   dispatch<Payload extends JsonValue, Ok>(payload: Payload): Promise<Ok | void>
+}
+
+export interface Listener<T> {
+  on(listen: (obj: T) => void): { unsubscribe: () => void }
+}
+
+export interface ChainSource {
+  getTipBlockNumber: () => Promise<CKBComponents.BlockNumber>
+  getTipHeader: () => Promise<CKBComponents.BlockHeader>
+  getCurrentEpoch: () => Promise<CKBComponents.Epoch>
+  getBlock: (blockNumber: string) => Promise<CKBComponents.Block>
+}
+
+export type Path = string
+export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS'
+
+export type RoutePayload<Body, Params> = {
+  body: Body
+  params: Params
+  path: Path
+  method: Method
+}
+
+export interface Route {
+  path: Path
+  method: Method
+  middleware: Middleware
 }

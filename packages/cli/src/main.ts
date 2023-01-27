@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command, createOption, Option } from 'commander'
-import { TaskParam, TaskArguments, initialKuai, paramTypes, KuaiArguments } from '@kuai/core'
+import { TaskParam, TaskArguments, initialKuai, paramTypes, KuaiArguments } from '@ckb-js/kuai-core'
 
 const KUAI_GLOBAL_PARAMS: Array<TaskParam> = [
   {
