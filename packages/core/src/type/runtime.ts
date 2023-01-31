@@ -6,7 +6,7 @@ export interface KuaiArguments {
   network?: string
 }
 
-export type KuaiConfig = {
+export interface KuaiConfig {
   kuaiArguments?: KuaiArguments
   network?: HttpNetworkConfig
 }

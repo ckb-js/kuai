@@ -1,3 +1,7 @@
 {
-  "name": "kuai-project"
+  "name": "kuai-project",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  }
 }
