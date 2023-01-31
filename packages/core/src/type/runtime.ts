@@ -20,6 +20,7 @@ export type RunTaskFunction = (name: string, taskArguments?: TaskArguments) => P
 export type EnvironmentExtender = (env: RuntimeEnvironment) => void
 
 export interface RuntimeEnvironment {
+  // TODO: change to generate type
   readonly config: KuaiConfig
   readonly tasks: Record<string, Task>
   readonly run: RunTaskFunction

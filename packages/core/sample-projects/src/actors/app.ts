@@ -12,7 +12,6 @@ export type AppMessage = HelloMessage;
 @ActorProvider({ name: 'app' })
 export class CustomActor extends Actor<object, MessagePayload<AppMessage>> {
   handleCall = (_msg: ActorMessage<MessagePayload<AppMessage>>): void => {
-    console.log('app actor handleCall');
     switch (_msg.payload?.value?.type) {
       case 'hello': {
         const name = _msg.payload?.value?.hello.name;
