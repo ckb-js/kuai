@@ -1,31 +1,34 @@
 import type { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
-
+import type { Key } from 'path-to-regexp'
 export interface Listener<T> {
   on(listen: (obj: T) => void): void
 }
 
-export type Middleware = (ctx: Context, next: () => Promise<void>) => Promise<void>
-
-export interface Context {
-  payload: JsonValue
-
-  ok(): void
-
-  ok<OK>(x: OK): void
-
-  err(): void
-
-  err<Err>(x: Err): void
-}
-
 export type JsonValue = null | number | string | { [key: string]: JsonValue } | JsonValue[]
+
+type Next = () => Awaited<void>
+
+export type DefaultContext = object
+
+export type Context<CustomT extends DefaultContext = DefaultContext> = {
+  payload: JsonValue
+  ok(): void
+  ok<OK>(x: OK): void
+  err(): void
+  err<Err>(x: Err): void
+} & CustomT
+
+export type Middleware<CustomT extends DefaultContext = DefaultContext> = (
+  context: Context<CustomT>,
+  next: Next,
+) => ReturnType<Next>
 
 // `CoR` (Chain of Responsibility), abbr for chain of responsibility
 // a module that strings middleware together in order
-export interface CoR {
-  use(plugin: Middleware): void
+export interface CoR<ContextT extends DefaultContext = Record<string, never>> {
+  use<NewContextT = unknown>(plugin: Middleware<NewContextT & ContextT>): CoR<NewContextT & ContextT>
 
-  dispatch<Payload extends JsonValue, Ok>(payload: Payload): Promise<Ok | void>
+  dispatch<Ok>(payload: JsonValue): Promise<Ok | void>
 }
 
 export interface Listener<T> {
@@ -42,15 +45,22 @@ export interface ChainSource {
 export type Path = string
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS'
 
-export type RoutePayload<Body, Params> = {
-  body: Body
-  params: Params
+export type RoutePayload<Query = Record<string, string>, Params = Record<string, string>, Body = unknown> = {
+  query?: Query
+  body?: Body
+  params?: Params
   path: Path
   method: Method
+}
+
+export interface RouterContext {
+  payload: RoutePayload
 }
 
 export interface Route {
   path: Path
   method: Method
-  middleware: Middleware
+  middleware: Middleware<RouterContext>
+  paramKeys: Key[]
+  regexp: RegExp
 }

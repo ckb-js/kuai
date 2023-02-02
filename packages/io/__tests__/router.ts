@@ -29,4 +29,18 @@ describe('test KuaiRouter', () => {
     const childrenResult = await cor.dispatch({ method: 'GET', path: '/parent/children' })
     expect(childrenResult).toMatch('hello children')
   })
+
+  it(`support params`, async () => {
+    const cor = new CoR()
+    const kuaiRouter = new KuaiRouter()
+
+    kuaiRouter.get('/:username', async (ctx) => {
+      ctx.ok(`hello ${ctx.payload.params?.username}`)
+    })
+
+    cor.use(kuaiRouter.middleware())
+
+    const result = await cor.dispatch({ method: 'GET', path: '/alice' })
+    expect(result).toMatch('hello alice')
+  })
 })
