@@ -1,9 +1,10 @@
 import type { ActorURI } from '../actor'
-import type { LockScriptHash, TypeScriptHash } from './types'
+import type { LockScriptHash, TypeScriptHash, RegistryStatus } from './types'
 
 export interface ResourceBindingRegistry {
   uri: ActorURI
   pattern: string
+  status?: RegistryStatus
 }
 
 interface RegisterMessage {

@@ -157,7 +157,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     if (!this.#registry.get(type)) {
       this.#registry.set(type, new Map())
     }
-    this.#registry.get(type)?.set(lock, { uri, pattern })
+    this.#registry.get(type)?.set(lock, { uri, pattern, status: 'registered' })
     this.#registryReverse.set(uri, [type, lock])
   }
 

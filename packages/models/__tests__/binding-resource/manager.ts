@@ -73,7 +73,11 @@ describe('Test resource binding', () => {
           },
         },
       })
-      expect(manager.registry.get('0x11')?.get('0x22')).toEqual({ uri: ref.uri, pattern: 'normal' })
+      expect(manager.registry.get('0x11')?.get('0x22')).toEqual({
+        uri: ref.uri,
+        pattern: 'normal',
+        status: 'registered',
+      })
       expect(manager.registryReverse.get(ref.uri)).toEqual(['0x11', '0x22'])
     })
   })
