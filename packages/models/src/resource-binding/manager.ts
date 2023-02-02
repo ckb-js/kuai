@@ -8,6 +8,7 @@ import { Listener } from '@ckb-js/kuai-io'
 import type { Subscription } from 'rxjs'
 import { ChainSource } from '@ckb-js/kuai-io/lib/types'
 import { OutPointString, UpdateStorageValue } from '../store'
+import { CellChangeBuffer } from './cell-change-buffer'
 
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
   #registry: Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> = new Map()
@@ -15,6 +16,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   #registryReverse: Map<ActorURI, [TypeScriptHash, LockScriptHash]> = new Map()
   #lastBlock: Block | undefined = undefined
   #tipBlockNumber = BI.from(0)
+  #buffer: CellChangeBuffer = new CellChangeBuffer()
 
   constructor(private _listener: Listener<Header>, private _dataSource: ChainSource) {
     super()
@@ -28,11 +30,29 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   }
 
   private update(pollingInterval = 1000) {
+    let semaphore = 0
     return setInterval(async () => {
-      if (this.#tipBlockNumber.gt(0) && this.#tipBlockNumber.gt(BI.from(this.#lastBlock?.header.number ?? 0))) {
-        this.updateStore(await this._dataSource.getBlock(this.#tipBlockNumber.toHexString()))
+      semaphore++
+      if (semaphore == 1) {
+        if (this.#buffer.hasReadyStore()) {
+          this.updateBuffer()
+        }
+        if (this.#tipBlockNumber.gt(0) && this.#tipBlockNumber.gt(BI.from(this.#lastBlock?.header.number ?? 0))) {
+          this.updateStore(await this._dataSource.getBlock(this.#tipBlockNumber.toHexString()))
+        }
       }
+
+      semaphore--
     }, pollingInterval)
+  }
+
+  private updateBuffer() {
+    const stores = this.#buffer.popAll()
+    for (const changes of stores) {
+      for (const [store, input, data] of changes) {
+        this.updateCellChanges(store, input, data)
+      }
+    }
   }
 
   private updateCellChanges(store: ResourceBindingRegistry, input: Input[], data: CellChangeData[]) {
