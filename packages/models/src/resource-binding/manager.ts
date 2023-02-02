@@ -7,7 +7,7 @@ import { outPointToOutPointString } from './utils'
 import { Listener } from '@ckb-js/kuai-io'
 import type { Subscription } from 'rxjs'
 import { ChainSource } from '@ckb-js/kuai-io/lib/types'
-import { OutPointString } from '../store'
+import { OutPointString, UpdateStorageValue } from '../store'
 
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
   #registry: Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> = new Map()
@@ -177,7 +177,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   private sendMessage<T extends 'remove_cell' | 'update_cells'>(
     store: ResourceBindingRegistry,
     type: T,
-    payload: T extends 'remove_cell' ? OutPointString[] : { cell: Cell; witness: HexString }[],
+    payload: T extends 'remove_cell' ? OutPointString[] : UpdateStorageValue[],
   ) {
     this.call(store.uri, {
       pattern: store.pattern,
