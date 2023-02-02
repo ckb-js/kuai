@@ -1,7 +1,7 @@
-import { Transaction, Block, Header, Input, HexString, utils, Cell } from '@ckb-lumos/base'
+import { Transaction, Block, Header, Input, utils } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
-import { TypeScriptHash, LockScriptHash } from './types'
+import { TypeScriptHash, LockScriptHash, CellChangeData } from './types'
 import { ResourceBindingRegistry, ResourceBindingManagerMessage } from './interface'
 import { outPointToOutPointString } from './utils'
 import { Listener } from '@ckb-js/kuai-io'
@@ -35,36 +35,40 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }, pollingInterval)
   }
 
+  private updateCellChanges(store: ResourceBindingRegistry, input: Input[], data: CellChangeData[]) {
+    const upgrade: UpdateStorageValue[] = []
+    for (const [cell, witness] of data) {
+      upgrade.push({ witness, cell })
+      if (cell.outPoint) {
+        this.#registryOutPoint.set(outPointToOutPointString(cell.outPoint), store)
+      }
+    }
+
+    if (upgrade.length > 0) {
+      this.sendMessage(store, 'update_cells', upgrade)
+    }
+
+    if (input.length > 0) {
+      this.sendMessage(
+        store,
+        'remove_cell',
+        input.map((v) => outPointToOutPointString(v.previousOutput)),
+      )
+    }
+  }
+
   private updateStore(block: Block) {
     if (!this.#lastBlock || BI.from(block.header.number).gt(BI.from(this.#lastBlock.header.number))) {
-      const changes = this.filterCells(block)
+      const changes = this.filterCellsAndMapChanges(block)
       for (const [store, input, data] of changes) {
-        const upgrade: { witness: HexString; cell: Cell }[] = []
-        for (const [cell, witness] of data) {
-          upgrade.push({ witness, cell })
-          if (cell.outPoint) {
-            this.#registryOutPoint.set(outPointToOutPointString(cell.outPoint), store)
-          }
-        }
-
-        if (upgrade.length > 0) {
-          this.sendMessage(store, 'update_cells', upgrade)
-        }
-
-        if (input.length > 0) {
-          this.sendMessage(
-            store,
-            'remove_cell',
-            input.map((v) => outPointToOutPointString(v.previousOutput)),
-          )
-        }
+        this.updateCellChanges(store, input, data)
       }
       this.#lastBlock = block
     }
   }
 
-  private mapOutputs(tx: Transaction, block: Block): Map<OutPointString, [Cell, string]> {
-    const outputs = new Map<OutPointString, [Cell, string]>()
+  private mapOutputs(tx: Transaction, block: Block): Map<OutPointString, CellChangeData> {
+    const outputs = new Map<OutPointString, CellChangeData>()
     if (tx.hash) {
       for (const outputIndex in tx.outputs) {
         const outPoint = {
@@ -87,9 +91,9 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return outputs
   }
 
-  private filterCells(block: Block): [ResourceBindingRegistry, Input[], [Cell, string][]][] {
-    const changes: Map<ActorURI, [ResourceBindingRegistry, Input[], [Cell, string][]]> = new Map()
-    let outputs = new Map<OutPointString, [Cell, string]>()
+  private filterCellsAndMapChanges(block: Block): [ResourceBindingRegistry, Input[], CellChangeData[]][] {
+    const changes: Map<ActorURI, [ResourceBindingRegistry, Input[], CellChangeData[]]> = new Map()
+    let outputs = new Map<OutPointString, CellChangeData>()
     for (const tx of block.transactions) {
       outputs = new Map([...outputs, ...this.mapOutputs(tx, block)])
       for (const input of tx.inputs) {
