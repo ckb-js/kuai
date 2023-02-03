@@ -45,7 +45,11 @@ export interface ChainSource {
 export type Path = string
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS'
 
-export type RoutePayload<Query = Record<string, string>, Params = Record<string, string>, Body = unknown> = {
+export type RoutePayload<
+  Query extends Record<string, string> = Record<string, string>,
+  Params extends Record<string, string> = Record<string, string>,
+  Body extends object = object,
+> = {
   query?: Query
   body?: Body
   params?: Params
@@ -53,14 +57,28 @@ export type RoutePayload<Query = Record<string, string>, Params = Record<string,
   method: Method
 }
 
-export interface RouterContext {
-  payload: RoutePayload
+export interface RouterContext<
+  Query extends Record<string, string> = Record<string, string>,
+  Params extends Record<string, string> = Record<string, string>,
+  Body extends object = object,
+> {
+  payload: RoutePayload<Query, Params, Body>
 }
 
-export interface Route {
+export type RouterExtendContext<
+  Query extends Record<string, string> = Record<string, string>,
+  Params extends Record<string, string> = Record<string, string>,
+  Body extends object = object,
+> = Context<RouterContext<Query, Params, Body>>
+
+export interface Route<
+  Query extends Record<string, string> = Record<string, string>,
+  Params extends Record<string, string> = Record<string, string>,
+  Body extends object = object,
+> {
   path: Path
   method: Method
-  middleware: Middleware<RouterContext>
+  middleware: Middleware<RouterContext<Query, Params, Body>>
   paramKeys: Key[]
   regexp: RegExp
 }
