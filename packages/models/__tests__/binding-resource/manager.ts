@@ -66,8 +66,8 @@ const mockSource: ChainSource = {
     throw new Error('Function not implemented.')
   },
   getAllLiveCellsWithWitness: function (
-    _typeScript: Script | undefined,
     _lockScript: Script,
+    _typeScript?: Script,
   ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
     return Promise.resolve([])
   },
@@ -91,8 +91,8 @@ describe('Test resource binding', () => {
         throw new Error('Function not implemented.')
       },
       getAllLiveCellsWithWitness: function (
-        _typeScript: Script | undefined,
         _lockScript: Script,
+        _typeScript?: Script,
       ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
         const witness = '0x'
         const cell: Cell = {
@@ -289,8 +289,8 @@ describe('Test resource binding', () => {
         return Promise.resolve(mockBlock)
       },
       getAllLiveCellsWithWitness: function (
-        _typeScript: Script | undefined,
         _lockScript: Script,
+        _typeScript?: Script,
       ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
         return Promise.resolve([])
       },
@@ -364,8 +364,8 @@ describe('Test resource binding', () => {
         throw new Error('Function not implemented.')
       },
       getAllLiveCellsWithWitness: function (
-        _typeScript: Script | undefined,
         _lockScript: Script,
+        _typeScript?: Script,
       ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
         return Promise.resolve([])
       },
