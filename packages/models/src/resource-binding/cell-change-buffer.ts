@@ -2,7 +2,7 @@ import type { ActorURI } from '../actor'
 import type { CellChange } from './types'
 
 export class CellChangeBuffer {
-  #buffer: Map<ActorURI, CellChange[]> = new Map()
+  #bufferMap: Map<ActorURI, CellChange[]> = new Map()
   #readyList: Array<ActorURI> = []
 
   hasReadyStore(): boolean {
@@ -10,19 +10,19 @@ export class CellChangeBuffer {
   }
 
   push(uri: ActorURI, data: CellChange) {
-    let buffer = this.#buffer.get(uri)
+    let buffer = this.#bufferMap.get(uri)
     if (!buffer) {
       buffer = []
     }
     buffer.push(data)
-    this.#buffer.set(uri, buffer)
+    this.#bufferMap.set(uri, buffer)
   }
 
   pop(): CellChange[] | undefined {
     const uri = this.#readyList.pop()
     if (uri) {
-      const changes = this.#buffer.get(uri)
-      this.#buffer.delete(uri)
+      const changes = this.#bufferMap.get(uri)
+      this.#bufferMap.delete(uri)
       return changes
     }
   }
@@ -44,8 +44,8 @@ export class CellChangeBuffer {
     this.#readyList.push(uri)
   }
 
-  get buffer(): Map<ActorURI, CellChange[]> {
-    return this.#buffer
+  get bufferMap(): Map<ActorURI, CellChange[]> {
+    return this.#bufferMap
   }
 
   get readyList(): Array<ActorURI> {

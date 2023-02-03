@@ -50,14 +50,14 @@ describe('CellChangeBuffer', () => {
     it('push should success when empty', () => {
       const buffer = new CellChangeBuffer()
       buffer.push(registry.uri, change)
-      expect(buffer.buffer.get(registry.uri)).toEqual([change])
+      expect(buffer.bufferMap.get(registry.uri)).toEqual([change])
     })
 
     it('push should success when not empty', () => {
       const buffer = new CellChangeBuffer()
       buffer.push(registry.uri, change)
       buffer.push(registry.uri, change)
-      expect(buffer.buffer.get(registry.uri)).toEqual([change, change])
+      expect(buffer.bufferMap.get(registry.uri)).toEqual([change, change])
     })
   })
 
@@ -72,7 +72,7 @@ describe('CellChangeBuffer', () => {
       buffer.push(registry.uri, change)
       buffer.signalReady(registry.uri)
       expect(buffer.pop()).toEqual([change])
-      expect(buffer.buffer.get(registry.uri)).toBeUndefined()
+      expect(buffer.bufferMap.get(registry.uri)).toBeUndefined()
       expect(buffer.readyList).toEqual([])
     })
 
@@ -87,8 +87,8 @@ describe('CellChangeBuffer', () => {
       buffer.signalReady(registry.uri)
       buffer.signalReady(registry2.uri)
       expect(buffer.popAll()).toEqual([[change], [change]])
-      expect(buffer.buffer.get(registry.uri)).toBeUndefined()
-      expect(buffer.buffer.get(registry2.uri)).toBeUndefined()
+      expect(buffer.bufferMap.get(registry.uri)).toBeUndefined()
+      expect(buffer.bufferMap.get(registry2.uri)).toBeUndefined()
       expect(buffer.readyList).toEqual([])
     })
 
@@ -102,8 +102,8 @@ describe('CellChangeBuffer', () => {
       buffer.push(registry2.uri, change)
       buffer.signalReady(registry.uri)
       expect(buffer.popAll()).toEqual([[change]])
-      expect(buffer.buffer.get(registry.uri)).toBeUndefined()
-      expect(buffer.buffer.get(registry2.uri)).toEqual([change])
+      expect(buffer.bufferMap.get(registry.uri)).toBeUndefined()
+      expect(buffer.bufferMap.get(registry2.uri)).toEqual([change])
       expect(buffer.readyList).toEqual([])
     })
   })
