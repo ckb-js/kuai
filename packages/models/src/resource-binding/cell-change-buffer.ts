@@ -1,7 +1,7 @@
-import { Input } from '@ckb-lumos/base'
-import { ActorURI } from '../actor'
-import { ResourceBindingRegistry } from './interface'
-import { CellChangeData } from './types'
+import type { Input } from '@ckb-lumos/base'
+import type { ActorURI } from '../actor'
+import type { ResourceBindingRegistry } from './interface'
+import type { CellChangeData } from './types'
 
 export class CellChangeBuffer {
   #buffer: Map<ActorURI, [ResourceBindingRegistry, Input[], CellChangeData[]][]> = new Map()
