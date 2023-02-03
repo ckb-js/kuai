@@ -1,6 +1,6 @@
 import type { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
 import type { Key } from 'path-to-regexp'
-import { Script } from '@ckb-lumos/base'
+import type { Script } from '@ckb-lumos/base'
 
 export interface Listener<T> {
   on(listen: (obj: T) => void): void
