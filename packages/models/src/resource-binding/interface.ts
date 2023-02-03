@@ -1,5 +1,6 @@
+import { Script } from '@ckb-lumos/base'
 import type { ActorURI } from '../actor'
-import type { LockScriptHash, TypeScriptHash, RegistryStatus } from './types'
+import type { RegistryStatus } from './types'
 
 export interface ResourceBindingRegistry {
   uri: ActorURI
@@ -10,8 +11,8 @@ export interface ResourceBindingRegistry {
 interface RegisterMessage {
   type: 'register'
   register: {
-    typeScriptHash: TypeScriptHash
-    lockScriptHash: LockScriptHash
+    typeScript: Script
+    lockScript: Script
   } & ResourceBindingRegistry
 }
 

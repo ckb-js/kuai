@@ -1,4 +1,4 @@
-import { Transaction, Block, Header, Input, utils } from '@ckb-lumos/base'
+import { Transaction, Block, Header, Input, utils, Script } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
 import { TypeScriptHash, LockScriptHash, CellChangeData } from './types'
@@ -156,12 +156,35 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return Array.from(changes.values())
   }
 
+  private async initiateStore(registry: ResourceBindingRegistry, lockScript: Script, typeScript?: Script) {
+    const cells = await this._dataSource.getAllLiveCellsWithWitness(typeScript, lockScript)
+    this.updateCellChanges(
+      registry,
+      [],
+      cells.map((cell) => [
+        {
+          cellOutput: {
+            capacity: cell.output.capacity,
+            lock: cell.output.lock,
+            type: cell.output.type,
+          },
+          data: cell.outputData,
+          outPoint: cell.outPoint,
+          blockNumber: cell.blockNumber,
+        },
+        cell.witness,
+      ]),
+    )
+    this.#buffer.signalReady(registry.uri)
+    registry.status = 'initiated'
+  }
+
   handleCall = (_msg: ActorMessage<MessagePayload<ResourceBindingManagerMessage>>): void => {
     switch (_msg.payload?.value?.type) {
       case 'register': {
         const register = _msg.payload?.value?.register
         if (register) {
-          this.register(register.lockScriptHash, register.typeScriptHash, register.uri, register.pattern)
+          this.register(register.lockScript, register.typeScript, register.uri, register.pattern)
         }
         break
       }
@@ -177,12 +200,16 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }
   }
 
-  async register(lock: LockScriptHash, type: TypeScriptHash, uri: ActorURI, pattern: string) {
-    if (!this.#registry.get(type)) {
-      this.#registry.set(type, new Map())
+  async register(lock: Script, type: Script | undefined, uri: ActorURI, pattern: string) {
+    const lockHash = utils.computeScriptHash(lock)
+    const typeHash = type ? utils.computeScriptHash(type) : 'null'
+    if (!this.#registry.get(typeHash)) {
+      this.#registry.set(typeHash, new Map())
     }
-    this.#registry.get(type)?.set(lock, { uri, pattern, status: 'registered' })
-    this.#registryReverse.set(uri, [type, lock])
+    const registry: ResourceBindingRegistry = { uri, pattern, status: 'registered' }
+    this.#registry.get(typeHash)?.set(lockHash, registry)
+    this.#registryReverse.set(uri, [typeHash, lockHash])
+    await this.initiateStore(registry, lock, type)
   }
 
   revoke(uri: ActorURI) {
