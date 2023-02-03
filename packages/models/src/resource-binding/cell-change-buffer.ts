@@ -10,10 +10,7 @@ export class CellChangeBuffer {
   }
 
   push(uri: ActorURI, data: CellChange) {
-    let buffer = this.#bufferMap.get(uri)
-    if (!buffer) {
-      buffer = []
-    }
+    const buffer = this.#bufferMap.get(uri) ?? []
     buffer.push(data)
     this.#bufferMap.set(uri, buffer)
   }
