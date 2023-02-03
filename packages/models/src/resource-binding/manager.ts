@@ -33,7 +33,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     let semaphore = 0
     return setInterval(async () => {
       semaphore++
-      if (semaphore == 1) {
+      if (semaphore === 1) {
         if (this.#buffer.hasReadyStore()) {
           this.updateBuffer()
         }
