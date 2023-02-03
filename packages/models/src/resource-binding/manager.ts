@@ -1,8 +1,13 @@
 import { Transaction, Block, Header, Input, utils, Script } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
-import { TypeScriptHash, LockScriptHash, CellChangeData } from './types'
-import { ResourceBindingRegistry, ResourceBindingManagerMessage } from './interface'
+import {
+  TypeScriptHash,
+  LockScriptHash,
+  CellChangeData,
+  ResourceBindingRegistry,
+  ResourceBindingManagerMessage,
+} from './types'
 import { outPointToOutPointString } from './utils'
 import { Listener } from '@ckb-js/kuai-io'
 import type { Subscription } from 'rxjs'

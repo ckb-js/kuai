@@ -1,8 +1,29 @@
-import { Cell, Hash } from '@ckb-lumos/base'
+import { Cell, Hash, Script } from '@ckb-lumos/base'
+import { ActorURI } from '../actor'
 
 export type TypeScriptHash = Hash | 'null'
 export type LockScriptHash = Hash
-
 export type RegistryStatus = 'registered' | 'initiated'
+export type CellChangeData = [cell: Cell, witness: string]
+export type ResourceBindingManagerMessage = RegisterMessage | RevokeMessage
 
-export type CellChangeData = [Cell, string]
+export interface ResourceBindingRegistry {
+  uri: ActorURI
+  pattern: string
+  status?: RegistryStatus
+}
+
+interface RegisterMessage {
+  type: 'register'
+  register: {
+    typeScript: Script
+    lockScript: Script
+  } & ResourceBindingRegistry
+}
+
+interface RevokeMessage {
+  type: 'revoke'
+  revoke: {
+    uri: ActorURI
+  }
+}
