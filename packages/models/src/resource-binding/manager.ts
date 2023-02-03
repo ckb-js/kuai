@@ -7,6 +7,7 @@ import {
   CellChangeData,
   ResourceBindingRegistry,
   ResourceBindingManagerMessage,
+  CellChange,
 } from './types'
 import { outPointToOutPointString } from './utils'
 import { Listener } from '@ckb-js/kuai-io'
@@ -116,8 +117,8 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return outputs
   }
 
-  private filterCellsAndMapChanges(block: Block): [ResourceBindingRegistry, Input[], CellChangeData[]][] {
-    const changes: Map<ActorURI, [ResourceBindingRegistry, Input[], CellChangeData[]]> = new Map()
+  private filterCellsAndMapChanges(block: Block): CellChange[] {
+    const changes: Map<ActorURI, CellChange> = new Map()
     let outputs = new Map<OutPointString, CellChangeData>()
     for (const tx of block.transactions) {
       outputs = new Map([...outputs, ...this.mapOutputs(tx, block)])

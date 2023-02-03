@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import { ProviderKey, Behavior, outPointToOutPointString } from '../../src'
-import { Manager, ResourceBindingRegistry, CellChangeData } from '../../src'
+import { Manager, CellChange } from '../../src'
 import { utils, Input, Output, Block, Epoch, Header, Transaction, Cell, Script } from '@ckb-lumos/base'
 import { ChainSource } from '@ckb-js/kuai-io/lib/types'
 import { TipHeaderListener } from '@ckb-js/kuai-io'
@@ -338,7 +338,7 @@ describe('Test resource binding', () => {
           index: '0x0',
         },
       }
-      const change: [ResourceBindingRegistry, Input[], CellChangeData[]] = [registry, [input], [[cell, witness]]]
+      const change: CellChange = [registry, [input], [[cell, witness]]]
       jest.spyOn(CellChangeBuffer.prototype, 'popAll').mockImplementationOnce(() => [[change]])
       jest.spyOn(CellChangeBuffer.prototype, 'hasReadyStore').mockImplementationOnce(() => true)
 

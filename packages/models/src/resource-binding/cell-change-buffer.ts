@@ -1,16 +1,15 @@
-import type { Input } from '@ckb-lumos/base'
 import type { ActorURI } from '../actor'
-import type { CellChangeData, ResourceBindingRegistry } from './types'
+import type { CellChange } from './types'
 
 export class CellChangeBuffer {
-  #buffer: Map<ActorURI, [ResourceBindingRegistry, Input[], CellChangeData[]][]> = new Map()
+  #buffer: Map<ActorURI, CellChange[]> = new Map()
   #readyList: Array<ActorURI> = []
 
   hasReadyStore(): boolean {
     return this.#readyList.length > 0
   }
 
-  push(uri: ActorURI, data: [ResourceBindingRegistry, Input[], CellChangeData[]]) {
+  push(uri: ActorURI, data: CellChange) {
     let buffer = this.#buffer.get(uri)
     if (!buffer) {
       buffer = []
@@ -19,7 +18,7 @@ export class CellChangeBuffer {
     this.#buffer.set(uri, buffer)
   }
 
-  pop(): [ResourceBindingRegistry, Input[], CellChangeData[]][] | undefined {
+  pop(): CellChange[] | undefined {
     const uri = this.#readyList.pop()
     if (uri) {
       const changes = this.#buffer.get(uri)
@@ -28,9 +27,9 @@ export class CellChangeBuffer {
     }
   }
 
-  popAll(): [ResourceBindingRegistry, Input[], CellChangeData[]][][] {
+  popAll(): CellChange[][] {
     let length = this.#readyList.length
-    const res: [ResourceBindingRegistry, Input[], CellChangeData[]][][] = []
+    const res: CellChange[][] = []
     while (length-- > 0) {
       const data = this.pop()
       if (data) {
@@ -45,7 +44,7 @@ export class CellChangeBuffer {
     this.#readyList.push(uri)
   }
 
-  get buffer(): Map<ActorURI, [ResourceBindingRegistry, Input[], CellChangeData[]][]> {
+  get buffer(): Map<ActorURI, CellChange[]> {
     return this.#buffer
   }
 

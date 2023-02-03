@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 import { CellChangeBuffer } from '../../src/resource-binding/cell-change-buffer'
-import { CellChangeData, ResourceBindingRegistry } from '../../src'
+import { CellChange, ResourceBindingRegistry } from '../../src'
 import { Input, Cell } from '@ckb-lumos/base'
 
 describe('CellChangeBuffer', () => {
@@ -36,7 +36,7 @@ describe('CellChangeBuffer', () => {
       index: '0x0',
     },
   }
-  const change: [ResourceBindingRegistry, Input[], CellChangeData[]] = [registry, [input], [[cell, witness]]]
+  const change: CellChange = [registry, [input], [[cell, witness]]]
 
   describe('ReadyList', () => {
     it('signal ready should success', () => {
