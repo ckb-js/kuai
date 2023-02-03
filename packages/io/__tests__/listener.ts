@@ -5,7 +5,7 @@ import { timeout, distinctUntilChanged, catchError } from 'rxjs'
 import type { Subscription } from 'rxjs'
 
 import { ChainSource } from '../src/types'
-import { Script } from '@ckb-lumos/base'
+import type { Script } from '@ckb-lumos/base'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const { scheduler } = require('node:timers/promises')
 
