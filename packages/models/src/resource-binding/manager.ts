@@ -94,7 +94,14 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     if (!this.#lastBlock || BI.from(block.header.number).gt(BI.from(this.#lastBlock.header.number))) {
       const changes = this.filterCellsAndMapChanges(block)
       for (const [store, input, data] of changes) {
-        this.updateCellChanges(store, input, data)
+        switch (store.status) {
+          case 'initiated':
+            this.updateCellChanges(store, input, data)
+            break
+          case 'registered':
+          default:
+            this.#buffer.push(store.uri, [store, input, data])
+        }
       }
       this.#lastBlock = block
     }
