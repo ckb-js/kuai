@@ -12,7 +12,6 @@ export type StoreType = {
     addresses: ItemData[]
     custom: ItemData[]
     dweb: ItemData[]
-    permissions: ItemData[]
   }
 }
 
