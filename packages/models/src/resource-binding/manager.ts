@@ -44,7 +44,14 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
           this.updateBuffer()
         }
         if (this.#tipBlockNumber.gt(0) && this.#tipBlockNumber.gt(BI.from(this.#lastBlock?.header.number ?? 0))) {
-          this.updateStore(await this._dataSource.getBlock(this.#tipBlockNumber.toHexString()))
+          try {
+            const block = await this._dataSource.getBlock(this.#tipBlockNumber.toHexString())
+            if (block) {
+              this.updateStore(block)
+            }
+          } catch (e) {
+            // ignore
+          }
         }
       }
 

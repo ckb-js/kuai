@@ -41,7 +41,7 @@ export interface ChainSource {
   getTipBlockNumber: () => Promise<CKBComponents.BlockNumber>
   getTipHeader: () => Promise<CKBComponents.BlockHeader>
   getCurrentEpoch: () => Promise<CKBComponents.Epoch>
-  getBlock: (blockNumber: string) => Promise<CKBComponents.Block>
+  getBlock: (blockNumber: string) => Promise<CKBComponents.Block | undefined>
   getAllLiveCellsWithWitness: (
     lockScript: Script,
     typeScript?: Script,
