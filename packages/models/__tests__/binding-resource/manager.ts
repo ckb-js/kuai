@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import { ProviderKey, Behavior, outPointToOutPointString } from '../../src'
-import { Manager } from '../../src'
-import { utils, Input, Output, Block, Epoch, Header, Transaction } from '@ckb-lumos/base'
+import { Manager, CellChange } from '../../src'
+import { utils, Input, Output, Block, Epoch, Header, Transaction, Cell, Script } from '@ckb-lumos/base'
 import { ChainSource } from '@ckb-js/kuai-io/lib/types'
 import { TipHeaderListener } from '@ckb-js/kuai-io'
 import type { Subscription } from 'rxjs'
+import { CellChangeBuffer } from '../../src/resource-binding/cell-change-buffer'
+import { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 const mockXRead = jest.fn<() => any>()
@@ -15,6 +17,20 @@ jest.mock('ioredis', () => {
     xadd = mockXAdd
   }
 })
+
+const lockScript: Script = {
+  codeHash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+  hashType: 'type',
+  args: '0x2359dfdfd29a9de93787a0e9d666751d54d7e74a',
+}
+const LockScriptHash = utils.computeScriptHash(lockScript)
+
+const typeScript: Script = {
+  codeHash: '0xa9267ff5a16f38aa9382608eb9022883a78e6a40855107bb59f8406cce00e981',
+  hashType: 'type',
+  args: '0x2d8d67c8d73453c1a6d6d600e491b303910802e0cc90a709da9b15d26c5c48b3',
+}
+const TypeScriptHash = utils.computeScriptHash(typeScript)
 
 const ref = {
   name: 'store',
@@ -49,13 +65,77 @@ const mockSource: ChainSource = {
   getBlock: function (): Promise<Block> {
     throw new Error('Function not implemented.')
   },
+  getAllLiveCellsWithWitness: function (
+    _lockScript: Script,
+    _typeScript?: Script,
+  ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
+    return Promise.resolve([])
+  },
 }
 
 const mockListener = new TipHeaderListener(mockSource)
 
 describe('Test resource binding', () => {
   describe('test handleCall with register', () => {
-    it('register success', () => {
+    const mockSource: ChainSource = {
+      getTipBlockNumber: function (): Promise<string> {
+        throw new Error('Function not implemented.')
+      },
+      getTipHeader: function (): Promise<Header> {
+        throw new Error('Function not implemented.')
+      },
+      getCurrentEpoch: function (): Promise<Epoch> {
+        throw new Error('Function not implemented.')
+      },
+      getBlock: function (): Promise<Block> {
+        throw new Error('Function not implemented.')
+      },
+      getAllLiveCellsWithWitness: function (
+        _lockScript: Script,
+        _typeScript?: Script,
+      ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
+        const witness = '0x'
+        const cell: Cell = {
+          cellOutput: {
+            capacity: '0x1000',
+            lock: {
+              codeHash: '0x1c04df09d9adede5bfc40ff1a39a3a17fc8e29f15c56f16b7e48680c600ee5ac',
+              hashType: 'type',
+              args: '0xc0464bbb406441b651e84d2b20bb3d2c9a0c05f595b053b8409a607e6554775f',
+            },
+            type: {
+              codeHash: '0x00000000000000000000000000000000000000000000000000545950455f4944',
+              hashType: 'type',
+              args: '0xf26f761463b4d66b1b4e69e8f8dc097003572faeeb6751f1ff283b6fb2b85082',
+            },
+          },
+          data: '0x',
+          outPoint: {
+            txHash: '0xfeb8784185ed6880e318610333989db5a4bb9fdaca054564859bd2b66e18eac3',
+            index: '0x0',
+          },
+          blockNumber: '0x1',
+        }
+
+        return Promise.resolve([
+          {
+            witness,
+            blockNumber: cell.blockNumber!,
+            outPoint: cell.outPoint!,
+            output: cell.cellOutput,
+            outputData: cell.data,
+            txIndex: cell.outPoint!.index,
+          },
+        ])
+      },
+    }
+
+    const mockListener = new TipHeaderListener(mockSource)
+
+    afterEach(() => {
+      mockXAdd.mockClear()
+    })
+    it('register success', async () => {
       const manager = new Manager(mockListener, mockSource)
       manager.handleCall({
         from: ref,
@@ -65,18 +145,30 @@ describe('Test resource binding', () => {
           value: {
             type: 'register',
             register: {
-              typeScriptHash: '0x11',
-              lockScriptHash: '0x22',
+              lockScript,
+              typeScript,
               uri: ref.uri,
               pattern: 'normal',
             },
           },
         },
       })
-      expect(manager.registry.get('0x11')?.get('0x22')).toEqual({ uri: ref.uri, pattern: 'normal' })
-      expect(manager.registryReverse.get(ref.uri)).toEqual(['0x11', '0x22'])
+      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual({
+        uri: ref.uri,
+        pattern: 'normal',
+        status: 'registered',
+      })
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual({
+        uri: ref.uri,
+        pattern: 'normal',
+        status: 'initiated',
+      })
+      expect(manager.registryReverse.get(ref.uri)).toEqual([TypeScriptHash, LockScriptHash])
+      expect(mockXAdd).toBeCalledTimes(1)
     })
   })
+
   describe('test handleCall with revoke', () => {
     it('revoke success', () => {
       const manager = new Manager(mockListener, mockSource)
@@ -88,8 +180,8 @@ describe('Test resource binding', () => {
           value: {
             type: 'register',
             register: {
-              typeScriptHash: '0x11',
-              lockScriptHash: '0x22',
+              typeScript,
+              lockScript,
               uri: ref.uri,
               pattern: 'normal',
             },
@@ -109,7 +201,7 @@ describe('Test resource binding', () => {
           },
         },
       })
-      expect(manager.registry.get('0x11')?.get('0x22')).toBeUndefined()
+      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toBeUndefined()
       expect(manager.registryReverse.get(ref.uri)).toBeUndefined()
     })
 
@@ -163,6 +255,100 @@ describe('Test resource binding', () => {
     })
   })
 
+  describe('test update store in buffer when the store initiated', () => {
+    const mockBlock: Block = {
+      header: {
+        timestamp: '0x',
+        number: '0x896211',
+        epoch: '0x',
+        compactTarget: '0x',
+        dao: '0x',
+        hash: '0x4009f0b85dcba1bf23fe8dcb4a9de9e8d77f816ae8afceac1e56432b50239fb2',
+        nonce: '0x71da0b841524ee070000000296000800',
+        parentHash: '0x',
+        proposalsHash: '0x',
+        transactionsRoot: '0x',
+        extraHash: '0x',
+        version: '0x',
+      },
+      transactions: [],
+      uncles: [],
+      proposals: [],
+    }
+    const mockSource: ChainSource = {
+      getTipBlockNumber: function (): Promise<string> {
+        throw new Error('Function not implemented.')
+      },
+      getTipHeader: function (): Promise<Header> {
+        return Promise.resolve(mockBlock.header)
+      },
+      getCurrentEpoch: function (): Promise<Epoch> {
+        throw new Error('Function not implemented.')
+      },
+      getBlock: function (): Promise<Block> {
+        return Promise.resolve(mockBlock)
+      },
+      getAllLiveCellsWithWitness: function (
+        _lockScript: Script,
+        _typeScript?: Script,
+      ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
+        return Promise.resolve([])
+      },
+    }
+
+    const manager = new Manager(new TipHeaderListener(mockSource), mockSource)
+    let listener: { subscription: Subscription; updator: NodeJS.Timer }
+
+    afterEach(() => {
+      mockXAdd.mockClear()
+      listener.subscription.unsubscribe()
+      clearInterval(listener.updator)
+    })
+
+    it('cell update success', async () => {
+      const registry = {
+        uri: 'local://testActor',
+        pattern: '',
+      }
+      const input: Input = {
+        previousOutput: {
+          txHash: '0x637c22b7a3870de160455e34bbf6aa9957d8eefb897548951303044175e0ee8f',
+          index: '0x1',
+        },
+        since: '',
+      }
+      const witness = '0x'
+      const cell: Cell = {
+        cellOutput: {
+          capacity: '0x1000',
+          lock: {
+            codeHash: '0x1c04df09d9adede5bfc40ff1a39a3a17fc8e29f15c56f16b7e48680c600ee5ac',
+            hashType: 'type',
+            args: '0xc0464bbb406441b651e84d2b20bb3d2c9a0c05f595b053b8409a607e6554775f',
+          },
+          type: {
+            codeHash: '0x00000000000000000000000000000000000000000000000000545950455f4944',
+            hashType: 'type',
+            args: '0xf26f761463b4d66b1b4e69e8f8dc097003572faeeb6751f1ff283b6fb2b85082',
+          },
+        },
+        data: '0x',
+        outPoint: {
+          txHash: '0xfeb8784185ed6880e318610333989db5a4bb9fdaca054564859bd2b66e18eac3',
+          index: '0x0',
+        },
+      }
+      const change: CellChange = [registry, [input], [[cell, witness]]]
+      jest.spyOn(CellChangeBuffer.prototype, 'popAll').mockImplementationOnce(() => [[change]])
+      jest.spyOn(CellChangeBuffer.prototype, 'hasReadyStore').mockImplementationOnce(() => true)
+
+      manager.register(cell.cellOutput.lock, cell.cellOutput.type, registry.uri, 'normal')
+      listener = manager.listen()
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      expect(mockXAdd).toBeCalledTimes(2)
+    })
+  })
+
   describe('test update store when latest block arrived', () => {
     const mockSource: ChainSource = {
       getTipBlockNumber: function (): Promise<string> {
@@ -176,6 +362,12 @@ describe('Test resource binding', () => {
       },
       getBlock: function (): Promise<Block> {
         throw new Error('Function not implemented.')
+      },
+      getAllLiveCellsWithWitness: function (
+        _lockScript: Script,
+        _typeScript?: Script,
+      ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
+        return Promise.resolve([])
       },
     }
     const manager = new Manager(new TipHeaderListener(mockSource), mockSource)
@@ -571,30 +763,10 @@ describe('Test resource binding', () => {
       mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
       listener = manager.listen()
       mockSource.getBlock = () => Promise.resolve(mockBlock)
-      manager.register(
-        utils.computeScriptHash(outputA.lock),
-        outputA.type ? utils.computeScriptHash(outputA.type) : 'null',
-        ref1.uri,
-        'normal',
-      )
-      manager.register(
-        utils.computeScriptHash(outputE.lock),
-        outputE.type ? utils.computeScriptHash(outputE.type) : 'null',
-        ref1.uri,
-        'normal',
-      )
-      manager.register(
-        utils.computeScriptHash(outputD.lock),
-        outputD.type ? utils.computeScriptHash(outputD.type) : 'null',
-        ref2.uri,
-        'normal',
-      )
-      manager.register(
-        utils.computeScriptHash(outputC.lock),
-        outputC.type ? utils.computeScriptHash(outputC.type) : 'null',
-        ref2.uri,
-        'normal',
-      )
+      manager.register(outputA.lock, outputA.type, ref1.uri, 'normal')
+      manager.register(outputE.lock, outputE.type, ref1.uri, 'normal')
+      manager.register(outputD.lock, outputD.type, ref2.uri, 'normal')
+      manager.register(outputC.lock, outputC.type, ref2.uri, 'normal')
 
       await new Promise((resolve) => setTimeout(resolve, 2000))
       expect(mockXAdd).toBeCalledTimes(2)

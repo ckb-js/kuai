@@ -1,13 +1,20 @@
-import { Transaction, Block, Header, Input, HexString, utils, Cell } from '@ckb-lumos/base'
+import { Transaction, Block, Header, Input, utils, Script } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
-import { TypeScriptHash, LockScriptHash } from './types'
-import { ResourceBindingRegistry, ResourceBindingManagerMessage } from './interface'
+import {
+  TypeScriptHash,
+  LockScriptHash,
+  CellChangeData,
+  ResourceBindingRegistry,
+  ResourceBindingManagerMessage,
+  CellChange,
+} from './types'
 import { outPointToOutPointString } from './utils'
 import { Listener } from '@ckb-js/kuai-io'
 import type { Subscription } from 'rxjs'
 import { ChainSource } from '@ckb-js/kuai-io/lib/types'
-import { OutPointString } from '../store'
+import { OutPointString, UpdateStorageValue } from '../store'
+import { CellChangeBuffer } from './cell-change-buffer'
 
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
   #registry: Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> = new Map()
@@ -15,6 +22,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   #registryReverse: Map<ActorURI, [TypeScriptHash, LockScriptHash]> = new Map()
   #lastBlock: Block | undefined = undefined
   #tipBlockNumber = BI.from(0)
+  #buffer: CellChangeBuffer = new CellChangeBuffer()
 
   constructor(private _listener: Listener<Header>, private _dataSource: ChainSource) {
     super()
@@ -28,43 +36,79 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   }
 
   private update(pollingInterval = 1000) {
+    let semaphore = 0
     return setInterval(async () => {
-      if (this.#tipBlockNumber.gt(0) && this.#tipBlockNumber.gt(BI.from(this.#lastBlock?.header.number ?? 0))) {
-        this.updateStore(await this._dataSource.getBlock(this.#tipBlockNumber.toHexString()))
+      semaphore++
+      if (semaphore === 1) {
+        if (this.#buffer.hasReadyStore()) {
+          this.updateBuffer()
+        }
+        if (this.#tipBlockNumber.gt(0) && this.#tipBlockNumber.gt(BI.from(this.#lastBlock?.header.number ?? 0))) {
+          try {
+            const block = await this._dataSource.getBlock(this.#tipBlockNumber.toHexString())
+            if (block) {
+              this.updateStore(block)
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
       }
+
+      semaphore--
     }, pollingInterval)
+  }
+
+  private updateBuffer() {
+    const stores = this.#buffer.popAll()
+    for (const changes of stores) {
+      for (const [store, input, data] of changes) {
+        this.updateCellChanges(store, input, data)
+      }
+    }
+  }
+
+  private updateCellChanges(store: ResourceBindingRegistry, input: Input[], data: CellChangeData[]) {
+    const upgrade: UpdateStorageValue[] = []
+    for (const [cell, witness] of data) {
+      upgrade.push({ witness, cell })
+      if (cell.outPoint) {
+        this.#registryOutPoint.set(outPointToOutPointString(cell.outPoint), store)
+      }
+    }
+
+    if (upgrade.length > 0) {
+      this.sendMessage(store, 'update_cells', upgrade)
+    }
+
+    if (input.length > 0) {
+      this.sendMessage(
+        store,
+        'remove_cell',
+        input.map((v) => outPointToOutPointString(v.previousOutput)),
+      )
+    }
   }
 
   private updateStore(block: Block) {
     if (!this.#lastBlock || BI.from(block.header.number).gt(BI.from(this.#lastBlock.header.number))) {
-      const changes = this.filterCells(block)
+      const changes = this.filterCellsAndMapChanges(block)
       for (const [store, input, data] of changes) {
-        const upgrade: { witness: HexString; cell: Cell }[] = []
-        for (const [cell, witness] of data) {
-          upgrade.push({ witness, cell })
-          if (cell.outPoint) {
-            this.#registryOutPoint.set(outPointToOutPointString(cell.outPoint), store)
-          }
-        }
-
-        if (upgrade.length > 0) {
-          this.sendMessage(store, 'update_cells', upgrade)
-        }
-
-        if (input.length > 0) {
-          this.sendMessage(
-            store,
-            'remove_cell',
-            input.map((v) => outPointToOutPointString(v.previousOutput)),
-          )
+        switch (store.status) {
+          case 'initiated':
+            this.updateCellChanges(store, input, data)
+            break
+          case 'registered':
+          default:
+            this.#buffer.push(store.uri, [store, input, data])
         }
       }
       this.#lastBlock = block
     }
   }
 
-  private mapOutputs(tx: Transaction, block: Block): Map<OutPointString, [Cell, string]> {
-    const outputs = new Map<OutPointString, [Cell, string]>()
+  private mapOutputs(tx: Transaction, block: Block): Map<OutPointString, CellChangeData> {
+    const outputs = new Map<OutPointString, CellChangeData>()
     if (tx.hash) {
       for (const outputIndex in tx.outputs) {
         const outPoint = {
@@ -87,9 +131,9 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return outputs
   }
 
-  private filterCells(block: Block): [ResourceBindingRegistry, Input[], [Cell, string][]][] {
-    const changes: Map<ActorURI, [ResourceBindingRegistry, Input[], [Cell, string][]]> = new Map()
-    let outputs = new Map<OutPointString, [Cell, string]>()
+  private filterCellsAndMapChanges(block: Block): CellChange[] {
+    const changes: Map<ActorURI, CellChange> = new Map()
+    let outputs = new Map<OutPointString, CellChangeData>()
     for (const tx of block.transactions) {
       outputs = new Map([...outputs, ...this.mapOutputs(tx, block)])
       for (const input of tx.inputs) {
@@ -132,12 +176,35 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return Array.from(changes.values())
   }
 
+  private async initiateStore(registry: ResourceBindingRegistry, lockScript: Script, typeScript?: Script) {
+    const cells = await this._dataSource.getAllLiveCellsWithWitness(lockScript, typeScript)
+    this.updateCellChanges(
+      registry,
+      [],
+      cells.map((cell) => [
+        {
+          cellOutput: {
+            capacity: cell.output.capacity,
+            lock: cell.output.lock,
+            type: cell.output.type,
+          },
+          data: cell.outputData,
+          outPoint: cell.outPoint,
+          blockNumber: cell.blockNumber,
+        },
+        cell.witness,
+      ]),
+    )
+    this.#buffer.signalReady(registry.uri)
+    registry.status = 'initiated'
+  }
+
   handleCall = (_msg: ActorMessage<MessagePayload<ResourceBindingManagerMessage>>): void => {
     switch (_msg.payload?.value?.type) {
       case 'register': {
         const register = _msg.payload?.value?.register
         if (register) {
-          this.register(register.lockScriptHash, register.typeScriptHash, register.uri, register.pattern)
+          this.register(register.lockScript, register.typeScript, register.uri, register.pattern)
         }
         break
       }
@@ -153,12 +220,16 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }
   }
 
-  async register(lock: LockScriptHash, type: TypeScriptHash, uri: ActorURI, pattern: string) {
-    if (!this.#registry.get(type)) {
-      this.#registry.set(type, new Map())
+  async register(lock: Script, type: Script | undefined, uri: ActorURI, pattern: string) {
+    const lockHash = utils.computeScriptHash(lock)
+    const typeHash = type ? utils.computeScriptHash(type) : 'null'
+    if (!this.#registry.get(typeHash)) {
+      this.#registry.set(typeHash, new Map())
     }
-    this.#registry.get(type)?.set(lock, { uri, pattern })
-    this.#registryReverse.set(uri, [type, lock])
+    const registry: ResourceBindingRegistry = { uri, pattern, status: 'registered' }
+    this.#registry.get(typeHash)?.set(lockHash, registry)
+    this.#registryReverse.set(uri, [typeHash, lockHash])
+    await this.initiateStore(registry, lock, type)
   }
 
   revoke(uri: ActorURI) {
@@ -177,7 +248,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   private sendMessage<T extends 'remove_cell' | 'update_cells'>(
     store: ResourceBindingRegistry,
     type: T,
-    payload: T extends 'remove_cell' ? OutPointString[] : { cell: Cell; witness: HexString }[],
+    payload: T extends 'remove_cell' ? OutPointString[] : UpdateStorageValue[],
   ) {
     this.call(store.uri, {
       pattern: store.pattern,

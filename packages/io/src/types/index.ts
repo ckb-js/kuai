@@ -1,5 +1,7 @@
 import type { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
 import type { Key } from 'path-to-regexp'
+import type { Script } from '@ckb-lumos/base'
+
 export interface Listener<T> {
   on(listen: (obj: T) => void): void
 }
@@ -39,7 +41,11 @@ export interface ChainSource {
   getTipBlockNumber: () => Promise<CKBComponents.BlockNumber>
   getTipHeader: () => Promise<CKBComponents.BlockHeader>
   getCurrentEpoch: () => Promise<CKBComponents.Epoch>
-  getBlock: (blockNumber: string) => Promise<CKBComponents.Block>
+  getBlock: (blockNumber: string) => Promise<CKBComponents.Block | undefined>
+  getAllLiveCellsWithWitness: (
+    lockScript: Script,
+    typeScript?: Script,
+  ) => Promise<(CKBComponents.IndexerCell & { witness: CKBComponents.Witness })[]>
 }
 
 export type Path = string

@@ -5,6 +5,7 @@ import { timeout, distinctUntilChanged, catchError } from 'rxjs'
 import type { Subscription } from 'rxjs'
 
 import { ChainSource } from '../src/types'
+import type { Script } from '@ckb-lumos/base'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const { scheduler } = require('node:timers/promises')
 
@@ -51,6 +52,12 @@ describe('test Listener', () => {
       }),
     getCurrentEpoch: () => Promise.resolve(mockEpoch),
     getBlock: () => Promise.resolve(mockBlock),
+    getAllLiveCellsWithWitness: function (
+      _lockScript: Script,
+      _typeScript?: Script,
+    ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
+      return Promise.resolve([])
+    },
   }
 
   it(`distinctUntilChanged pipe `, async () => {
