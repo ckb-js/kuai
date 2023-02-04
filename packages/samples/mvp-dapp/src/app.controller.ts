@@ -3,8 +3,11 @@ import { helpers } from '@ckb-lumos/lumos'
 import { Actor } from '@ckb-js/kuai-models'
 import type { types } from '@ckb-js/kuai-io'
 import { appRegistry } from './actors'
+import { Tx } from './views/tx.view'
+import { Load } from './views/load.view'
+import { Read } from './views/read.view'
 
-const { TransactionSkeleton, createTransactionFromSkeleton } = helpers
+const { TransactionSkeleton } = helpers
 
 const router = new KuaiRouter()
 
@@ -12,7 +15,7 @@ router.post('/claim', async (ctx) => {
   const txSkeleton = new TransactionSkeleton()
   // findCells
 
-  ctx.ok(createTransactionFromSkeleton(txSkeleton))
+  ctx.ok(Tx.toJson(txSkeleton, [], []))
 })
 
 router.get('/read/:path', async (ctx) => {
@@ -22,7 +25,7 @@ router.get('/read/:path', async (ctx) => {
     return ctx.err('not found storage')
   }
 
-  const res = await Actor.call(storage.ref.uri, storage.ref, {
+  await Actor.call(storage.ref.uri, storage.ref, {
     pattern: 'normal',
     value: {
       type: 'fetch',
@@ -32,11 +35,27 @@ router.get('/read/:path', async (ctx) => {
     },
   })
 
-  ctx.ok(JSON.stringify(res.message))
+  ctx.ok(
+    Read.toJson({
+      key: '',
+      value: '',
+      label: '',
+    }),
+  )
 })
 
 router.get('/load', async (ctx) => {
-  ctx.ok('mock load')
+  // TODO: find storage
+  ctx.ok(
+    Load.toJson({
+      data: {
+        profile: [],
+        addresses: [],
+        custom: [],
+        dweb: [],
+      },
+    }),
+  )
 })
 
 router.post(
@@ -63,14 +82,14 @@ router.post(
       },
     })
 
-    ctx.ok(createTransactionFromSkeleton(txSkeleton))
+    ctx.ok(Tx.toJson(txSkeleton, [], []))
   },
 )
 
 router.post('/clear', async (ctx) => {
   const txSkeleton = new TransactionSkeleton()
 
-  ctx.ok(createTransactionFromSkeleton(txSkeleton))
+  ctx.ok(Tx.toJson(txSkeleton, [], []))
 })
 
 export { router }
