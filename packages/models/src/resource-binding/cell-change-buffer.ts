@@ -16,7 +16,7 @@ export class CellChangeBuffer {
   }
 
   pop(): CellChange[] | undefined {
-    const uri = this.#readyList.pop()
+    const uri = this.#readyList.shift()
     if (uri) {
       const changes = this.#bufferMap.get(uri)
       this.#bufferMap.delete(uri)
@@ -25,14 +25,14 @@ export class CellChangeBuffer {
   }
 
   popAll(): CellChange[][] {
-    let length = this.#readyList.length
+    const length = this.#readyList.length
     const res: CellChange[][] = []
-    while (length-- > 0) {
+    this.#readyList.slice(0, length).forEach(() => {
       const data = this.pop()
       if (data) {
         res.push(data)
       }
-    }
+    })
 
     return res
   }
