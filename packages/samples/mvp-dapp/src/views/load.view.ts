@@ -1,5 +1,9 @@
 import type { StoreType } from '../record/record.model'
 
+interface Item {
+  value: string
+  optional?: string
+}
 export class Load {
   static toJson(storage: StoreType): string {
     const profile = new Map<string, Item>()
@@ -37,9 +41,4 @@ export class Load {
       dweb,
     })
   }
-}
-
-interface Item {
-  value: string
-  optional?: string
 }
