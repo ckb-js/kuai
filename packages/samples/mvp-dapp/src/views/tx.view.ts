@@ -18,14 +18,19 @@ export class Tx {
       txSkeleton.update('inputs', (inputs) => inputs.push(input))
 
       txSkeleton.update('witnesses', (witnesses) => {
-        if (witness == '0x' || witness.length == 0) {
+        if (witness === '0x' || witness === '') {
           const omniLock = config.getConfig().SCRIPTS.OMNI_LOCK as NonNullable<config.ScriptConfig>
           const fromLockScript = input.cellOutput.lock
-          if (omniLock.CODE_HASH === fromLockScript.codeHash && fromLockScript.hashType === omniLock.HASH_TYPE) {
-            return witnesses.push(bytes.hexify(blockchain.WitnessArgs.pack({ lock: OMNILOCK_SIGNATURE_PLACEHOLDER })))
-          } else {
-            return witnesses.push(bytes.hexify(blockchain.WitnessArgs.pack({ lock: SECP_SIGNATURE_PLACEHOLDER })))
-          }
+          return witnesses.push(
+            bytes.hexify(
+              blockchain.WitnessArgs.pack({
+                lock:
+                  omniLock.CODE_HASH === fromLockScript.codeHash && fromLockScript.hashType === omniLock.HASH_TYPE
+                    ? OMNILOCK_SIGNATURE_PLACEHOLDER
+                    : SECP_SIGNATURE_PLACEHOLDER,
+              }),
+            ),
+          )
         }
         return witnesses.push(witness)
       })
