@@ -1,6 +1,6 @@
 import { JSONStore, OutPointString, UpdateStorageValue } from '@ckb-js/kuai-models'
 
-type ItemData = {
+export type ItemData = {
   key: string
   value: string
   label: string
