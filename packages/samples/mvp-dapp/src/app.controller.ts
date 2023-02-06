@@ -15,7 +15,7 @@ router.post('/claim', async (ctx) => {
   const txSkeleton = new TransactionSkeleton()
   // findCells
 
-  ctx.ok(Tx.toJson(txSkeleton, [], []))
+  ctx.ok(Tx.toJsonString(txSkeleton, [], []))
 })
 
 router.get('/read/:path', async (ctx) => {
@@ -36,7 +36,7 @@ router.get('/read/:path', async (ctx) => {
   })
 
   ctx.ok(
-    Read.toJson({
+    Read.toJsonString({
       key: '',
       value: '',
       label: '',
@@ -47,7 +47,7 @@ router.get('/read/:path', async (ctx) => {
 router.get('/load', async (ctx) => {
   // TODO: find storage
   ctx.ok(
-    Load.toJson({
+    Load.toJsonString({
       data: {
         profile: [],
         addresses: [],
@@ -82,14 +82,14 @@ router.post(
       },
     })
 
-    ctx.ok(Tx.toJson(txSkeleton, [], []))
+    ctx.ok(Tx.toJsonString(txSkeleton, [], []))
   },
 )
 
 router.post('/clear', async (ctx) => {
   const txSkeleton = new TransactionSkeleton()
 
-  ctx.ok(Tx.toJson(txSkeleton, [], []))
+  ctx.ok(Tx.toJsonString(txSkeleton, [], []))
 })
 
 export { router }

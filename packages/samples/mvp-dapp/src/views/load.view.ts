@@ -5,7 +5,7 @@ interface Item {
   optional?: string
 }
 export class Load {
-  static toJson(storage: StoreType): string {
+  static toJsonString(storage: StoreType): string {
     const profile = new Map<string, Item>()
     storage.data.profile.forEach((item) => {
       profile.set(item.key, {

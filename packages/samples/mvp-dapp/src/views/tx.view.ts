@@ -5,7 +5,7 @@ import { blockchain } from '@ckb-lumos/base'
 import { bytes } from '@ckb-lumos/codec'
 
 export class Tx {
-  static async toJson(
+  static async toJsonString(
     txSkeleton: helpers.TransactionSkeletonType,
     inputData: CellChangeData[],
     outputCells: Cell[],
