@@ -7,5 +7,5 @@ This project demonstrates a basic kuai use case.
 ```
 npm run build
 
-node ./dist/src/main.js
+npm run start:prod
 ```

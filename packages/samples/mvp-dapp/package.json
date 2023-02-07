@@ -1,7 +1,9 @@
 {
   "name": "kuai-mvp-dapp",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "build:watch": "tsc:w",
+    "start:prod": "node ./dist/main.js"
   },
   "dependencies": {
     "@ckb-js/kuai-core": "0.0.1",
