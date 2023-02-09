@@ -5,7 +5,7 @@ import { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
 export class NervosChainSource implements ChainSource {
   #rpc: RPC
 
-  constructor(rpcUrl: string) {
+  constructor(rpcUrl: string, private _getCellsLimit: number = 1000) {
     this.#rpc = new RPC(rpcUrl)
   }
 
@@ -28,9 +28,8 @@ export class NervosChainSource implements ChainSource {
   ) => {
     const res: (CKBComponents.IndexerCell & { witness: string })[] = []
 
-    const step = BI.from(1000)
     startBlock = startBlock ?? BI.from(0)
-    endBlock = startBlock ?? BI.from(await this.getTipBlockNumber())
+    endBlock = endBlock ?? BI.from(await this.getTipBlockNumber())
 
     let lastCursor = ''
     do {
@@ -44,7 +43,7 @@ export class NervosChainSource implements ChainSource {
           },
         },
         'asc',
-        step.toHexString(),
+        `0x${this._getCellsLimit.toString(16)}`,
         lastCursor == '' ? undefined : lastCursor,
       )
       for (const cell of cells.objects) {
