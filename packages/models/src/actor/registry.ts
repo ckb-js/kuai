@@ -17,9 +17,9 @@ export class Registry {
     return this.#actors.has(uri)
   }
 
-  find = (uri: ActorURI): Actor | undefined => {
+  find = <T = Actor>(uri: ActorURI): T | undefined => {
     try {
-      return this.#container.get(uri)
+      return this.#container.get<T>(uri)
     } catch {
       return undefined
     }

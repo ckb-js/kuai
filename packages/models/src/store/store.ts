@@ -26,6 +26,8 @@ import {
   NoSchemaException,
   UnmatchLengthException,
 } from '../exceptions'
+import { ProviderKey, CellPattern, SchemaPattern } from '../utils'
+import { cellPatternMatch, schemaPatternMatch } from './pattern-match'
 
 const ByteCharLen = 2
 
@@ -45,17 +47,25 @@ export class Store<
 
   protected options?: Option
 
-  protected schemaOption: GetStorageOption<StructSchema>
+  protected schemaOption?: GetStorageOption<StructSchema>
+
+  protected cellPattern?: CellPattern
+
+  protected schemaPattern?: SchemaPattern
 
   constructor(
     schemaOption: GetStorageOption<StructSchema>,
     params?: {
       states?: Record<OutPointString, GetStorageStruct<StructSchema>>
       chainData?: Record<OutPointString, UpdateStorageValue>
+      cellPattern?: CellPattern
+      schemaPattern?: SchemaPattern
       options?: Option
     },
   ) {
     super()
+    this.cellPattern = Reflect.getMetadata(ProviderKey.CellPattern, this.constructor) || params?.cellPattern
+    this.schemaPattern = Reflect.getMetadata(ProviderKey.SchemaPattern, this.constructor) || params?.schemaPattern
     this.schemaOption = schemaOption
     this.states = params?.states || {}
     this.chainData = params?.chainData || {}
@@ -76,6 +86,8 @@ export class Store<
   }
 
   private deserializeCell({ cell, witness }: UpdateStorageValue): GetStorageStruct<StructSchema> {
+    if (!this.schemaOption || typeof this.schemaOption !== 'object' || this.schemaOption == null)
+      return {} as GetStorageStruct<StructSchema>
     const res: Partial<Record<StorageLocation, unknown>> = {}
     if ('data' in this.schemaOption) {
       res.data = this.deserializeField('data', this.schemaOption.data, cell.data)
@@ -93,9 +105,16 @@ export class Store<
   }
 
   private addState({ cell, witness }: UpdateStorageValue) {
+    if (this.cellPattern && !cellPatternMatch(this.cellPattern, { cell, witness })) {
+      return
+    }
     if (cell.outPoint) {
       const outpoint = `${cell.outPoint?.txHash}${cell.outPoint.index.slice(2)}`
-      this.states[outpoint] = this.deserializeCell({ cell, witness })
+      const value = this.deserializeCell({ cell, witness })
+      if (this.schemaPattern && !schemaPatternMatch(this.schemaPattern, value)) {
+        return
+      }
+      this.states[outpoint] = value
       this.chainData[outpoint] = { cell, witness }
     }
   }
@@ -180,6 +199,8 @@ export class Store<
   }
 
   private serializeField(type: StorageLocation, offChainValue: unknown) {
+    if (!this.schemaOption || typeof this.schemaOption !== 'object' || this.schemaOption == null)
+      return { hexString: '0x', offset: 0, length: 0 }
     this.assetStorage(this.getStorage(type))
     const hexString = bytes.hexify(this.getStorage(type)!.serialize(offChainValue))
     if (typeof type === 'string') {
@@ -291,6 +312,8 @@ export class Store<
       states,
       options: this.options,
       chainData: this.cloneChainData(),
+      cellPattern: this.cellPattern,
+      schemaPattern: this.schemaPattern,
     })
   }
 

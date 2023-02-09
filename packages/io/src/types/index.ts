@@ -57,11 +57,10 @@ export type RoutePayload<
   Body extends object = object,
 > = {
   query?: Query
-  body?: Body
-  params?: Params
   path: Path
   method: Method
-}
+} & ([Params] extends [never] ? Record<string, never> : { params: Params }) &
+  ([Body] extends [never] ? Record<string, never> : { body: Body })
 
 export interface RouterContext<
   Query extends Record<string, string> = Record<string, string>,
