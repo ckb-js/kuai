@@ -15,14 +15,7 @@ async function bootstrap() {
 
   Reflect.defineMetadata(
     ProviderKey.Actor,
-    {
-      ref: {
-        name: 'resource',
-        path: '',
-        protocal: 'local',
-        uri: 'local://resource',
-      },
-    },
+    new ActorReference('resource',  '')
     Manager,
   )
 
