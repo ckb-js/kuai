@@ -12,22 +12,16 @@ import { DAPP_DATA_PREFIX } from './const'
 
 const router = new KuaiRouter()
 function createCellPattern(lock: Script) {
-  return (value: UpdateStorageValue, preMatch = true) => {
+  return (value: UpdateStorageValue) => {
     const cellLock = value.cell.cellOutput.lock
-    return (
-      preMatch &&
-      cellLock.args === lock?.args &&
-      cellLock.codeHash === lock?.codeHash &&
-      cellLock.hashType === lock?.hashType
-    )
+    return cellLock.args === lock?.args && cellLock.codeHash === lock?.codeHash && cellLock.hashType === lock?.hashType
   }
 }
 
 function createRecordPattern(lock: Script) {
-  return (value: UpdateStorageValue, preMatch = true) => {
+  return (value: UpdateStorageValue) => {
     const cellLock = value.cell.cellOutput.lock
     return (
-      preMatch &&
       cellLock.args === lock?.args &&
       cellLock.codeHash === lock?.codeHash &&
       cellLock.hashType === lock?.hashType &&

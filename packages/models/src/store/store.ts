@@ -27,7 +27,6 @@ import {
   UnmatchLengthException,
 } from '../exceptions'
 import { ProviderKey, CellPattern, SchemaPattern } from '../utils'
-import { cellPatternMatch, schemaPatternMatch } from './pattern-match'
 
 const ByteCharLen = 2
 
@@ -86,8 +85,7 @@ export class Store<
   }
 
   private deserializeCell({ cell, witness }: UpdateStorageValue): GetStorageStruct<StructSchema> {
-    if (!this.schemaOption || typeof this.schemaOption !== 'object' || this.schemaOption == null)
-      return {} as GetStorageStruct<StructSchema>
+    if (!this.schemaOption || typeof this.schemaOption !== 'object') return {} as GetStorageStruct<StructSchema>
     const res: Partial<Record<StorageLocation, unknown>> = {}
     if ('data' in this.schemaOption) {
       res.data = this.deserializeField('data', this.schemaOption.data, cell.data)
@@ -105,13 +103,13 @@ export class Store<
   }
 
   private addState({ cell, witness }: UpdateStorageValue) {
-    if (this.cellPattern && !cellPatternMatch(this.cellPattern, { cell, witness })) {
+    if (this.cellPattern && !this.cellPattern({ cell, witness })) {
       return
     }
     if (cell.outPoint) {
       const outpoint = `${cell.outPoint?.txHash}${cell.outPoint.index.slice(2)}`
       const value = this.deserializeCell({ cell, witness })
-      if (this.schemaPattern && !schemaPatternMatch(this.schemaPattern, value)) {
+      if (this.schemaPattern && !this.schemaPattern(value)) {
         return
       }
       this.states[outpoint] = value
@@ -199,8 +197,7 @@ export class Store<
   }
 
   private serializeField(type: StorageLocation, offChainValue: unknown) {
-    if (!this.schemaOption || typeof this.schemaOption !== 'object' || this.schemaOption == null)
-      return { hexString: '0x', offset: 0, length: 0 }
+    if (!this.schemaOption || typeof this.schemaOption !== 'object') return { hexString: '0x', offset: 0, length: 0 }
     this.assetStorage(this.getStorage(type))
     const hexString = bytes.hexify(this.getStorage(type)!.serialize(offChainValue))
     if (typeof type === 'string') {

@@ -25,11 +25,11 @@ export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>>
   }
 }
 
-type SchemaMatch = (value: unknown, preMatch: boolean) => boolean
-export type SchemaPattern = SchemaMatch | SchemaMatch[]
+export type MatchFunc<T> = (value: T) => boolean
 
-type CellMatch = (value: UpdateStorageValue, preMatch: boolean) => boolean
-export type CellPattern = CellMatch | CellMatch[]
+export type SchemaPattern = MatchFunc<unknown>
+
+export type CellPattern = MatchFunc<UpdateStorageValue>
 
 export function Pattern({
   cellPattern,
