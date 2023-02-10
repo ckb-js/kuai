@@ -1,6 +1,6 @@
 import type { ChainSource } from '@ckb-js/kuai-io/lib/types'
 import { Script, RPC, BI } from '@ckb-lumos/lumos'
-import { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
+import type { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
 
 export class NervosChainSource implements ChainSource {
   #rpc: RPC
