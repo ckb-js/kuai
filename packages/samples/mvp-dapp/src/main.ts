@@ -4,7 +4,7 @@ import { initialKuai } from '@ckb-js/kuai-core'
 import { KoaRouterAdapter, CoR, TipHeaderListener } from '@ckb-js/kuai-io'
 import { router } from './app.controller'
 import './type-extends'
-import { Manager, ProviderKey } from '@ckb-js/kuai-models'
+import { ActorReference, Manager, ProviderKey } from '@ckb-js/kuai-models'
 import { NervosChainSource } from './chain-source'
 
 async function bootstrap() {
@@ -13,11 +13,7 @@ async function bootstrap() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const port = (kuaiEnv.config as any)?.port || 3000
 
-  Reflect.defineMetadata(
-    ProviderKey.Actor,
-    new ActorReference('resource',  '')
-    Manager,
-  )
+  Reflect.defineMetadata(ProviderKey.Actor, new ActorReference('resource', ''), Manager)
 
   const dataSource = new NervosChainSource(kuaiEnv.config.rpcUrl)
   const listener = new TipHeaderListener(dataSource)
