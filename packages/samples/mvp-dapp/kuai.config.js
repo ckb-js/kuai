@@ -1,5 +1,4 @@
 module.exports = {
   port: 3000,
-  rpcUrl: '',
-  indexerUrl: '',
+  rpcUrl: 'https://mainnet.ckbapp.dev/rpc',
 }
