@@ -2,7 +2,7 @@
   "name": "kuai-mvp-dapp",
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc:w",
+    "build:watch": "tsc -w",
     "start:prod": "node ./dist/main.js"
   },
   "dependencies": {
