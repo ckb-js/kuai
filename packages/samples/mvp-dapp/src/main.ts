@@ -13,7 +13,7 @@ async function bootstrap() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const port = (kuaiEnv.config as any)?.port || 3000
 
-  Reflect.defineMetadata(ProviderKey.Actor, new ActorReference('resource', ''), Manager)
+  Reflect.defineMetadata(ProviderKey.Actor, { ref: new ActorReference('resource', '/').json }, Manager)
 
   const dataSource = new NervosChainSource(kuaiEnv.config.rpcUrl)
   const listener = new TipHeaderListener(dataSource)
