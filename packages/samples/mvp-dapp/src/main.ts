@@ -3,12 +3,12 @@ import { koaBody } from 'koa-body'
 import { initialKuai } from '@ckb-js/kuai-core'
 import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io'
 import { router } from './app.controller'
-import './type-extends'
 
 async function bootstrap() {
   const kuaiCtx = await initialKuai()
   const kuaiEnv = kuaiCtx.getRuntimeEnvironment()
-  const port = kuaiEnv.config?.port || 3000
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const port = (kuaiEnv.config as any)?.port || 3000
 
   const app = new Koa()
   app.use(koaBody())

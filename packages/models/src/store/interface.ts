@@ -30,7 +30,7 @@ export type OmitByValue<T, R = never> = {
   [P in keyof T as T[P] extends R ? never : P]: T[P]
 }
 
-type IfEmptyStorageSchemaNever<T extends StorageSchema> = IsKeysExist<T, 'data'> extends true
+type IfEmptyStorageSchema<T extends StorageSchema, R = never> = IsKeysExist<T, 'data'> extends true
   ? T
   : IsKeysExist<T, 'witness'> extends true
   ? T
@@ -38,7 +38,7 @@ type IfEmptyStorageSchemaNever<T extends StorageSchema> = IsKeysExist<T, 'data'>
   ? T
   : IsKeysExist<T, 'typeArgs'> extends true
   ? T
-  : never
+  : R
 
 export type GetFullStorageStruct<T extends StorageSchema> = {
   data: IsKeysExist<T, 'data'> extends true ? GetFieldStruct<T['data']> : never
@@ -47,7 +47,7 @@ export type GetFullStorageStruct<T extends StorageSchema> = {
   typeArgs: IsKeysExist<T, 'typeArgs'> extends true ? GetFieldStruct<T['typeArgs']> : never
 }
 
-export type GetStorageStruct<T extends StorageSchema> = IfEmptyStorageSchemaNever<T> extends true
+export type GetStorageStruct<T extends StorageSchema> = IfEmptyStorageSchema<T> extends true
   ? never
   : OmitByValue<GetFullStorageStruct<T>>
 
@@ -55,7 +55,7 @@ type PickExist<T, K extends keyof T> = OmitByValue<{
   [P in K as P extends keyof T ? P : never]: T[P]
 }>
 
-export type GetStorageOption<T extends StorageSchema> = IfEmptyStorageSchemaNever<
+export type GetStorageOption<T extends StorageSchema> = IfEmptyStorageSchema<
   OmitByValue<{
     [P in keyof T]: P extends 'data'
       ? T extends { data: infer Option extends { offset?: ByteLength; length?: ByteLength; schema: unknown } }
@@ -74,7 +74,8 @@ export type GetStorageOption<T extends StorageSchema> = IfEmptyStorageSchemaNeve
         ? PickExist<Option, 'offset' | 'length'>
         : true
       : never
-  }>
+  }>,
+  void
 >
 
 export type GetOnChainStorage<T extends StorageSchema> = {
