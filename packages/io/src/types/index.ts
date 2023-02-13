@@ -1,4 +1,5 @@
 import type { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
+import type { IncomingHttpHeaders } from 'http'
 import type { Key } from 'path-to-regexp'
 import type { Script } from '@ckb-lumos/base'
 
@@ -57,6 +58,9 @@ export type RoutePayload<
   Body extends object = object,
 > = {
   query?: Query
+  body?: Body
+  params?: Params
+  header: IncomingHttpHeaders
   path: Path
   method: Method
 } & ([Params] extends [never] ? Record<string, never> : { params: Params }) &

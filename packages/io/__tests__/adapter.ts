@@ -35,7 +35,7 @@ describe('test KoaRouterAdapter', () => {
 
   const koaRouterAdapter = new KoaRouterAdapter(cor)
 
-  koaServer.use(koaRouterAdapter.routes()).use(koaRouterAdapter.allowedMethods())
+  koaServer.use(koaRouterAdapter.routes())
 
   const server = koaServer.listen(4004)
 

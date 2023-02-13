@@ -1,6 +1,7 @@
 import { KuaiRouter } from '@ckb-js/kuai-io'
-import { HashType, HexString, Script } from '@ckb-lumos/lumos'
+import { HexString, Script, helpers } from '@ckb-lumos/lumos'
 import { ActorReference, Manager, ProviderKey, UpdateStorageValue } from '@ckb-js/kuai-models'
+import { NotFound, BadRequest } from 'http-errors'
 import { appRegistry } from './actors'
 import { Load } from './views/load.view'
 import { Read } from './views/read.view'
@@ -71,55 +72,120 @@ async function getRecordModel(lock: Script): Promise<RecordModel> {
   return recordModel
 }
 
-router.post<never, never, { lock: Script; capacity: HexString }>('/claim', async (ctx) => {
-  const lock = ctx.payload.body.lock
+router.post<never, { address: string }, { capacity: HexString }>('/claim/:address', async (ctx) => {
+  const { body, params } = ctx.payload
+
+  if (!params || !params.address) {
+    throw new BadRequest('invalid address')
+  }
+
+  const lock = ((address: string) => {
+    try {
+      return helpers.parseAddress(address)
+    } catch (e) {
+      throw new BadRequest('invalid address')
+    }
+  })(params.address)
+
+  if (!body || !body.capacity) {
+    throw new BadRequest('undefined body field: capacity')
+  }
+
   const omnilockModel = await getOmnilockModel(lock)
-  const result = omnilockModel.claim(lock, ctx.payload.body.capacity)
+  const result = omnilockModel.claim(lock, body.capacity)
   // TODO use view to format tx
   ctx.ok(result)
 })
 
-router.get<{ path: string }, { args: string; codeHash: string; hashType: HashType }>('/read/:path', async (ctx) => {
-  const lock: Script = {
-    args: ctx.payload.params.args,
-    codeHash: ctx.payload.params.codeHash,
-    hashType: ctx.payload.params.hashType,
+router.get<never, { path: string; address: string }>('/read/:address/:path', async (ctx) => {
+  const { params } = ctx.payload
+
+  if (!params || !params.address) {
+    throw new BadRequest('invalid address')
   }
+
+  const lock = ((address: string) => {
+    try {
+      return helpers.parseAddress(address)
+    } catch (e) {
+      throw new BadRequest('invalid address')
+    }
+  })(params.address)
+
+  if (!params || !params.path) {
+    throw new BadRequest('invalid path')
+  }
+
   const recordModel = await getRecordModel(lock)
   const key = recordModel.getOneOfKey()
   const data = recordModel.get(key, ['data'])
-  const path = ctx.payload.query?.path
+  const path = params.path
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (path && path in data && (data as any)[path]) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ctx.ok(Read.toJsonString((data as any)[path]))
   } else {
-    ctx.err('There is no data with path')
+    throw new NotFound('There is no data with path')
   }
 })
 
-router.get<never, { args: string; codeHash: string; hashType: HashType }>('/load', async (ctx) => {
-  const lock: Script = {
-    args: ctx.payload.params.args,
-    codeHash: ctx.payload.params.codeHash,
-    hashType: ctx.payload.params.hashType,
+router.get<never, { address: string }>('/load/:address', async (ctx) => {
+  const { params } = ctx.payload
+
+  if (!params || !params.address) {
+    throw new BadRequest('invalid address')
   }
+
+  const lock = ((address: string) => {
+    try {
+      return helpers.parseAddress(address)
+    } catch (e) {
+      throw new BadRequest('invalid address')
+    }
+  })(params.address)
+
   const recordModel = await getRecordModel(lock)
   const key = recordModel.getOneOfKey()
   const data = recordModel.get(key, ['data'])
   ctx.ok(Load.toJsonString({ data }))
 })
 
-router.post<never, never, { lock: Script; value: StoreType['data'] }>('/set', async (ctx) => {
-  const lock = ctx.payload.body.lock
+router.post<never, { address: string }, { value: StoreType['data'] }>('/set/:address', async (ctx) => {
+  const { params } = ctx.payload
+
+  if (!params || !params.address) {
+    throw new BadRequest('invalid address')
+  }
+
+  const lock = ((address: string) => {
+    try {
+      return helpers.parseAddress(address)
+    } catch (e) {
+      throw new BadRequest('invalid address')
+    }
+  })(params.address)
+
   const recordModel = await getRecordModel(lock)
   const result = recordModel.update(ctx.payload.body.value)
   // TODO use view to format tx
   ctx.ok(result)
 })
 
-router.post<never, never, { lock: Script }>('/clear', async (ctx) => {
-  const lock = ctx.payload.body.lock
+router.post<never, { address: string }>('/clear/:address', async (ctx) => {
+  const { params } = ctx.payload
+
+  if (!params || !params.address) {
+    throw new BadRequest('invalid address')
+  }
+
+  const lock = ((address: string) => {
+    try {
+      return helpers.parseAddress(address)
+    } catch (e) {
+      throw new BadRequest('invalid address')
+    }
+  })(params.address)
+
   const recordModel = await getRecordModel(lock)
   const result = recordModel.clear()
   // TODO use view to format tx

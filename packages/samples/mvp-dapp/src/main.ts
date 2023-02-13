@@ -29,7 +29,7 @@ async function bootstrap() {
 
   const koaRouterAdapter = new KoaRouterAdapter(cor)
 
-  app.use(koaRouterAdapter.routes()).use(koaRouterAdapter.allowedMethods())
+  app.use(koaRouterAdapter.routes())
 
   const server = app.listen(port, function () {
     const address = (() => {

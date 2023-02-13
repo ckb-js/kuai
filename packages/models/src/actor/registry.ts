@@ -11,7 +11,7 @@ import { DuplicatedActorException, InvalidActorURIException, ProviderKey } from 
 
 export class Registry {
   #actors: Set<ActorURI> = new Set()
-  #container: Container = new Container()
+  #container: Container = new Container({ skipBaseClassChecks: true })
 
   isLive = (uri: ActorURI): boolean => {
     return this.#actors.has(uri)
@@ -20,7 +20,8 @@ export class Registry {
   find = <T = Actor>(uri: ActorURI): T | undefined => {
     try {
       return this.#container.get<T>(uri)
-    } catch {
+    } catch (e) {
+      console.log('Registry `find` catch error', e)
       return undefined
     }
   }
