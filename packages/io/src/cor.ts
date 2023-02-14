@@ -9,7 +9,7 @@ export class CoR<ContextT extends object = Record<string, never>> implements ICo
     return this
   }
 
-  public async dispatch<Ok>(payload: JsonValue): Promise<Ok | void> {
+  public async dispatch<Ok, Payload extends JsonValue>(payload: Payload): Promise<Ok | void> {
     return new Promise((resolve, rej) => {
       const ctx: Context<ContextT> = {
         payload,

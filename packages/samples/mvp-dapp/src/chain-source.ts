@@ -13,7 +13,7 @@ export class NervosChainSource implements ChainSource {
 
   getCurrentEpoch = () => this.#rpc.getCurrentEpoch()
 
-  getBlock = (blockNumber: string) => this.#rpc.getBlock(blockNumber)
+  getBlock = (blockNumber: string) => this.#rpc.getBlockByNumber(blockNumber)
 
   getTipBlockNumber = async () => {
     const header = await this.#rpc.getTipHeader()

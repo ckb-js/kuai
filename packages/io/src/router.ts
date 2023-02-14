@@ -1,6 +1,7 @@
 import { Middleware, Route, Path, RouterContext, RoutePayload, Method } from './types'
 import type { Key } from 'path-to-regexp'
 import { pathToRegexp } from 'path-to-regexp'
+import { NotFound } from 'http-errors'
 
 function isRoutePayload(x: unknown): x is RoutePayload {
   return typeof x === 'object' && x !== null && 'path' in x && 'method' in x
@@ -19,14 +20,19 @@ function createRoute<
   P extends Record<string, string> = Record<string, string>,
   B extends object = object,
 >(options: { path: Path; middleware: Middleware<RouterContext<Q, P, B>>; method: Method }): Route<Q, P, B> {
-  const { path, middleware, method } = options
   const keys: Key[] = []
-  const regexp = pathToRegexp(path, keys)
+  const regexp = pathToRegexp(options.path, keys)
 
   return {
-    path,
-    method,
-    middleware,
+    path: options.path,
+    method: options.method,
+    middleware: async (ctx, next) => {
+      try {
+        await options.middleware(ctx, next)
+      } catch (e) {
+        ctx.err(e)
+      }
+    },
     regexp,
     paramKeys: keys,
   }
@@ -115,6 +121,7 @@ export class KuaiRouter {
 
         return route.middleware(ctx, next)
       } else {
+        ctx.err(new NotFound())
         return next()
       }
     }
