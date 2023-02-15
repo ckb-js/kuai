@@ -1,4 +1,5 @@
 module.exports = {
   port: 3000,
-  rpcUrl: 'https://mainnet.ckbapp.dev/rpc',
+  rpcUrl: 'https://testnet.ckb.dev/rpc',
+  lumosConfig: 'aggron4',
 }
