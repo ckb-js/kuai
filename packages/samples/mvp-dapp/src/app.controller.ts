@@ -46,7 +46,6 @@ async function getOmnilockModel(lock: Script): Promise<OmnilockModel> {
       pattern: lockHash,
       value: { type: 'register', register: { lockScript: lock, uri: actorRef.uri, pattern: lockHash } },
     })
-    return omnilockModel
   }
   return omnilockModel
 }

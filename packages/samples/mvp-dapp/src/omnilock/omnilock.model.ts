@@ -1,6 +1,7 @@
 import { CellPattern, JSONStore, OutPointString, SchemaPattern, UpdateStorageValue } from '@ckb-js/kuai-models'
 import { HexString, Script } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
+import { InternalServerError } from 'http-errors'
 import { DAPP_DATA_PREFIX } from '../const'
 
 /**
@@ -26,15 +27,15 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
         v.cell.cellOutput.lock.codeHash === lock.codeHash &&
         v.cell.cellOutput.lock.hashType === lock.hashType,
     )
-    const totalCapacity: BI = BI.from(0)
-    const currentTotalCapacity: BI = BI.from(0)
+    let totalCapacity: BI = BI.from(0)
+    let currentTotalCapacity: BI = BI.from(0)
     const inputs = cells.filter((v) => {
-      totalCapacity.add(BI.from(v.cell.cellOutput.capacity))
+      totalCapacity = totalCapacity.add(BI.from(v.cell.cellOutput.capacity))
       if (currentTotalCapacity.gte(capacity)) return false
-      currentTotalCapacity.add(BI.from(v.cell.cellOutput.capacity))
+      currentTotalCapacity = currentTotalCapacity.add(BI.from(v.cell.cellOutput.capacity))
       return true
     })
-    if (currentTotalCapacity.lt(capacity)) throw new Error('not enough capacity')
+    if (currentTotalCapacity.lt(capacity)) throw new InternalServerError('not enough capacity')
     return {
       inputs: inputs.map((v) => v.cell.cellOutput),
       outputs: [
