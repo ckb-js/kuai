@@ -37,7 +37,10 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     })
     if (currentTotalCapacity.lt(capacity)) throw new InternalServerError('not enough capacity')
     return {
-      inputs: inputs.map((v) => v.cell.cellOutput),
+      inputs: inputs.map((v) => ({
+        ...v.cell.cellOutput,
+        previousOutput: v.cell.outPoint,
+      })),
       outputs: [
         {
           lock,
@@ -48,7 +51,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
           capacity: totalCapacity.sub(capacity).toHexString(),
         },
       ],
-      outputs_data: [`0x${DAPP_DATA_PREFIX}`, '0x'],
+      outputs_data: [DAPP_DATA_PREFIX, '0x'],
     }
   }
 }

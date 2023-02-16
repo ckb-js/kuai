@@ -30,7 +30,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
       schemaPattern?: SchemaPattern
     },
   ) {
-    super({ data: { offset: DAPP_DATA_PREFIX_LEN } }, params)
+    super({ data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, params)
   }
 
   update(newValue: StoreType['data']) {
@@ -40,7 +40,11 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
     return {
       inputs: input.cell.cellOutput,
       outputs: input.cell.cellOutput,
-      outputs_data: [data],
+      outputs_data: [
+        `${input.cell.data.slice(0, 2 + this.schemaOption!.data.offset * 2)}${data.slice(
+          2 + this.schemaOption!.data.offset * 2,
+        )}`,
+      ],
     }
   }
 
