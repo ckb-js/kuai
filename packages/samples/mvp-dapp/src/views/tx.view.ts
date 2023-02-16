@@ -1,27 +1,48 @@
-import { CellChangeData } from '@ckb-js/kuai-models'
-import { Cell, helpers, commons, config } from '@ckb-lumos/lumos'
+import { Cell, helpers, config } from '@ckb-lumos/lumos'
 import { SECP_SIGNATURE_PLACEHOLDER, OMNILOCK_SIGNATURE_PLACEHOLDER } from '@ckb-lumos/common-scripts/lib/helper'
 import { blockchain } from '@ckb-lumos/base'
 import { bytes } from '@ckb-lumos/codec'
 
 export class Tx {
-  static async toJsonString(
-    txSkeleton: helpers.TransactionSkeletonType,
-    inputData: CellChangeData[],
-    outputCells: Cell[],
-  ): Promise<string> {
-    txSkeleton.update('outputs', (outputs) => {
-      return outputs.push(...outputCells)
-    })
+  static async toJsonString({
+    inputs,
+    outputs,
+    witnesses,
+  }: {
+    inputs: Cell[]
+    outputs: Cell[]
+    witnesses?: string[]
+  }): Promise<helpers.TransactionSkeletonObject> {
+    let txSkeleton = helpers.TransactionSkeleton({})
+    txSkeleton = txSkeleton.update('outputs', (v) => v.push(...outputs))
+    const CONFIG = config.getConfig()
+    txSkeleton = txSkeleton.update('cellDeps', (cellDeps) =>
+      cellDeps.push(
+        {
+          outPoint: {
+            txHash: CONFIG.SCRIPTS.OMNILOCK!.TX_HASH,
+            index: CONFIG.SCRIPTS.OMNILOCK!.INDEX,
+          },
+          depType: CONFIG.SCRIPTS.OMNILOCK!.DEP_TYPE,
+        },
+        {
+          outPoint: {
+            txHash: CONFIG.SCRIPTS.SECP256K1_BLAKE160!.TX_HASH,
+            index: CONFIG.SCRIPTS.SECP256K1_BLAKE160!.INDEX,
+          },
+          depType: CONFIG.SCRIPTS.SECP256K1_BLAKE160!.DEP_TYPE,
+        },
+      ),
+    )
 
-    for (const [input, witness] of inputData) {
-      txSkeleton.update('inputs', (inputs) => inputs.push(input))
+    inputs.forEach((input, idx) => {
+      txSkeleton = txSkeleton.update('inputs', (inputs) => inputs.push(input))
 
-      txSkeleton.update('witnesses', (witnesses) => {
-        if (witness === '0x' || witness === '') {
-          const omniLock = config.getConfig().SCRIPTS.OMNI_LOCK as NonNullable<config.ScriptConfig>
+      txSkeleton = txSkeleton.update('witnesses', (wit) => {
+        if (!witnesses?.[idx] || witnesses?.[idx] === '0x' || witnesses?.[idx] === '') {
+          const omniLock = CONFIG.SCRIPTS.OMNILOCK as NonNullable<config.ScriptConfig>
           const fromLockScript = input.cellOutput.lock
-          return witnesses.push(
+          return wit.push(
             bytes.hexify(
               blockchain.WitnessArgs.pack({
                 lock:
@@ -32,14 +53,10 @@ export class Tx {
             ),
           )
         }
-        return witnesses.push(witness)
+        return wit.push(witnesses?.[idx])
       })
-    }
-
-    txSkeleton = commons.common.prepareSigningEntries(txSkeleton)
-
-    return JSON.stringify({
-      tx: helpers.createTransactionFromSkeleton(txSkeleton),
     })
+
+    return helpers.transactionSkeletonToObject(txSkeleton)
   }
 }

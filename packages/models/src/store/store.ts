@@ -79,8 +79,8 @@ export class Store<
   }
 
   private deserializeField(type: StorageLocation, option: unknown, value: string) {
+    this.assetStorage(this.getStorage(type))
     try {
-      this.assetStorage(this.getStorage(type))
       const [offset, length] = this.getOffsetAndLength(option)
       return this.getStorage(type)?.deserialize(getUint8ArrayfromHex(value, offset, length))
     } catch (error) {

@@ -3,18 +3,22 @@ import { HexString, Script, helpers } from '@ckb-lumos/lumos'
 import { ActorReference, Manager, ProviderKey, UpdateStorageValue } from '@ckb-js/kuai-models'
 import { NotFound, BadRequest } from 'http-errors'
 import { appRegistry } from './actors'
-import { Load } from './views/load.view'
-import { Read } from './views/read.view'
 import { OmnilockModel } from './omnilock/omnilock.model'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
 import { RecordModel, StoreType } from './record/record.model'
 import { DAPP_DATA_PREFIX } from './const'
+import { Tx } from './views/tx.view'
 
 const router = new KuaiRouter()
 function createCellPattern(lock: Script) {
   return (value: UpdateStorageValue) => {
     const cellLock = value.cell.cellOutput.lock
-    return cellLock.args === lock?.args && cellLock.codeHash === lock?.codeHash && cellLock.hashType === lock?.hashType
+    return (
+      cellLock.args === lock?.args &&
+      cellLock.codeHash === lock?.codeHash &&
+      cellLock.hashType === lock?.hashType &&
+      value.cell.data === '0x'
+    )
   }
 }
 
@@ -92,8 +96,7 @@ router.post<never, { address: string }, { capacity: HexString }>('/claim/:addres
 
   const omnilockModel = await getOmnilockModel(lock)
   const result = omnilockModel.claim(lock, body.capacity)
-  // TODO use view to format tx
-  ctx.ok(result)
+  ctx.ok(Tx.toJsonString(result))
 })
 
 router.get<never, { path: string; address: string }>('/read/:address/:path', async (ctx) => {
@@ -122,7 +125,7 @@ router.get<never, { path: string; address: string }>('/read/:address/:path', asy
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (path && path in data && (data as any)[path]) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ctx.ok(Read.toJsonString((data as any)[path]))
+    ctx.ok((data as any)[path])
   } else {
     throw new NotFound('There is no data with path')
   }
@@ -146,7 +149,7 @@ router.get<never, { address: string }>('/load/:address', async (ctx) => {
   const recordModel = await getRecordModel(lock)
   const key = recordModel.getOneOfKey()
   const data = recordModel.get(key, ['data'])
-  ctx.ok(Load.toJsonString({ data }))
+  ctx.ok(data)
 })
 
 router.post<never, { address: string }, { value: StoreType['data'] }>('/set/:address', async (ctx) => {
@@ -166,8 +169,7 @@ router.post<never, { address: string }, { value: StoreType['data'] }>('/set/:add
 
   const recordModel = await getRecordModel(lock)
   const result = recordModel.update(ctx.payload.body.value)
-  // TODO use view to format tx
-  ctx.ok(result)
+  ctx.ok(Tx.toJsonString(result))
 })
 
 router.post<never, { address: string }>('/clear/:address', async (ctx) => {
@@ -187,8 +189,7 @@ router.post<never, { address: string }>('/clear/:address', async (ctx) => {
 
   const recordModel = await getRecordModel(lock)
   const result = recordModel.clear()
-  // TODO use view to format tx
-  ctx.ok(result)
+  ctx.ok(await Tx.toJsonString(result))
 })
 
 export { router }
