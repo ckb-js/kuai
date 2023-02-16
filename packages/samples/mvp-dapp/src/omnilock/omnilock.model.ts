@@ -61,7 +61,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
           data: '0x',
         },
       ],
-      witnesses: inputs.map((v) => v.witness),
+      witnesses: [],
     }
   }
 }

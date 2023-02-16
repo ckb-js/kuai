@@ -1,5 +1,6 @@
 import { CellPattern, JSONStore, OutPointString, SchemaPattern, UpdateStorageValue } from '@ckb-js/kuai-models'
 import { Cell } from '@ckb-lumos/base'
+import { InternalServerError } from 'http-errors'
 import { BI } from '@ckb-lumos/bi'
 import { DAPP_DATA_PREFIX_LEN, TX_FEE } from '../const'
 
@@ -37,7 +38,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
 
   update(newValue: StoreType['data']) {
     const inputs = Object.values(this.chainData)
-    if (!inputs.length) throw new Error('No mvp cell to set value')
+    if (!inputs.length) throw new InternalServerError('No mvp cell to set value')
     const { data } = this.initOnChain({ data: newValue })
     const outputCapacity = inputs
       .reduce((pre: BI, cur) => pre.add(cur.cell.cellOutput.capacity), BI.from(0))
@@ -66,7 +67,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
     witnesses: string[]
   } {
     const inputs = Object.values(this.chainData)
-    if (!inputs.length) throw new Error('No mvp cell to set value')
+    if (!inputs.length) throw new InternalServerError('No mvp cell to set value')
     let hasSubFee = false
     const outputs: Cell[] = inputs.map((v) => {
       if (!hasSubFee && BI.from(v.cell.cellOutput.capacity).gte(BI.from('6100000000').add(TX_FEE))) {
@@ -88,7 +89,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
     return {
       inputs: inputs.map((v) => v.cell),
       outputs: outputs,
-      witnesses: inputs.map((v) => v.witness),
+      witnesses: [],
     }
   }
 

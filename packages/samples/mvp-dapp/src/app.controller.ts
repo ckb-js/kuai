@@ -1,7 +1,7 @@
 import { KuaiRouter } from '@ckb-js/kuai-io'
 import { HexString, Script, helpers } from '@ckb-lumos/lumos'
 import { ActorReference, Manager, ProviderKey, UpdateStorageValue } from '@ckb-js/kuai-models'
-import { NotFound, BadRequest } from 'http-errors'
+import { BadRequest } from 'http-errors'
 import { appRegistry } from './actors'
 import { OmnilockModel } from './omnilock/omnilock.model'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
@@ -120,15 +120,8 @@ router.get<never, { path: string; address: string }>('/read/:address/:path', asy
 
   const recordModel = await getRecordModel(lock)
   const key = recordModel.getOneOfKey()
-  const data = recordModel.get(key, ['data'])
-  const path = params.path
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (path && path in data && (data as any)[path]) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ctx.ok((data as any)[path])
-  } else {
-    throw new NotFound('There is no data with path')
-  }
+  const data = recordModel.get(key, params.path ? ['data', ...params.path.split('.')] : ['data'])
+  ctx.ok(data)
 })
 
 router.get<never, { address: string }>('/load/:address', async (ctx) => {
