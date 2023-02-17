@@ -726,6 +726,26 @@ describe('Test resource binding', () => {
         witnesses,
       }
 
+      const mockBlock0: Block = {
+        header: {
+          timestamp: '0x',
+          number: '0x896210',
+          epoch: '0x',
+          compactTarget: '0x',
+          dao: '0x',
+          hash: '0x4009f0b85dcba1bf23fe8dcb4a9de9e8d77f816ae8afceac1e56432b50239fb0',
+          nonce: '0x71da0b841524ee070000000296000700',
+          parentHash: '0x',
+          proposalsHash: '0x',
+          transactionsRoot: '0x',
+          extraHash: '0x',
+          version: '0x',
+        },
+        transactions: [],
+        uncles: [],
+        proposals: [],
+      }
+
       const mockBlock: Block = {
         header: {
           timestamp: '0x',
@@ -760,8 +780,12 @@ describe('Test resource binding', () => {
         uri: 'local://store2',
       }
 
-      mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
+      mockSource.getTipHeader = () => Promise.resolve(mockBlock0.header)
+      mockSource.getBlock = () => Promise.resolve(mockBlock0)
       listener = manager.listen()
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      expect(manager.lastBlock?.header.number).toEqual(mockBlock0.header.number)
+      mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
       mockSource.getBlock = () => Promise.resolve(mockBlock)
       manager.register(outputA.lock, outputA.type, ref1.uri, 'normal')
       manager.register(outputE.lock, outputE.type, ref1.uri, 'normal')
