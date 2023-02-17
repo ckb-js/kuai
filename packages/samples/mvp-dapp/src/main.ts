@@ -29,7 +29,8 @@ async function bootstrap() {
 
   config.initializeConfig(lumosConfig)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const port = (kuaiEnv.config as any)?.port || 3000
+  const port = kuaiEnv.config.port || 3000
+  const host = kuaiEnv.config.host || '127.0.0.1'
 
   Reflect.defineMetadata(ProviderKey.Actor, { ref: new ActorReference('resource', '/').json }, Manager)
 
@@ -49,7 +50,7 @@ async function bootstrap() {
 
   app.use(koaRouterAdapter.routes())
 
-  const server = app.listen(port, function () {
+  const server = app.listen(port, host, function () {
     const address = (() => {
       const _address = server.address()
       if (!_address) {
@@ -63,7 +64,7 @@ async function bootstrap() {
       return `http://${_address.address}:${_address.port}`
     })()
 
-    console.log(`kuai app listening at ${address}`)
+    console.log(`kuai app listening to ${address}`)
   })
 }
 
