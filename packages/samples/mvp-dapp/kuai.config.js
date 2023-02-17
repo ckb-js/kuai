@@ -1,5 +1,8 @@
+require('dotenv').config()
+
 module.exports = {
-  port: 3000,
-  rpcUrl: 'https://testnet.ckb.dev/rpc',
-  lumosConfig: 'aggron4',
+  host: process.env.HOST,
+  port: process.env.PORT,
+  rpcUrl: process.env.CKB_RPC_URL || 'https://testnet.ckb.dev/rpc',
+  lumosConfig: process.env.LUMOS_CONFIG || 'aggron4',
 }
