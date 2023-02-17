@@ -65,7 +65,7 @@ export class Registry {
     if (this.isLive(metadata.ref.uri)) {
       throw new DuplicatedActorException(metadata.ref.uri)
     }
-    this.#container.bind(metadata.ref.uri).to(module)
+    this.#container.bind(metadata.ref.uri).to(module).inSingletonScope()
     this.#actors.add(metadata.ref.uri)
   }
 }

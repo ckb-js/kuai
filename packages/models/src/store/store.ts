@@ -30,7 +30,7 @@ import { ProviderKey, CellPattern, SchemaPattern } from '../utils'
 
 const ByteCharLen = 2
 
-export function getUint8ArrayfromHex(value: string, offset: ByteLength, length: ByteLength) {
+function getUint8ArrayfromHex(value: string, offset: ByteLength, length: ByteLength) {
   return bytes.bytify(
     `0x${value.slice(2 + offset * ByteCharLen, length ? 2 + offset * ByteCharLen + length * ByteCharLen : undefined)}`,
   )
@@ -80,8 +80,12 @@ export class Store<
 
   private deserializeField(type: StorageLocation, option: unknown, value: string) {
     this.assetStorage(this.getStorage(type))
-    const [offset, length] = this.getOffsetAndLength(option)
-    return this.getStorage(type)?.deserialize(getUint8ArrayfromHex(value, offset, length))
+    try {
+      const [offset, length] = this.getOffsetAndLength(option)
+      return this.getStorage(type)?.deserialize(getUint8ArrayfromHex(value, offset, length))
+    } catch (error) {
+      return undefined
+    }
   }
 
   private deserializeCell({ cell, witness }: UpdateStorageValue): GetStorageStruct<StructSchema> {

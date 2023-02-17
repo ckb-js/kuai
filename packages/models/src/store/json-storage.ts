@@ -73,6 +73,8 @@ export class JSONStorage<T extends JSONStorageOffChain> extends ChainStorage<T> 
 
   deserialize(data: Uint8Array): T {
     if (data === null || data === undefined) throw new UnexpectedParamsException(`${data}`)
+    const json = Buffer.from(data).toString()
+    if (json === '') throw new UnexpectedParamsException(`${data}`)
     return JSON.parse(Buffer.from(data).toString(), reviver)
   }
 }
