@@ -7,5 +7,7 @@ declare module '@ckb-js/kuai-core' {
     host?: string
     rpcUrl: string
     lumosConfig?: Config | 'aggron4' | 'lina'
+    redisPort?: number
+    redisHost?: string
   }
 }
