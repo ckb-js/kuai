@@ -34,7 +34,19 @@ function createRecordPattern(lock: Script) {
   }
 }
 
-async function getOmnilockModel(lock: Script): Promise<OmnilockModel> {
+const getLock = (address: string) => {
+  if (!address) {
+    throw new BadRequest('invalid address')
+  }
+  try {
+    return helpers.parseAddress(address)
+  } catch {
+    throw new BadRequest('invalid address')
+  }
+}
+
+async function getOmnilockModel(address = ''): Promise<OmnilockModel> {
+  const lock = getLock(address)
   const lockHash = computeScriptHash(lock)
   const actorRef = new ActorReference('omnilock', `/${lockHash}/`)
   let omnilockModel = appRegistry.find<OmnilockModel>(actorRef.uri)
@@ -42,6 +54,7 @@ async function getOmnilockModel(lock: Script): Promise<OmnilockModel> {
     class NewStore extends OmnilockModel {}
     Reflect.defineMetadata(ProviderKey.Actor, { ref: actorRef }, NewStore)
     Reflect.defineMetadata(ProviderKey.CellPattern, createCellPattern(lock), NewStore)
+    Reflect.defineMetadata(ProviderKey.LockPattern, lock, NewStore)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     appRegistry.bind(NewStore as any)
     omnilockModel = appRegistry.find<OmnilockModel>(actorRef.uri)
@@ -54,7 +67,8 @@ async function getOmnilockModel(lock: Script): Promise<OmnilockModel> {
   return omnilockModel
 }
 
-async function getRecordModel(lock: Script): Promise<RecordModel> {
+async function getRecordModel(address: string): Promise<RecordModel> {
+  const lock = getLock(address)
   const lockHash = computeScriptHash(lock)
   const actorRef = new ActorReference('record', `/${lockHash}/`)
   let recordModel = appRegistry.find<RecordModel>(actorRef.uri)
@@ -75,112 +89,51 @@ async function getRecordModel(lock: Script): Promise<RecordModel> {
   return recordModel
 }
 
+router.get<never, { address: string }>('/meta/:address', async (ctx) => {
+  const omniLockModel = await getOmnilockModel(ctx.payload.params?.address)
+  ctx.ok(omniLockModel.meta)
+})
+
 router.post<never, { address: string }, { capacity: HexString }>('/claim/:address', async (ctx) => {
   const { body, params } = ctx.payload
 
-  if (!params || !params.address) {
-    throw new BadRequest('invalid address')
-  }
-
-  const lock = ((address: string) => {
-    try {
-      return helpers.parseAddress(address)
-    } catch (e) {
-      throw new BadRequest('invalid address')
-    }
-  })(params.address)
-
-  if (!body || !body.capacity) {
+  if (!body?.capacity) {
     throw new BadRequest('undefined body field: capacity')
   }
 
-  const omnilockModel = await getOmnilockModel(lock)
-  const result = omnilockModel.claim(lock, body.capacity)
+  const omnilockModel = await getOmnilockModel(params?.address)
+  const result = omnilockModel.claim(body.capacity)
   ctx.ok(Tx.toJsonString(result))
 })
 
 router.get<never, { path: string; address: string }>('/read/:address/:path', async (ctx) => {
   const { params } = ctx.payload
 
-  if (!params || !params.address) {
-    throw new BadRequest('invalid address')
-  }
-
-  const lock = ((address: string) => {
-    try {
-      return helpers.parseAddress(address)
-    } catch (e) {
-      throw new BadRequest('invalid address')
-    }
-  })(params.address)
-
-  if (!params || !params.path) {
+  if (!params?.path) {
     throw new BadRequest('invalid path')
   }
 
-  const recordModel = await getRecordModel(lock)
+  const recordModel = await getRecordModel(params?.address)
   const key = recordModel.getOneOfKey()
   const data = recordModel.get(key, params.path ? ['data', ...params.path.split('.')] : ['data'])
   ctx.ok(data)
 })
 
 router.get<never, { address: string }>('/load/:address', async (ctx) => {
-  const { params } = ctx.payload
-
-  if (!params || !params.address) {
-    throw new BadRequest('invalid address')
-  }
-
-  const lock = ((address: string) => {
-    try {
-      return helpers.parseAddress(address)
-    } catch (e) {
-      throw new BadRequest('invalid address')
-    }
-  })(params.address)
-
-  const recordModel = await getRecordModel(lock)
+  const recordModel = await getRecordModel(ctx.payload.params?.address)
   const key = recordModel.getOneOfKey()
   const data = recordModel.get(key, ['data'])
   ctx.ok(data)
 })
 
 router.post<never, { address: string }, { value: StoreType['data'] }>('/set/:address', async (ctx) => {
-  const { params } = ctx.payload
-
-  if (!params || !params.address) {
-    throw new BadRequest('invalid address')
-  }
-
-  const lock = ((address: string) => {
-    try {
-      return helpers.parseAddress(address)
-    } catch (e) {
-      throw new BadRequest('invalid address')
-    }
-  })(params.address)
-
-  const recordModel = await getRecordModel(lock)
+  const recordModel = await getRecordModel(ctx.payload.params?.address)
   const result = recordModel.update(ctx.payload.body.value)
   ctx.ok(Tx.toJsonString(result))
 })
 
 router.post<never, { address: string }>('/clear/:address', async (ctx) => {
-  const { params } = ctx.payload
-
-  if (!params || !params.address) {
-    throw new BadRequest('invalid address')
-  }
-
-  const lock = ((address: string) => {
-    try {
-      return helpers.parseAddress(address)
-    } catch (e) {
-      throw new BadRequest('invalid address')
-    }
-  })(params.address)
-
-  const recordModel = await getRecordModel(lock)
+  const recordModel = await getRecordModel(ctx.payload.params?.address)
   const result = recordModel.clear()
   ctx.ok(await Tx.toJsonString(result))
 })

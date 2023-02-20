@@ -1,4 +1,5 @@
 import { bytes } from '@ckb-lumos/codec'
+import type { Script } from '@ckb-lumos/base'
 import type { ActorMessage, MessagePayload } from '../actor'
 import type {
   OutPointString,
@@ -52,6 +53,18 @@ export class Store<
 
   protected schemaPattern?: SchemaPattern
 
+  #lock?: Script
+
+  #type?: Script
+
+  get lockScript() {
+    return this.#lock
+  }
+
+  get typeScript() {
+    return this.#type
+  }
+
   constructor(
     schemaOption: GetStorageOption<StructSchema>,
     params?: {
@@ -69,6 +82,8 @@ export class Store<
     this.states = params?.states || {}
     this.chainData = params?.chainData || {}
     this.options = params?.options
+    this.#lock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor)
+    this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor)
   }
 
   private getOffsetAndLength(option: unknown): [ByteLength, ByteLength] {

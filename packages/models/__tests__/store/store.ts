@@ -649,4 +649,19 @@ describe('test store', () => {
       ).toThrow(new NonStorageInstanceException())
     })
   })
+
+  describe('should be bound with scripts', () => {
+    class StoreBoundScripts<R extends StorageSchema<CustomType>> extends Store<StorageCustom<CustomType>, R> {}
+    Reflect.defineMetadata(ProviderKey.LockPattern, { codeHash: 'lock' }, StoreBoundScripts)
+    Reflect.defineMetadata(ProviderKey.TypePattern, { codeHash: 'type' }, StoreBoundScripts)
+    it('should bind lock script', () => {
+      const store = new StoreBoundScripts({})
+      expect(store.lockScript?.codeHash).toBe('lock')
+    })
+
+    it('should bind type script', () => {
+      const store = new StoreBoundScripts({})
+      expect(store.typeScript?.codeHash).toBe('type')
+    })
+  })
 })
