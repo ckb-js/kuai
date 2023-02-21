@@ -4,18 +4,28 @@
  */
 
 import type { ActorMessage, ActorURI, ActorRef, MessagePayload, CallResponse } from './interface'
-import { injectable, Container } from 'inversify'
+import { injectable, Container, inject, optional } from 'inversify'
 import Redis from 'ioredis'
 import { ActorReference } from './actor-reference'
 import { Status, Behavior, ProviderKey, SendMailException, PayloadMissingInMessageException } from '../utils'
 
+export const REDIS_PORT_SYMBOL = Symbol('mq_redis_port')
+export const REDIS_HOST_SYMBOL = Symbol('mq_redis_host')
+
 @injectable()
 class MessageQueue {
-  instance = new Redis()
+  instance: Redis
+
+  constructor(
+    @inject(REDIS_PORT_SYMBOL) @optional() port = 6379,
+    @inject(REDIS_HOST_SYMBOL) @optional() host = '127.0.0.1',
+  ) {
+    this.instance = new Redis(port, host)
+  }
 }
 
 const MQ_SYMBOL = Symbol('mq')
-const mqContainer = new Container()
+export const mqContainer = new Container()
 mqContainer.bind<MessageQueue>(MQ_SYMBOL).to(MessageQueue)
 
 @injectable()

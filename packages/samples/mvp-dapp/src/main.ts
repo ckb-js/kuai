@@ -5,12 +5,28 @@ import { config } from '@ckb-lumos/lumos'
 import { KoaRouterAdapter, CoR, TipHeaderListener } from '@ckb-js/kuai-io'
 import { router } from './app.controller'
 import './type-extends'
-import { ActorReference, Manager, ProviderKey } from '@ckb-js/kuai-models'
+import {
+  ActorReference,
+  Manager,
+  ProviderKey,
+  mqContainer,
+  REDIS_PORT_SYMBOL,
+  REDIS_HOST_SYMBOL,
+} from '@ckb-js/kuai-models'
 import { NervosChainSource } from './chain-source'
 
 async function bootstrap() {
   const kuaiCtx = await initialKuai()
   const kuaiEnv = kuaiCtx.getRuntimeEnvironment()
+
+  if (kuaiEnv.config.redisPort) {
+    mqContainer.bind(REDIS_PORT_SYMBOL).toConstantValue(kuaiEnv.config.redisPort)
+  }
+
+  if (kuaiEnv.config.redisHost) {
+    mqContainer.bind(REDIS_HOST_SYMBOL).toConstantValue(kuaiEnv.config.redisHost)
+  }
+
   const lumosConfig: config.Config = (() => {
     if (kuaiEnv.config.lumosConfig === 'aggron4') {
       return config.predefined.AGGRON4
