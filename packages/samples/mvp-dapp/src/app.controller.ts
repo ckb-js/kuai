@@ -119,6 +119,10 @@ router.get<never, { path: string; address: string }>('/read/:address/:path', asy
 router.get<never, { address: string }>('/load/:address', async (ctx) => {
   const recordModel = await getRecordModel(ctx.payload.params?.address)
   const key = recordModel.getOneOfKey()
+  if (!key) {
+    ctx.err('store is not found')
+    return
+  }
   const data = recordModel.get(key, ['data'])
   ctx.ok(data)
 })

@@ -2,7 +2,7 @@ import { CellPattern, JSONStore, OutPointString, SchemaPattern, UpdateStorageVal
 import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { InternalServerError } from 'http-errors'
-import { DAPP_DATA_PREFIX, TX_FEE } from '../const'
+import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
 
 /**
  * add business logic in an actor
@@ -54,7 +54,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
             lock: this.lockScript!,
             capacity,
           },
-          data: DAPP_DATA_PREFIX,
+          data: `${DAPP_DATA_PREFIX}${INITIAL_RECORD_STATE}`,
         },
         {
           cellOutput: {
