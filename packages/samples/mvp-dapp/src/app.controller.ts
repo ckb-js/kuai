@@ -35,9 +35,6 @@ function createRecordPattern(lock: Script) {
 }
 
 const getLock = (address: string) => {
-  if (!address) {
-    throw new BadRequest('invalid address')
-  }
   try {
     return helpers.parseAddress(address)
   } catch {
