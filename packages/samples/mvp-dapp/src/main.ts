@@ -80,7 +80,7 @@ async function bootstrap() {
       return `http://${_address.address}:${_address.port}`
     })()
 
-    console.log(`kuai app listening to ${address}`)
+    console.info(`kuai app listening to ${address}`)
   })
 }
 

@@ -1,5 +1,5 @@
 import { CellPattern, JSONStore, OutPointString, SchemaPattern, UpdateStorageValue } from '@ckb-js/kuai-models'
-import { Cell, HexString, Script } from '@ckb-lumos/base'
+import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { InternalServerError } from 'http-errors'
 import { DAPP_DATA_PREFIX, TX_FEE } from '../const'
@@ -18,22 +18,25 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     },
   ) {
     super(undefined, params)
+    if (!this.lockScript) {
+      throw new Error('lock script is required')
+    }
   }
 
-  claim(
-    lock: Script,
-    capacity: HexString,
-  ): {
+  get meta(): Record<'capacity', string> {
+    const cells = this.#filterCells()
+    const capacity = cells.reduce((acc, cur) => BigInt(cur.cell.cellOutput.capacity ?? 0) + acc, BigInt(0)).toString()
+    return {
+      capacity,
+    }
+  }
+
+  claim(capacity: HexString): {
     inputs: Cell[]
     outputs: Cell[]
     witnesses: string[]
   } {
-    const cells = Object.values(this.chainData).filter(
-      (v) =>
-        v.cell.cellOutput.lock.args === lock.args &&
-        v.cell.cellOutput.lock.codeHash === lock.codeHash &&
-        v.cell.cellOutput.lock.hashType === lock.hashType,
-    )
+    const cells = this.#filterCells()
     let currentTotalCapacity: BI = BI.from(0)
     // additional 0.001 ckb for tx fee
     const needCapacity = BI.from(capacity).add(TX_FEE)
@@ -48,14 +51,14 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       outputs: [
         {
           cellOutput: {
-            lock,
+            lock: this.lockScript!,
             capacity,
           },
           data: DAPP_DATA_PREFIX,
         },
         {
           cellOutput: {
-            lock,
+            lock: this.lockScript!,
             capacity: currentTotalCapacity.sub(needCapacity).toHexString(),
           },
           data: '0x',
@@ -63,5 +66,10 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       ],
       witnesses: [],
     }
+  }
+
+  #filterCells = () => {
+    // TODO: is this filter necessary?
+    return Object.values(this.chainData).filter((v) => this.cellPattern?.(v) ?? true)
   }
 }
