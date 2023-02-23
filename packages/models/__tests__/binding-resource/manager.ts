@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
-import { ProviderKey, Behavior, outPointToOutPointString } from '../../src'
+import { ProviderKey, Behavior, outPointToOutPointString, ActorURI, ResourceBindingRegistry } from '../../src'
 import { Manager, CellChange } from '../../src'
 import { utils, Input, Output, Block, Epoch, Header, Transaction, Cell, Script } from '@ckb-lumos/base'
 import { ChainSource } from '@ckb-js/kuai-io/lib/types'
@@ -37,6 +37,13 @@ const ref = {
   protocol: 'local',
   path: '/',
   uri: 'local://store',
+}
+
+const ref1 = {
+  name: 'store1',
+  protocol: 'local',
+  path: '/',
+  uri: 'local://store1',
 }
 
 Reflect.defineMetadata(
@@ -153,19 +160,66 @@ describe('Test resource binding', () => {
           },
         },
       })
-      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual({
-        uri: ref.uri,
-        pattern: 'normal',
-        status: 'registered',
+
+      manager.handleCall({
+        from: ref,
+        behavior: Behavior.Call,
+        payload: {
+          pattern: 'normal',
+          value: {
+            type: 'register',
+            register: {
+              lockScript,
+              typeScript,
+              uri: ref1.uri,
+              pattern: 'normal',
+            },
+          },
+        },
       })
+      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual(
+        new Map<ActorURI, ResourceBindingRegistry>([
+          [
+            'local://store',
+            {
+              uri: ref.uri,
+              pattern: 'normal',
+              status: 'registered',
+            },
+          ],
+          [
+            'local://store1',
+            {
+              uri: ref1.uri,
+              pattern: 'normal',
+              status: 'registered',
+            },
+          ],
+        ]),
+      )
       await new Promise((resolve) => setTimeout(resolve, 2000))
-      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual({
-        uri: ref.uri,
-        pattern: 'normal',
-        status: 'initiated',
-      })
+      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual(
+        new Map<ActorURI, ResourceBindingRegistry>([
+          [
+            'local://store',
+            {
+              uri: ref.uri,
+              pattern: 'normal',
+              status: 'initiated',
+            },
+          ],
+          [
+            'local://store1',
+            {
+              uri: ref1.uri,
+              pattern: 'normal',
+              status: 'initiated',
+            },
+          ],
+        ]),
+      )
       expect(manager.registryReverse.get(ref.uri)).toEqual([TypeScriptHash, LockScriptHash])
-      expect(mockXAdd).toBeCalledTimes(1)
+      expect(mockXAdd).toBeCalledTimes(2)
     })
   })
 
@@ -201,7 +255,7 @@ describe('Test resource binding', () => {
           },
         },
       })
-      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toBeUndefined()
+      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual(new Map())
       expect(manager.registryReverse.get(ref.uri)).toBeUndefined()
     })
 

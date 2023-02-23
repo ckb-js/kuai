@@ -17,7 +17,7 @@ import { OutPointString, UpdateStorageValue } from '../store'
 import { CellChangeBuffer } from './cell-change-buffer'
 
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
-  #registry: Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> = new Map()
+  #registry: Map<TypeScriptHash, Map<LockScriptHash, Map<ActorURI, ResourceBindingRegistry>>> = new Map()
   #registryOutPoint: Map<OutPointString, ResourceBindingRegistry> = new Map()
   #registryReverse: Map<ActorURI, [TypeScriptHash, LockScriptHash]> = new Map()
   #lastBlock: Block | undefined = undefined
@@ -165,15 +165,15 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
 
     for (const output of outputs.values()) {
       const typeHash = output[0].cellOutput.type ? utils.computeScriptHash(output[0].cellOutput.type) : 'null'
-      const registry = this.#registry.get(typeHash)?.get(utils.computeScriptHash(output[0].cellOutput.lock))
-      if (registry) {
+      const registries = this.#registry.get(typeHash)?.get(utils.computeScriptHash(output[0].cellOutput.lock))
+      registries?.forEach((registry) => {
         let change = changes.get(registry.uri)
         if (!change) {
           change = [registry, [], []]
         }
         change[2].push(output)
         changes.set(registry.uri, change)
-      }
+      })
     }
 
     return Array.from(changes.values())
@@ -229,8 +229,13 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     if (!this.#registry.get(typeHash)) {
       this.#registry.set(typeHash, new Map())
     }
+    let registries = this.#registry.get(typeHash)?.get(lockHash)
+    if (!registries) {
+      registries = new Map<ActorURI, ResourceBindingRegistry>()
+    }
     const registry: ResourceBindingRegistry = { uri, pattern, status: 'registered' }
-    this.#registry.get(typeHash)?.set(lockHash, registry)
+    registries.set(uri, registry)
+    this.#registry.get(typeHash)?.set(lockHash, registries)
     this.#registryReverse.set(uri, [typeHash, lockHash])
     await this.initiateStore(registry, lock, type)
   }
@@ -239,7 +244,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     const registry = this.#registryReverse.get(uri)
     if (registry) {
       const [type, lock] = registry
-      this.#registry.get(type)?.delete(lock)
+      this.#registry.get(type)?.get(lock)?.delete(uri)
       this.#registryReverse.delete(uri)
     }
   }
@@ -262,7 +267,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     })
   }
 
-  get registry(): Map<TypeScriptHash, Map<LockScriptHash, ResourceBindingRegistry>> {
+  get registry(): Map<TypeScriptHash, Map<LockScriptHash, Map<ActorURI, ResourceBindingRegistry>>> {
     return this.#registry
   }
 
