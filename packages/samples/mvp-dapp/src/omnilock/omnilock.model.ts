@@ -2,7 +2,7 @@ import { CellPattern, JSONStore, OutPointString, SchemaPattern, UpdateStorageVal
 import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { InternalServerError } from 'http-errors'
-import { DAPP_DATA_PREFIX, TX_FEE } from '../const'
+import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
 
 /**
  * add business logic in an actor
@@ -24,7 +24,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
   }
 
   get meta(): Record<'capacity', string> {
-    const cells = this.#filterCells()
+    const cells = Object.values(this.chainData)
     const capacity = cells.reduce((acc, cur) => BigInt(cur.cell.cellOutput.capacity ?? 0) + acc, BigInt(0)).toString()
     return {
       capacity,
@@ -36,7 +36,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     outputs: Cell[]
     witnesses: string[]
   } {
-    const cells = this.#filterCells()
+    const cells = Object.values(this.chainData)
     let currentTotalCapacity: BI = BI.from(0)
     // additional 0.001 ckb for tx fee
     const needCapacity = BI.from(capacity).add(TX_FEE)
@@ -54,7 +54,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
             lock: this.lockScript!,
             capacity,
           },
-          data: DAPP_DATA_PREFIX,
+          data: `${DAPP_DATA_PREFIX}${INITIAL_RECORD_STATE}`,
         },
         {
           cellOutput: {
@@ -66,10 +66,5 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       ],
       witnesses: [],
     }
-  }
-
-  #filterCells = () => {
-    // TODO: is this filter necessary?
-    return Object.values(this.chainData).filter((v) => this.cellPattern?.(v) ?? true)
   }
 }

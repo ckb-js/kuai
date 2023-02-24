@@ -3,6 +3,7 @@ import { koaBody } from 'koa-body'
 import { initialKuai } from '@ckb-js/kuai-core'
 import { config } from '@ckb-lumos/lumos'
 import { KoaRouterAdapter, CoR, TipHeaderListener } from '@ckb-js/kuai-io'
+import cors from '@koa/cors'
 import { router } from './app.controller'
 import './type-extends'
 import {
@@ -64,6 +65,7 @@ async function bootstrap() {
 
   const koaRouterAdapter = new KoaRouterAdapter(cor)
 
+  app.use(cors())
   app.use(koaRouterAdapter.routes())
 
   const server = app.listen(port, host, function () {
