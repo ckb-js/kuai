@@ -51,3 +51,21 @@ export class UnexpectedSchemaOptException extends Error {
     super(`Unexpected schema options without object`)
   }
 }
+
+export class UnexpectedMoleculeTypeException extends Error {
+  constructor(type: string) {
+    super(`Unexpected molecule type with ${type} when create codec`)
+  }
+}
+
+export class NoCodecForMolecueException extends Error {
+  constructor() {
+    super(`No codec for serialize or deserialize`)
+  }
+}
+
+export class UnionShouldOnlyOneKeyException extends Error {
+  constructor() {
+    super(`Molecule union type should only have one key for pack`)
+  }
+}

@@ -30,6 +30,7 @@ import {
 } from '../exceptions'
 import { ProviderKey, CellPattern, SchemaPattern, isStringList } from '../utils'
 import { outPointToOutPointString } from '../resource-binding'
+import { MoleculeStorage, DynamicParam, GetCodecConfig, isCodecConfig, GetMoleculeOffChain } from './molecule-storage'
 
 const ByteCharLen = 2
 
@@ -411,5 +412,89 @@ export class JSONStore<R extends StorageSchema<JSONStorageOffChain>> extends Sto
 > {
   getStorage(_storeKey: StorageLocation): JSONStorage<JSONStorageOffChain> {
     return new JSONStorage()
+  }
+}
+
+type GetFieldConfig<T> = T extends DynamicParam
+  ? GetCodecConfig<T>
+  : T extends { schema: DynamicParam }
+  ? GetCodecConfig<T['schema']>
+  : never
+
+type GetMoleculeConfig<T extends StorageSchema<DynamicParam>> = GetStorageStructByTemplate<{
+  data: GetFieldConfig<T['data']>
+  witness: GetFieldConfig<T['witness']>
+  lockArgs: GetFieldConfig<T['lockArgs']>
+  typeArgs: GetFieldConfig<T['typeArgs']>
+}>
+
+type GetFieldSchema<T> = T extends DynamicParam
+  ? GetMoleculeOffChain<T>
+  : T extends { schema: DynamicParam }
+  ? Omit<T, 'schema'> & { schema: GetMoleculeOffChain<T['schema']> }
+  : never
+
+type GetMoleculeStorageStruct<T extends StorageSchema> = GetStorageStructByTemplate<{
+  data: GetFieldSchema<T['data']>
+  witness: GetFieldSchema<T['witness']>
+  lockArgs: GetFieldSchema<T['lockArgs']>
+  typeArgs: GetFieldSchema<T['typeArgs']>
+}>
+
+export class MoleculeStore<R extends StorageSchema<DynamicParam>> extends Store<
+  MoleculeStorage<DynamicParam>,
+  GetMoleculeStorageStruct<R>,
+  GetMoleculeConfig<R>
+> {
+  constructor(
+    schemaOption: GetStorageOption<GetMoleculeStorageStruct<R>>,
+    params: {
+      states?: Record<OutPointString, GetStorageStruct<GetMoleculeStorageStruct<R>>>
+      chainData?: Record<OutPointString, UpdateStorageValue>
+      cellPattern?: CellPattern
+      schemaPattern?: SchemaPattern
+      options: GetMoleculeConfig<R>
+    },
+  ) {
+    super(schemaOption, params)
+  }
+
+  #moleculeStorageCache: Partial<Record<StorageLocation, MoleculeStorage<DynamicParam>>> = {}
+
+  getStorage(storeKey: StorageLocation): MoleculeStorage<DynamicParam> | undefined {
+    if (this.#moleculeStorageCache[storeKey]) return this.#moleculeStorageCache[storeKey]
+    switch (storeKey) {
+      case 'data':
+        if (this.options && 'data' in this.options && isCodecConfig(this.options.data)) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore for Type instantiation is excessively deep and possibly infinite.
+          this.#moleculeStorageCache[storeKey] = new MoleculeStorage(this.options.data)
+        }
+        break
+      case 'lockArgs':
+        if (this.options && 'lockArgs' in this.options && isCodecConfig(this.options.lockArgs)) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore for Type instantiation is excessively deep and possibly infinite.
+          this.#moleculeStorageCache[storeKey] = new MoleculeStorage(this.options.lockArgs)
+        }
+        break
+      case 'typeArgs':
+        if (this.options && 'typeArgs' in this.options && isCodecConfig(this.options.typeArgs)) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore for Type instantiation is excessively deep and possibly infinite.
+          this.#moleculeStorageCache[storeKey] = new MoleculeStorage(this.options.typeArgs)
+        }
+        break
+      case 'witness':
+        if (this.options && 'witness' in this.options && isCodecConfig(this.options.witness)) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore for Type instantiation is excessively deep and possibly infinite.
+          this.#moleculeStorageCache[storeKey] = new MoleculeStorage(this.options.witness)
+        }
+        break
+      default:
+        break
+    }
+    return this.#moleculeStorageCache[storeKey]
   }
 }
