@@ -173,7 +173,6 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
         change[2].push(cellChangeData)
         const registryMap = this.#registryOutPoint.get(outPoint) ?? new Map()
         registryMap.set(registry.uri, registry)
-        // this.#registryOutPoint.set(outPoint, registryMap)
         changes.set(registry.uri, change)
       })
     })
@@ -182,7 +181,6 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
       registryMap?.forEach((registry) => {
         const change = changes.get(registry.uri) ?? [registry, [], []]
         change[1].push(input)
-        // this.#registryOutPoint.delete(outPoint)
         changes.set(registry.uri, change)
       })
     })
@@ -275,11 +273,6 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     this.call(registry.uri, {
       pattern: type,
       value: payload,
-      // pattern: registry.pattern,
-      // value: {
-      //   type,
-      //   value: payload,
-      // },
     })
   }
 
