@@ -111,7 +111,12 @@ router.get<never, { path: string; address: string }>('/load/:address/:path', asy
   }
 
   const recordModel = await getRecordModel(params?.address)
-  ctx.ok(recordModel.load(`data.${params.path}`))
+  const value = recordModel.load(`data.${params.path}`)
+  if (value) {
+    ctx.ok(value)
+  } else {
+    ctx.err('field is not found')
+  }
 })
 
 router.get<never, { address: string }>('/load/:address', async (ctx) => {
