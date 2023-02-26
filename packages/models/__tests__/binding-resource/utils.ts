@@ -8,7 +8,7 @@ describe('Test utils', () => {
         txHash: '0x12',
         index: '0x11',
       }
-      expect(outPointToOutPointString(outpoint)).toEqual('0x1211')
+      expect(outPointToOutPointString(outpoint)).toEqual('0x12-0x11')
     })
   })
 })

@@ -87,7 +87,7 @@ const createCell = ({
   }
 }
 
-const defaultOutpoint = `0x${'0'.repeat(64)}0`
+const defaultOutpoint = `0x${'0'.repeat(64)}-0x0`
 
 describe('test store', () => {
   describe('use json storage', () => {
@@ -143,16 +143,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ data: onchainData.data }),
-                  witness: '',
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ data: onchainData.data }),
+                witness: '',
+              },
+            ],
           },
         })
         expect(store.get(defaultOutpoint)).toStrictEqual({ data: initValue })
@@ -165,16 +162,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell(),
-                  witness: onchainData.witness,
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell(),
+                witness: onchainData.witness,
+              },
+            ],
           },
         })
         expect(store.get(defaultOutpoint)).toStrictEqual({ witness: initValue })
@@ -185,16 +179,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ data: store.initOnChain({ data: { a: BigNumber(1) } }).data }),
-                  witness: '',
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ data: store.initOnChain({ data: { a: BigNumber(1) } }).data }),
+                witness: '',
+              },
+            ],
           },
         })
         const initValue = { a: BigNumber(10) }
@@ -203,16 +194,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ data: onchainData.data }),
-                  witness: '',
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ data: onchainData.data }),
+                witness: '',
+              },
+            ],
           },
         })
         expect(store.get(defaultOutpoint)).toStrictEqual({ data: initValue })
@@ -225,16 +213,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ lock: { args: onchainData.lockArgs, codeHash: '', hashType: 'data' } }),
-                  witness: '',
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ lock: { args: onchainData.lockArgs, codeHash: '', hashType: 'data' } }),
+                witness: '',
+              },
+            ],
           },
         })
         expect(lockStore.get(defaultOutpoint)).toStrictEqual(initValue)
@@ -249,16 +234,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ lock: { args: onchainData.lockArgs, codeHash: '', hashType: 'data' } }),
-                  witness: '',
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ lock: { args: onchainData.lockArgs, codeHash: '', hashType: 'data' } }),
+                witness: '',
+              },
+            ],
           },
         })
         expect(lockStore.get(defaultOutpoint)).toStrictEqual(initValue)
@@ -271,16 +253,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ type: { args: onchainData.typeArgs, codeHash: '', hashType: 'data' } }),
-                  witness: '',
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ type: { args: onchainData.typeArgs, codeHash: '', hashType: 'data' } }),
+                witness: '',
+              },
+            ],
           },
         })
         expect(store.get(defaultOutpoint)).toStrictEqual(initValue)
@@ -295,16 +274,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ type: { args: onchainData.typeArgs, codeHash: '', hashType: 'data' } }),
-                  witness: '',
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ type: { args: onchainData.typeArgs, codeHash: '', hashType: 'data' } }),
+                witness: '',
+              },
+            ],
           },
         })
         expect(store.get(defaultOutpoint)).toStrictEqual(initValue)
@@ -320,16 +296,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ data: onchainData.data }),
-                  witness: '',
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ data: onchainData.data }),
+                witness: '',
+              },
+            ],
           },
         })
       })
@@ -338,11 +311,8 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'remove_cell',
-              value: [defaultOutpoint],
-            },
+            pattern: 'remove_cells',
+            value: [defaultOutpoint],
           },
         })
         expect(store.get(defaultOutpoint)).toBeUndefined()
@@ -352,11 +322,8 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'remove_cell',
-              value: [`0x${'0'.repeat(60)}0`],
-            },
+            pattern: 'remove_cells',
+            value: [`0x${'0'.repeat(60)}0`],
           },
         })
         expect(store.get(defaultOutpoint)).toBeDefined()
@@ -371,16 +338,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ data: onchainData.data }),
-                  witness: onchainData.witness,
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ data: onchainData.data }),
+                witness: onchainData.witness,
+              },
+            ],
           },
         })
         const cloneRes = store.clone()
@@ -399,16 +363,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ lock: { args: onchainData.lockArgs, codeHash: '0x00', hashType: 'type' } }),
-                  witness: onchainData.witness,
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ lock: { args: onchainData.lockArgs, codeHash: '0x00', hashType: 'type' } }),
+                witness: onchainData.witness,
+              },
+            ],
           },
         })
         const cloneRes = store.clone()
@@ -429,16 +390,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell({ type: { args: onchainData.typeArgs, codeHash: '0x00', hashType: 'type' } }),
-                  witness: onchainData.witness,
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell({ type: { args: onchainData.typeArgs, codeHash: '0x00', hashType: 'type' } }),
+                witness: onchainData.witness,
+              },
+            ],
           },
         })
         const cloneRes = store.clone()
@@ -475,20 +433,17 @@ describe('test store', () => {
         from: ref,
         behavior: Behavior.Call,
         payload: {
-          pattern: 'normal',
-          value: {
-            type: 'update_cells',
-            value: [
-              {
-                cell: createCell({
-                  type: { args: onchainData.typeArgs, codeHash: '0x00', hashType: 'type' },
-                  data: onchainData.data,
-                  lock: { args: onchainData.lockArgs, codeHash: '0x00', hashType: 'type' },
-                }),
-                witness: onchainData.witness,
-              },
-            ],
-          },
+          pattern: 'update_cells',
+          value: [
+            {
+              cell: createCell({
+                type: { args: onchainData.typeArgs, codeHash: '0x00', hashType: 'type' },
+                data: onchainData.data,
+                lock: { args: onchainData.lockArgs, codeHash: '0x00', hashType: 'type' },
+              }),
+              witness: onchainData.witness,
+            },
+          ],
         },
       })
       it('get success without path', () => {
@@ -544,20 +499,17 @@ describe('test store', () => {
         from: ref,
         behavior: Behavior.Call,
         payload: {
-          pattern: 'normal',
-          value: {
-            type: 'update_cells',
-            value: [
-              {
-                cell: createCell({
-                  type: { args: onchainData.typeArgs, codeHash: '0x00', hashType: 'type' },
-                  data: onchainData.data,
-                  lock: { args: onchainData.lockArgs, codeHash: '0x00', hashType: 'type' },
-                }),
-                witness: onchainData.witness,
-              },
-            ],
-          },
+          pattern: 'update_cells',
+          value: [
+            {
+              cell: createCell({
+                type: { args: onchainData.typeArgs, codeHash: '0x00', hashType: 'type' },
+                data: onchainData.data,
+                lock: { args: onchainData.lockArgs, codeHash: '0x00', hashType: 'type' },
+              }),
+              witness: onchainData.witness,
+            },
+          ],
         },
       })
       it('set success without path', () => {
@@ -603,6 +555,66 @@ describe('test store', () => {
     })
   })
 
+  describe('test load', () => {
+    const store = new JSONStore<{
+      data: { a: BigNumber; b: { c: BigNumber } }
+      witness: boolean
+      lockArgs: BigNumber
+      typeArgs: { a: BigNumber }
+    }>({
+      data: true,
+      witness: true,
+      lockArgs: true,
+      typeArgs: true,
+    })
+    const initValue = {
+      data: { a: BigNumber(20), b: { c: BigNumber(20) } },
+      witness: false,
+      lockArgs: BigNumber(10),
+      typeArgs: { a: BigNumber(30) },
+    }
+    const onchainData = store.initOnChain(initValue)
+    store.handleCall({
+      from: ref,
+      behavior: Behavior.Call,
+      payload: {
+        pattern: 'update_cells',
+        value: [
+          {
+            cell: createCell({
+              type: { args: onchainData.typeArgs, codeHash: '0x00', hashType: 'type' },
+              data: onchainData.data,
+              lock: { args: onchainData.lockArgs, codeHash: '0x00', hashType: 'type' },
+            }),
+            witness: onchainData.witness,
+          },
+        ],
+      },
+    })
+    it('load all success without path', () => {
+      expect(store.load()).toStrictEqual(initValue)
+    })
+    it('load data success path', () => {
+      expect(store.load('data')).toStrictEqual(initValue.data)
+    })
+    it('load witness success with first path witness', () => {
+      expect(store.load('witness')).toStrictEqual(initValue.witness)
+    })
+    it('load sub path success', () => {
+      expect(store.load('data.a')).toEqual(initValue.data.a)
+    })
+    it('load non-existent value returns null', () => {
+      expect(store.load('data.a111')).toBeNull()
+    })
+    it('load lock', () => {
+      expect(store.load('lockArgs')).toStrictEqual(initValue.lockArgs)
+    })
+    it('load type', () => {
+      expect(store.load('typeArgs')).toStrictEqual(initValue.typeArgs)
+    })
+    // TODO: add tests of data combination
+  })
+
   describe('extend store', () => {
     it('success', () => {
       const custom = new CustomStore<{ data: string }>({ data: true })
@@ -610,16 +622,13 @@ describe('test store', () => {
         from: ref,
         behavior: Behavior.Call,
         payload: {
-          pattern: 'normal',
-          value: {
-            type: 'update_cells',
-            value: [
-              {
-                cell: createCell(),
-                witness: '',
-              },
-            ],
-          },
+          pattern: 'update_cells',
+          value: [
+            {
+              cell: createCell(),
+              witness: '',
+            },
+          ],
         },
       })
       custom.clone()
@@ -634,16 +643,13 @@ describe('test store', () => {
           from: ref,
           behavior: Behavior.Call,
           payload: {
-            pattern: 'normal',
-            value: {
-              type: 'update_cells',
-              value: [
-                {
-                  cell: createCell(),
-                  witness: '',
-                },
-              ],
-            },
+            pattern: 'update_cells',
+            value: [
+              {
+                cell: createCell(),
+                witness: '',
+              },
+            ],
           },
         }),
       ).toThrow(new NonStorageInstanceException())
