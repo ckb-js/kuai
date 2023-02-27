@@ -1,3 +1,4 @@
+import { setTimeout } from 'node:timers/promises'
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import { ProviderKey, Behavior, outPointToOutPointString, ActorURI, ResourceBindingRegistry } from '../../src'
 import { Manager, CellChange } from '../../src'
@@ -197,7 +198,7 @@ describe('Test resource binding', () => {
           ],
         ]),
       )
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await setTimeout(2000)
       expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual(
         new Map<ActorURI, ResourceBindingRegistry>([
           [
@@ -398,7 +399,7 @@ describe('Test resource binding', () => {
 
       manager.register(cell.cellOutput.lock, cell.cellOutput.type, registry.uri, 'normal')
       listener = manager.listen()
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await setTimeout(2000)
       expect(mockXAdd).toBeCalledTimes(2)
     })
   })
@@ -837,7 +838,7 @@ describe('Test resource binding', () => {
       mockSource.getTipHeader = () => Promise.resolve(mockBlock0.header)
       mockSource.getBlock = () => Promise.resolve(mockBlock0)
       listener = manager.listen()
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await setTimeout(2000)
       expect(manager.lastBlock?.header.number).toEqual(mockBlock0.header.number)
       mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
       mockSource.getBlock = () => Promise.resolve(mockBlock)
@@ -846,14 +847,14 @@ describe('Test resource binding', () => {
       manager.register(outputD.lock, outputD.type, ref2.uri, 'normal')
       manager.register(outputC.lock, outputC.type, ref2.uri, 'normal')
 
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await setTimeout(2000)
       expect(mockXAdd).toBeCalledTimes(2)
       expect(mockXAdd.mock.calls[0][0]).toEqual(ref2.uri)
       expect(mockXAdd.mock.calls[0][3]).toEqual('local://resource')
       expect(mockXAdd.mock.calls[1][0]).toEqual(ref1.uri)
       expect(mockXAdd.mock.calls[1][3]).toEqual('local://resource')
-      expect(JSON.parse(mockXAdd.mock.calls[0][7] as string).value).toEqual({
-        type: 'update_cells',
+      expect(JSON.parse(mockXAdd.mock.calls[0][7] as string)).toMatchObject({
+        pattern: 'update_cells',
         value: [
           {
             witness: witnesses[0],
@@ -883,8 +884,8 @@ describe('Test resource binding', () => {
           },
         ],
       })
-      expect(JSON.parse(mockXAdd.mock.calls[1][7] as string).value).toEqual({
-        type: 'update_cells',
+      expect(JSON.parse(mockXAdd.mock.calls[1][7] as string)).toMatchObject({
+        pattern: 'update_cells',
         value: [
           {
             witness: witnesses[2],
@@ -963,14 +964,14 @@ describe('Test resource binding', () => {
       mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
       listener = manager.listen()
       mockSource.getBlock = () => Promise.resolve(mockBlock)
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await setTimeout(2000)
       expect(mockXAdd).toBeCalledTimes(2)
-      expect(JSON.parse(mockXAdd.mock.calls[0][7] as string).value).toEqual({
-        type: 'remove_cell',
+      expect(JSON.parse(mockXAdd.mock.calls[0][7] as string)).toMatchObject({
+        pattern: 'remove_cells',
         value: [outPointToOutPointString(inputN.previousOutput), outPointToOutPointString(inputO.previousOutput)],
       })
-      expect(JSON.parse(mockXAdd.mock.calls[1][7] as string).value).toEqual({
-        type: 'remove_cell',
+      expect(JSON.parse(mockXAdd.mock.calls[1][7] as string)).toMatchObject({
+        pattern: 'remove_cells',
         value: [outPointToOutPointString(inputM.previousOutput)],
       })
       expect(manager.lastBlock?.header.number).toEqual(mockBlock.header.number)

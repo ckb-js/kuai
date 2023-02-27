@@ -103,7 +103,7 @@ router.post<never, { address: string }, { capacity: HexString }>('/claim/:addres
   ctx.ok(Tx.toJsonString(result))
 })
 
-router.get<never, { path: string; address: string }>('/read/:address/:path', async (ctx) => {
+router.get<never, { path: string; address: string }>('/load/:address/:path', async (ctx) => {
   const { params } = ctx.payload
 
   if (!params?.path) {
@@ -111,9 +111,12 @@ router.get<never, { path: string; address: string }>('/read/:address/:path', asy
   }
 
   const recordModel = await getRecordModel(params?.address)
-  const key = recordModel.getOneOfKey()
-  const data = recordModel.get(key, params.path ? ['data', ...params.path.split('.')] : ['data'])
-  ctx.ok(data)
+  const value = recordModel.load(`data.${params.path}`)
+  if (value) {
+    ctx.ok(value)
+  } else {
+    ctx.err('field is not found')
+  }
 })
 
 router.get<never, { address: string }>('/load/:address', async (ctx) => {
@@ -123,8 +126,7 @@ router.get<never, { address: string }>('/load/:address', async (ctx) => {
     ctx.err('store is not found')
     return
   }
-  const data = recordModel.get(key, ['data'])
-  ctx.ok(data)
+  ctx.ok(recordModel.load('data'))
 })
 
 router.post<never, { address: string }, { value: StoreType['data'] }>('/set/:address', async (ctx) => {

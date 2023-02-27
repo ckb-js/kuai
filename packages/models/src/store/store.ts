@@ -17,6 +17,7 @@ import type {
 } from './interface'
 import type { JSONStorageOffChain } from './json-storage'
 import type { GetState } from './chain-storage'
+import { mergeWith, get } from 'lodash'
 import { ChainStorage } from './chain-storage'
 import { Actor } from '../actor'
 import { JSONStorage } from './json-storage'
@@ -27,7 +28,8 @@ import {
   NoSchemaException,
   UnmatchLengthException,
 } from '../exceptions'
-import { ProviderKey, CellPattern, SchemaPattern } from '../utils'
+import { ProviderKey, CellPattern, SchemaPattern, isStringList } from '../utils'
+import { outPointToOutPointString } from '../resource-binding'
 
 const ByteCharLen = 2
 
@@ -86,6 +88,24 @@ export class Store<
     this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor)
   }
 
+  public load(path?: string) {
+    let local = {}
+    const customizer = (objValue: StructSchema, srcValue: StructSchema) => {
+      if (Array.isArray(objValue)) {
+        return objValue.concat(srcValue)
+      }
+    }
+    Object.values(this.states).forEach((state) => {
+      local = mergeWith(local, state, customizer)
+    })
+
+    if (path) {
+      return get(local, path, null)
+    }
+
+    return local
+  }
+
   private getOffsetAndLength(option: unknown): [ByteLength, ByteLength] {
     if (typeof option !== 'object' || option === null) return [0, 0]
     const offset = 'offset' in option && typeof option.offset === 'number' ? option.offset : 0
@@ -94,7 +114,7 @@ export class Store<
   }
 
   private deserializeField(type: StorageLocation, option: unknown, value: string) {
-    this.assetStorage(this.getStorage(type))
+    this.assertStorage(this.getStorage(type))
     try {
       const [offset, length] = this.getOffsetAndLength(option)
       return this.getStorage(type)?.deserialize(getUint8ArrayfromHex(value, offset, length))
@@ -123,16 +143,17 @@ export class Store<
 
   private addState({ cell, witness }: UpdateStorageValue) {
     if (this.cellPattern && !this.cellPattern({ cell, witness })) {
+      // ignore cells from resource binding if pattern is not matched
       return
     }
     if (cell.outPoint) {
-      const outpoint = `${cell.outPoint?.txHash}${cell.outPoint.index.slice(2)}`
+      const outPoint = outPointToOutPointString(cell.outPoint)
       const value = this.deserializeCell({ cell, witness })
       if (this.schemaPattern && !this.schemaPattern(value)) {
         return
       }
-      this.states[outpoint] = value
-      this.chainData[outpoint] = { cell, witness }
+      this.states[outPoint] = value
+      this.chainData[outPoint] = { cell, witness }
     }
   }
 
@@ -217,7 +238,7 @@ export class Store<
 
   private serializeField(type: StorageLocation, offChainValue: unknown) {
     if (!this.schemaOption || typeof this.schemaOption !== 'object') return { hexString: '0x', offset: 0, length: 0 }
-    this.assetStorage(this.getStorage(type))
+    this.assertStorage(this.getStorage(type))
     const hexString = bytes.hexify(this.getStorage(type)!.serialize(offChainValue))
     if (typeof type === 'string') {
       if (!(type in this.schemaOption)) throw new NoSchemaException(type)
@@ -278,18 +299,22 @@ export class Store<
     return res as GetOnChainStorage<StructSchema>
   }
 
-  handleCall = (_msg: ActorMessage<MessagePayload<StoreMessage>>): void => {
-    switch (_msg.payload?.value?.type) {
+  handleCall = (msg: ActorMessage<MessagePayload<StoreMessage>>): void => {
+    switch (msg.payload?.pattern) {
       case 'update_cells':
-        _msg.payload.value.value.forEach((cellInfo) => {
-          this.addState(cellInfo)
+        msg.payload.value?.forEach((cellInfo) => {
+          if (typeof cellInfo !== 'string') {
+            this.addState(cellInfo)
+          }
         })
         break
-      case 'remove_cell':
-        this.removeState(_msg.payload.value.value)
+      case 'remove_cells':
+        if (isStringList(msg.payload.value)) {
+          this.removeState(msg.payload.value)
+        }
         break
       default:
-        break
+      // ignore
     }
   }
 
@@ -297,7 +322,7 @@ export class Store<
     return undefined
   }
 
-  assetStorage(storage: StorageT | undefined) {
+  assertStorage(storage: StorageT | undefined) {
     if (!storage) throw new NonStorageInstanceException()
   }
 
@@ -307,19 +332,19 @@ export class Store<
       const currentStateInKey = this.states[key]
       states[key] = (states[key] || {}) as GetFullStorageStruct<StructSchema>
       if ('data' in currentStateInKey && currentStateInKey.data !== undefined) {
-        this.assetStorage(this.getStorage('data'))
+        this.assertStorage(this.getStorage('data'))
         states[key].data = this.getStorage('data')?.clone(currentStateInKey.data)
       }
       if ('witness' in currentStateInKey && currentStateInKey.witness !== undefined) {
-        this.assetStorage(this.getStorage('witness'))
+        this.assertStorage(this.getStorage('witness'))
         states[key].witness = this.getStorage('witness')?.clone(currentStateInKey.witness)
       }
       if ('lockArgs' in currentStateInKey && (currentStateInKey.lockArgs ?? false) !== false) {
-        this.assetStorage(this.getStorage('lockArgs'))
+        this.assertStorage(this.getStorage('lockArgs'))
         states[key].lockArgs = this.getStorage('lockArgs')?.clone(currentStateInKey.lockArgs)
       }
       if ('typeArgs' in currentStateInKey && (currentStateInKey.typeArgs ?? false) !== false) {
-        this.assetStorage(this.getStorage('typeArgs'))
+        this.assertStorage(this.getStorage('typeArgs'))
         states[key].typeArgs = this.getStorage('typeArgs')?.clone(currentStateInKey.typeArgs)
       }
     })

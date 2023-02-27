@@ -94,12 +94,4 @@ export type UpdateStorageValue = {
   cell: Cell
 }
 
-export type StoreMessage =
-  | {
-      type: 'remove_cell'
-      value: OutPointString[]
-    }
-  | {
-      type: 'update_cells'
-      value: UpdateStorageValue[]
-    }
+export type StoreMessage = OutPointString[] | UpdateStorageValue[]

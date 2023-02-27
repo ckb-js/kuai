@@ -1,4 +1,4 @@
-import { Transaction, Block, Header, Input, utils, Script } from '@ckb-lumos/base'
+import { Block, Header, Input, utils, Script } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { Actor, ActorMessage, ActorURI, MessagePayload } from '..'
 import {
@@ -16,9 +16,11 @@ import { ChainSource } from '@ckb-js/kuai-io/lib/types'
 import { OutPointString, UpdateStorageValue } from '../store'
 import { CellChangeBuffer } from './cell-change-buffer'
 
+type Registry = Map<ActorURI, ResourceBindingRegistry>
+
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
-  #registry: Map<TypeScriptHash, Map<LockScriptHash, Map<ActorURI, ResourceBindingRegistry>>> = new Map()
-  #registryOutPoint: Map<OutPointString, ResourceBindingRegistry> = new Map()
+  #registry: Map<TypeScriptHash, Map<LockScriptHash, Registry>> = new Map()
+  #registryOutPoint: Map<OutPointString, Registry> = new Map()
   #registryReverse: Map<ActorURI, [TypeScriptHash, LockScriptHash]> = new Map()
   #lastBlock: Block | undefined = undefined
   #tipBlockNumber = BI.from(0)
@@ -71,24 +73,29 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }
   }
 
-  private updateCellChanges(store: ResourceBindingRegistry, input: Input[], data: CellChangeData[]) {
-    const upgrade: UpdateStorageValue[] = []
-    for (const [cell, witness] of data) {
-      upgrade.push({ witness, cell })
-      if (cell.outPoint) {
-        this.#registryOutPoint.set(outPointToOutPointString(cell.outPoint), store)
-      }
+  private updateCellChanges(
+    registry: ResourceBindingRegistry,
+    inputList: Input[],
+    cellChangeDataList: CellChangeData[],
+  ) {
+    if (cellChangeDataList.length > 0) {
+      const upgrade = [...cellChangeDataList.values()].map(([cell, witness]) => ({ cell, witness }))
+      upgrade.forEach(({ cell }) => {
+        if (!cell.outPoint) return
+        const outPointStr = outPointToOutPointString(cell.outPoint)
+        const registryMap = this.#registryOutPoint.get(outPointStr) ?? new Map()
+        registryMap.set(registry.uri, registry)
+        this.#registryOutPoint.set(outPointStr, registryMap)
+      })
+      this.sendMessage(registry, 'update_cells', upgrade)
     }
 
-    if (upgrade.length > 0) {
-      this.sendMessage(store, 'update_cells', upgrade)
-    }
-
-    if (input.length > 0) {
+    if (inputList.length > 0) {
+      inputList.forEach((input) => this.#registryOutPoint.delete(outPointToOutPointString(input.previousOutput)))
       this.sendMessage(
-        store,
-        'remove_cell',
-        input.map((v) => outPointToOutPointString(v.previousOutput)),
+        registry,
+        'remove_cells',
+        inputList.map((v) => outPointToOutPointString(v.previousOutput)),
       )
     }
   }
@@ -96,87 +103,89 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   private updateStore(block: Block) {
     if (!this.#lastBlock || BI.from(block.header.number).gt(BI.from(this.#lastBlock.header.number))) {
       const changes = this.filterCellsAndMapChanges(block)
-      for (const [store, input, data] of changes) {
-        switch (store.status) {
-          case 'initiated':
-            this.updateCellChanges(store, input, data)
+      changes.forEach(([registry, inputList, cellChangeDataList]) => {
+        switch (registry.status) {
+          case 'initiated': {
+            this.updateCellChanges(registry, inputList, cellChangeDataList)
             break
+          }
           case 'registered':
-          default:
-            this.#buffer.push(store.uri, [store, input, data])
+          default: {
+            this.#buffer.push(registry.uri, [registry, inputList, cellChangeDataList])
+          }
         }
-      }
+      })
       this.#lastBlock = block
     }
   }
 
-  private mapOutputs(tx: Transaction, block: Block): Map<OutPointString, CellChangeData> {
-    const outputs = new Map<OutPointString, CellChangeData>()
-    if (tx.hash) {
-      for (const outputIndex in tx.outputs) {
-        const outPoint = {
-          txHash: tx.hash,
-          index: BI.from(outputIndex).toHexString(),
-        }
-        outputs.set(outPointToOutPointString(outPoint), [
+  private filterCellsAndMapChanges(block: Block): CellChange[] {
+    const newOutputs = new Map<string, CellChangeData>()
+    const newInputs = new Map<string, Input>()
+
+    block.transactions.forEach(({ hash, inputs, outputs, outputsData, witnesses }) => {
+      if (!hash) return
+      /**
+       * add every input
+       */
+      inputs.forEach((input) => newInputs.set(outPointToOutPointString(input.previousOutput), input))
+
+      /**
+       * add every output
+       */
+      outputs.forEach((output, index) =>
+        newOutputs.set(outPointToOutPointString({ txHash: hash, index: `0x${index.toString(16)}` }), [
           {
-            cellOutput: tx.outputs[outputIndex],
-            data: tx.outputsData[outputIndex],
-            outPoint,
+            cellOutput: output,
+            data: outputsData[index],
+            outPoint: {
+              txHash: hash,
+              index: `0x${index.toString(16)}`,
+            },
             blockHash: block.header.hash,
             blockNumber: block.header.number,
           },
-          tx.witnesses[outputIndex],
-        ])
+          witnesses[index],
+        ]),
+      )
+    })
+    /**
+     * remove inputs and outputs if they are matched in the block
+     */
+    ;[...newInputs.keys()].forEach((outPoint) => {
+      if (newOutputs.has(outPoint)) {
+        newOutputs.delete(outPoint)
+        newInputs.delete(outPoint)
       }
-    }
+    })
 
-    return outputs
-  }
+    const changes = new Map<ActorURI, CellChange>()
+    ;[...newOutputs.entries()].forEach(([outPoint, cellChangeData]) => {
+      const { lock, type } = cellChangeData[0].cellOutput
+      const lockHash = utils.computeScriptHash(lock)
+      const typeHash = type ? utils.computeScriptHash(type) : 'null'
+      const registries = this.#registry.get(typeHash)?.get(lockHash)
 
-  private filterCellsAndMapChanges(block: Block): CellChange[] {
-    const changes: Map<ActorURI, CellChange> = new Map()
-    let outputs = new Map<OutPointString, CellChangeData>()
-    for (const tx of block.transactions) {
-      outputs = new Map([...outputs, ...this.mapOutputs(tx, block)])
-      for (const input of tx.inputs) {
-        const outPointString = outPointToOutPointString(input.previousOutput)
-        if (outputs.has(outPointString)) {
-          outputs.delete(outPointString)
-        } else {
-          const registry = this.#registryOutPoint.get(outPointString)
-          if (registry) {
-            let change = changes.get(registry.uri)
-            if (!change) {
-              change = [registry, [], []]
-            }
-            change[1].push(input)
-            changes.set(registry.uri, change)
-            this.#registryOutPoint.delete(outPointString)
-          } else {
-            // To be ignored
-            // For an input cell, if the current block doesn't output it, it must be output by a former block.
-            // If it isn't registered by any Stores, then it certainly belongs to any other applications.
-            // So this input cell could be ignored.
-          }
-        }
-      }
-    }
-
-    for (const output of outputs.values()) {
-      const typeHash = output[0].cellOutput.type ? utils.computeScriptHash(output[0].cellOutput.type) : 'null'
-      const registries = this.#registry.get(typeHash)?.get(utils.computeScriptHash(output[0].cellOutput.lock))
-      registries?.forEach((registry) => {
-        let change = changes.get(registry.uri)
-        if (!change) {
-          change = [registry, [], []]
-        }
-        change[2].push(output)
+      // regsitry is empty
+      if (!registries) return
+      ;[...registries.values()].forEach((registry) => {
+        const change = changes.get(registry.uri) ?? [registry, [], []]
+        change[2].push(cellChangeData)
+        const registryMap = this.#registryOutPoint.get(outPoint) ?? new Map()
+        registryMap.set(registry.uri, registry)
         changes.set(registry.uri, change)
       })
-    }
+    })
+    ;[...newInputs.entries()].forEach(([outPoint, input]) => {
+      const registryMap = this.#registryOutPoint.get(outPoint)
+      registryMap?.forEach((registry) => {
+        const change = changes.get(registry.uri) ?? [registry, [], []]
+        change[1].push(input)
+        changes.set(registry.uri, change)
+      })
+    })
 
-    return Array.from(changes.values())
+    return [...changes.values()]
   }
 
   private async initiateStore(registry: ResourceBindingRegistry, lockScript: Script, typeScript?: Script) {
@@ -200,6 +209,9 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     )
     this.#buffer.signalReady(registry.uri)
     registry.status = 'initiated'
+    const lockHash = utils.computeScriptHash(lockScript)
+    const typeHash = typeScript ? utils.computeScriptHash(typeScript) : 'null'
+    this.#registryReverse.set(registry.uri, [typeHash, lockHash])
   }
 
   handleCall = (_msg: ActorMessage<MessagePayload<ResourceBindingManagerMessage>>): void => {
@@ -253,17 +265,14 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return { subscription: this._listener.on(this.onListenBlock), updator: this.update(pollingInterval) }
   }
 
-  private sendMessage<T extends 'remove_cell' | 'update_cells'>(
-    store: ResourceBindingRegistry,
+  private sendMessage<T extends 'remove_cells' | 'update_cells'>(
+    registry: ResourceBindingRegistry,
     type: T,
-    payload: T extends 'remove_cell' ? OutPointString[] : UpdateStorageValue[],
+    payload: T extends 'remove_cells' ? OutPointString[] : UpdateStorageValue[],
   ) {
-    this.call(store.uri, {
-      pattern: store.pattern,
-      value: {
-        type,
-        value: payload,
-      },
+    this.call(registry.uri, {
+      pattern: type,
+      value: payload,
     })
   }
 
@@ -271,7 +280,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return this.#registry
   }
 
-  get registryOutPoint(): Map<OutPointString, ResourceBindingRegistry> {
+  get registryOutPoint(): Map<OutPointString, Registry> {
     return this.#registryOutPoint
   }
 
