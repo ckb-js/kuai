@@ -6,6 +6,4 @@ COPY . /home/app
 RUN npx lerna bootstrap
 RUN npx lerna run build
 
-WORKDIR /home/app/packages/samples/mvp-dapp
-
-CMD [ "node", "./dist/main.js" ]
+CMD npx lerna run start:prod --scope=kuai-mvp-dapp

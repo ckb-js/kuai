@@ -5,7 +5,6 @@ import { config } from '@ckb-lumos/lumos'
 import { KoaRouterAdapter, CoR, TipHeaderListener } from '@ckb-js/kuai-io'
 import cors from '@koa/cors'
 import { router } from './app.controller'
-import './type-extends'
 import {
   ActorReference,
   Manager,
