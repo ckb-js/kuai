@@ -114,7 +114,7 @@ export class Store<
   }
 
   private deserializeField(type: StorageLocation, option: unknown, value: string) {
-    this.assertStorge(this.getStorage(type))
+    this.assertStorage(this.getStorage(type))
     try {
       const [offset, length] = this.getOffsetAndLength(option)
       return this.getStorage(type)?.deserialize(getUint8ArrayfromHex(value, offset, length))
@@ -238,7 +238,7 @@ export class Store<
 
   private serializeField(type: StorageLocation, offChainValue: unknown) {
     if (!this.schemaOption || typeof this.schemaOption !== 'object') return { hexString: '0x', offset: 0, length: 0 }
-    this.assertStorge(this.getStorage(type))
+    this.assertStorage(this.getStorage(type))
     const hexString = bytes.hexify(this.getStorage(type)!.serialize(offChainValue))
     if (typeof type === 'string') {
       if (!(type in this.schemaOption)) throw new NoSchemaException(type)
@@ -322,7 +322,7 @@ export class Store<
     return undefined
   }
 
-  assertStorge(storage: StorageT | undefined) {
+  assertStorage(storage: StorageT | undefined) {
     if (!storage) throw new NonStorageInstanceException()
   }
 
@@ -332,19 +332,19 @@ export class Store<
       const currentStateInKey = this.states[key]
       states[key] = (states[key] || {}) as GetFullStorageStruct<StructSchema>
       if ('data' in currentStateInKey && currentStateInKey.data !== undefined) {
-        this.assertStorge(this.getStorage('data'))
+        this.assertStorage(this.getStorage('data'))
         states[key].data = this.getStorage('data')?.clone(currentStateInKey.data)
       }
       if ('witness' in currentStateInKey && currentStateInKey.witness !== undefined) {
-        this.assertStorge(this.getStorage('witness'))
+        this.assertStorage(this.getStorage('witness'))
         states[key].witness = this.getStorage('witness')?.clone(currentStateInKey.witness)
       }
       if ('lockArgs' in currentStateInKey && (currentStateInKey.lockArgs ?? false) !== false) {
-        this.assertStorge(this.getStorage('lockArgs'))
+        this.assertStorage(this.getStorage('lockArgs'))
         states[key].lockArgs = this.getStorage('lockArgs')?.clone(currentStateInKey.lockArgs)
       }
       if ('typeArgs' in currentStateInKey && (currentStateInKey.typeArgs ?? false) !== false) {
-        this.assertStorge(this.getStorage('typeArgs'))
+        this.assertStorage(this.getStorage('typeArgs'))
         states[key].typeArgs = this.getStorage('typeArgs')?.clone(currentStateInKey.typeArgs)
       }
     })
