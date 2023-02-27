@@ -4,6 +4,9 @@ on:
     branches:
       - 'deploy_action'
       - 'develop'
+    paths:
+      - 'packages/samples/**'
+
 jobs:
   build:
     runs-on: ubuntu-latest
