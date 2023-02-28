@@ -1,11 +1,10 @@
+import type { StoreType } from './actors/record.model'
 import { KuaiRouter } from '@ckb-js/kuai-io'
 import { HexString, Script, helpers } from '@ckb-lumos/lumos'
 import { ActorReference, Manager, ProviderKey, UpdateStorageValue } from '@ckb-js/kuai-models'
 import { BadRequest } from 'http-errors'
-import { appRegistry } from './actors'
-import { OmnilockModel } from './omnilock/omnilock.model'
+import { appRegistry, OmnilockModel, RecordModel } from './actors'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
-import { RecordModel, StoreType } from './record/record.model'
 import { DAPP_DATA_PREFIX } from './const'
 import { Tx } from './views/tx.view'
 
