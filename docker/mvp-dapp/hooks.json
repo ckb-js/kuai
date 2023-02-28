@@ -1,0 +1,13 @@
+[
+  {
+    "id": "redeploy-mvp-dapp",
+    "execute-command": "/bin/bash",
+    "pass-arguments-to-command": [
+      {
+        "source": "string",
+        "name": "./redeploy.sh"
+      }
+    ],
+    "response-message": "Redeploying mvp dapp server."
+  }
+]
