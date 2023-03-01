@@ -2,7 +2,6 @@ name: Deploy
 on:
   push:
     branches:
-      - 'deploy_action'
       - 'develop'
     paths:
       - 'packages/samples/**'
@@ -30,7 +29,7 @@ jobs:
         run: npm run build
 
       - name: Get GitHub organization or user
-        run: echo 'ORG='$(echo $(dirname ${GITHUB_REPOSITORY}) | awk '{print tolower($0)}') >> $GITHUB_ENV
+        run: echo 'ORG='$(echo $(dirname ${GITHUB_REPOSITORY}) | awk '{print tolower($0)}' | tr -d - ) >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
