@@ -10,6 +10,8 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "files": ["src/type-extends.d.ts"],
-  "include": ["src/**/*"]
+  "ts-node": {
+    "files": true
+  },
+  "include": ["src"]
 }
