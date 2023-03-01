@@ -1,6 +1,6 @@
 #!bin/bash
 
-ORG="${DOCKER_ORG:-painterpuppets}"
+ORG="${DOCKER_ORG:-ckbjs}"
 IMAGE="${MVP_DAPP_IMAGE:-kuai-mvp-dapp}"
 PORT="${MVP_DAPP_PORT:-80}"
 
