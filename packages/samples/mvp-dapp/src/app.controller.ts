@@ -7,6 +7,7 @@ import { appRegistry, OmnilockModel, RecordModel } from './actors'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
 import { DAPP_DATA_PREFIX } from './const'
 import { Tx } from './views/tx.view'
+import { BizError } from './exception'
 
 const router = new KuaiRouter()
 function createCellPattern(lock: Script) {
@@ -114,7 +115,7 @@ router.get<never, { path: string; address: string }>('/load/:address/:path', asy
   if (value) {
     ctx.ok(value)
   } else {
-    ctx.err('field is not found')
+    throw new BizError('field is not found')
   }
 })
 
@@ -122,8 +123,7 @@ router.get<never, { address: string }>('/load/:address', async (ctx) => {
   const recordModel = await getRecordModel(ctx.payload.params?.address)
   const key = recordModel.getOneOfKey()
   if (!key) {
-    ctx.err('store is not found')
-    return
+    throw new BizError('store is not found')
   }
   ctx.ok(recordModel.load('data'))
 })

@@ -1,5 +1,4 @@
 import KoaRouter from 'koa-router'
-import { isHttpError } from 'http-errors'
 import * as Koa from 'koa'
 import { CoR } from './cor'
 import type { JsonValue } from './types'
@@ -38,29 +37,19 @@ export class KoaRouterAdapter extends KoaRouter {
 
   routes(): KoaRouter.IMiddleware {
     return async (ctx, next) => {
-      try {
-        const result = await this.cor.dispatch({
-          method: ctx.method,
-          path: ctx.path,
-          query: ctx.query as JsonValue,
-          header: ctx.request.header as JsonValue,
-          body: ctx.request.body,
-        })
+      const result = await this.cor.dispatch({
+        method: ctx.method,
+        path: ctx.path,
+        query: ctx.query as JsonValue,
+        header: ctx.request.header as JsonValue,
+        body: ctx.request.body,
+      })
 
-        if (isNestedResult(result)) {
-          ctx.body = result._body
-          ctx.status = result._status
-        } else {
-          ctx.body = result
-        }
-      } catch (e: unknown) {
-        if (e instanceof Error) {
-          ctx.body = e.message
-        }
-
-        if (isHttpError(e)) {
-          ctx.status = e.status || 500
-        }
+      if (isNestedResult(result)) {
+        ctx.body = result._body
+        ctx.status = result._status
+      } else {
+        ctx.body = result
       }
 
       await next()
