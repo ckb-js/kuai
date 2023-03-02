@@ -1,4 +1,5 @@
 import { Context, HttpError, Next } from 'koa'
+import { MvpResponse } from './response'
 
 export function exceptionHandle() {
   return async (ctx: Context, next: Next) => {
@@ -8,8 +9,8 @@ export function exceptionHandle() {
       if (err instanceof HttpError) {
         ctx.body = { message: err.message }
       } else if (err instanceof BizError) {
-        ctx.status = 400
-        ctx.body = { message: err.message }
+        ctx.status = 200
+        ctx.body = MvpResponse.err(err.message, err.errCode)
       } else {
         ctx.status = 500
         ctx.body = { message: 'Internal server error' }
@@ -18,4 +19,11 @@ export function exceptionHandle() {
   }
 }
 
-export class BizError extends Error {}
+export class BizError extends Error {
+  errCode: string
+
+  constructor(message: string, errCode: string) {
+    super(message)
+    this.errCode = errCode
+  }
+}
