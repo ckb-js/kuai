@@ -1,10 +1,10 @@
 # Kuai MVP DApp
 
-This is the minimal viable product to demonstrate Kuai's ability to manipulate a group of cells on CKB.
+This is the minimum viable product(MVP) designed to demonstrate Kuai's ability to manipulate a group of cells on the Nervos Common Knowledge Base (CKB).
 
-The MVP DApp is a partially implemented [data.did.id](https://data.did.id/), which works as a decentralized account profile. Compared to the fully implementation, Kuai MVP DApp only focuses on the off-chain data management, while the on-chain state verification will be supported at the next stage.
+The Kuai MVP DApp is a partially implemented [data.did.id](https://data.did.id/), which serves as a decentralized account profile. In comparison to the fully implemented version, the Kuai MVP DApp focuses solely on on- and off-chain data management. On-chain state verification will be supported in the next stage of development.
 
-An online preview could be found at [Kuai MVP DApp](https://kuai-mvp-dapp-ui.vercel.app/)
+You can find an online preview of the Kuai MVP DApp at https://kuai-mvp-dapp-ui.vercel.app/.
 
 [![kuai mvp dapp cover](https://i.imgur.com/romOKAF.png)](https://drive.google.com/file/d/15qYCk1-UMZEUSn2_-gpTv4sSO4-ZJWAa/view?usp=sharing)
 
