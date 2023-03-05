@@ -10,7 +10,7 @@ An online preview could be found at [Kuai MVP DApp](https://kuai-mvp-dapp-ui.ver
 
 ## Code snippets
 
-The magical `get` could be found at [store model of Kuai](https://github.com/ckb-js/kuai/blob/optimize-mvp-dapp/packages/models/src/store/store.ts#L91-L107)
+The magical `get` could be found at [store model of Kuai](https://github.com/ckb-js/kuai/blob/develop/packages/models/src/store/store.ts#L91-L107)
 
 ```typescript
   public load(path?: string) {
@@ -32,7 +32,7 @@ The magical `get` could be found at [store model of Kuai](https://github.com/ckb
   }
 ```
 
-The magical `set` could be found at [store model of Kuai](https://github.com/ckb-js/kuai/blob/optimize-mvp-dapp/packages/models/src/store/store.ts#L281-L300)
+The magical `set` could be found at [store model of Kuai](https://github.com/ckb-js/kuai/blob/develop/packages/models/src/store/store.ts#L281-L300)
 
 ```typescript
   initOnChain(value: GetStorageStruct<StructSchema>): GetOnChainStorage<StructSchema> {
@@ -59,7 +59,7 @@ The magical `set` could be found at [store model of Kuai](https://github.com/ckb
 
 With the power of magical `get` and `set`, the business model `record`, representing a storage with a custom schema, has the ability to manipulate cells by users' mind
 
-The main code of business logic could be found at [record model of mvp dapp](https://github.com/ckb-js/kuai/blob/optimize-mvp-dapp/packages/samples/mvp-dapp/src/actors/record.model.ts#L39-L62)
+The main code of business logic could be found at [record model of mvp dapp](https://github.com/ckb-js/kuai/blob/develop/packages/samples/mvp-dapp/src/actors/record.model.ts#L39-L62)
 
 ```typescript
   update(newValue: StoreType['data']) {
@@ -95,7 +95,7 @@ With the help of `get` and `update`, the following workflow is feasible
 1. dump the entire state into local by `load()`;
 2. manipulate on the local state;
 3. generate cell transition from `prev state` to `new state` by `update()`.
-4. transform the cell transition into a transaction by view layer, [tx.view](https://github.com/ckb-js/kuai/blob/optimize-mvp-dapp/packages/samples/mvp-dapp/src/views/tx.view.ts) in this case.
+4. transform the cell transition into a transaction by view layer, [tx.view](https://github.com/ckb-js/kuai/blob/develop/packages/samples/mvp-dapp/src/views/tx.view.ts) in this case.
 
 It's quite similar to the [setState](https://reactjs.org/docs/faq-state.html#what-does-setstate-do) method in [React](https://reactjs.org/). No matter how many updates are scheduled by `setState`, only the final state will be rendered in a frame.
 
