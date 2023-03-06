@@ -27,3 +27,7 @@ $ npm run build
 ```
 
 Outputs will be built in the `lib` directory in their own workspaces
+
+## Demos
+
+[MVP DApp](./packages/samples/mvp-dapp)
