@@ -10,7 +10,7 @@ export function handleException() {
         ctx.body = { message: err.message }
       } else if (err instanceof MvpError) {
         ctx.status = 200
-        ctx.body = MvpResponse.err(err.message, err.errCode)
+        ctx.body = MvpResponse.err(err.message, err.code)
       } else {
         ctx.status = 500
         ctx.body = { message: 'Internal server error' }
@@ -20,10 +20,10 @@ export function handleException() {
 }
 
 export class MvpError extends Error {
-  errCode: string
+  code: string
 
   constructor(message: string, errCode: string) {
     super(message)
-    this.errCode = errCode
+    this.code = errCode
   }
 }
