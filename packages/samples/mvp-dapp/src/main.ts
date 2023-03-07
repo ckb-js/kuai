@@ -14,6 +14,7 @@ import {
   REDIS_HOST_SYMBOL,
 } from '@ckb-js/kuai-models'
 import { NervosChainSource } from './chain-source'
+import { handleException } from './exception'
 
 async function bootstrap() {
   const kuaiCtx = await initialKuai()
@@ -64,6 +65,7 @@ async function bootstrap() {
 
   const koaRouterAdapter = new KoaRouterAdapter(cor)
 
+  app.use(handleException())
   app.use(cors())
   app.use(koaRouterAdapter.routes())
 

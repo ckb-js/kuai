@@ -1,6 +1,7 @@
 {
   "name": "kuai-mvp-dapp",
   "scripts": {
+    "dev": "ts-node src/main.ts",
     "build": "tsc",
     "build:watch": "tsc -w",
     "start:prod": "node ./dist/main.js"
