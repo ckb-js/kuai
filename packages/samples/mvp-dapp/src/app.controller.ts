@@ -7,7 +7,7 @@ import { appRegistry, OmnilockModel, RecordModel } from './actors'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
 import { DAPP_DATA_PREFIX } from './const'
 import { Tx } from './views/tx.view'
-import { BizError } from './exception'
+import { MvpError } from './exception'
 import { MvpResponse } from './response'
 
 const router = new KuaiRouter()
@@ -116,7 +116,7 @@ router.get<never, { path: string; address: string }>('/load/:address/:path', asy
   if (value) {
     ctx.ok(MvpResponse.ok(MvpResponse.ok(value)))
   } else {
-    throw new BizError('field is not found', '404')
+    throw new MvpError('field is not found', '404')
   }
 })
 
@@ -124,7 +124,7 @@ router.get<never, { address: string }>('/load/:address', async (ctx) => {
   const recordModel = await getRecordModel(ctx.payload.params?.address)
   const key = recordModel.getOneOfKey()
   if (!key) {
-    throw new BizError('store is not found', '404')
+    throw new MvpError('store is not found', '404')
   }
   ctx.ok(MvpResponse.ok(recordModel.load('data')))
 })
