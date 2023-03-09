@@ -231,19 +231,13 @@ export class MoleculeStorage<T extends DynamicParam> extends ChainStorage<GetMol
     if (typeof codecConfig === 'string') {
       switch (codecConfig) {
         case 'Uint8':
-          return number.Uint8
         case 'Uint16':
-          return number.Uint16
         case 'Uint32':
-          return number.Uint32
         case 'Uint64':
-          return number.Uint64
         case 'Uint128':
-          return number.Uint128
         case 'Uint256':
-          return number.Uint256
         case 'Uint512':
-          return number.Uint512
+          return number[codecConfig]
         default:
           throw new UnexpectedMoleculeTypeException(codecConfig)
       }
