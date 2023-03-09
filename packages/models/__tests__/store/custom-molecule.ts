@@ -1,7 +1,7 @@
 import { molecule, number } from '@ckb-lumos/codec'
 import { describe, expect, it } from '@jest/globals'
 import { UnionShouldOnlyOneKeyException } from '../../src/exceptions'
-import { UTF8String, wrapUnion } from '../../src/store/customer-molecule'
+import { UTF8String, wrapUnion } from '../../src/store/custom-molecule'
 
 describe('test customer-molecule functions', () => {
   it('test UTF8 string', () => {

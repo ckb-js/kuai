@@ -2,7 +2,7 @@ import { molecule, number } from '@ckb-lumos/codec'
 import { BI } from '@ckb-lumos/bi'
 import { ChainStorage } from './chain-storage'
 import { BytesCodec, FixedBytesCodec } from '@ckb-lumos/codec/lib/base'
-import { OneOfRecord, UTF8String, wrapUnion } from './customer-molecule'
+import { OneOfRecord, UTF8String, wrapUnion } from './custom-molecule'
 import { NoCodecForMolecueException, UnexpectedMoleculeTypeException } from '../exceptions'
 
 /**
