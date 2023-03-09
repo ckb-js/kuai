@@ -46,13 +46,7 @@ export class UnmatchLengthException extends Error {
   }
 }
 
-export class UnexpectedSchemaOptException extends Error {
-  constructor() {
-    super(`Unexpected schema options without object`)
-  }
-}
-
-export class UnexpectedMoleculeTypeException extends Error {
+export class UnknownMoleculeTypeException extends Error {
   constructor(type: string) {
     super(`Unexpected molecule type with ${type} when create codec`)
   }

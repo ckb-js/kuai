@@ -3,7 +3,7 @@ import { BI } from '@ckb-lumos/bi'
 import { ChainStorage } from './chain-storage'
 import { BytesCodec, FixedBytesCodec } from '@ckb-lumos/codec/lib/base'
 import { OneOfRecord, UTF8String, wrapUnion } from './custom-molecule'
-import { NoCodecForMolecueException, UnexpectedMoleculeTypeException } from '../exceptions'
+import { NoCodecForMolecueException, UnknownMoleculeTypeException } from '../exceptions'
 
 /**
  * Comm types define
@@ -239,7 +239,7 @@ export class MoleculeStorage<T extends DynamicParam> extends ChainStorage<GetMol
         case 'Uint512':
           return number[codecConfig]
         default:
-          throw new UnexpectedMoleculeTypeException(codecConfig)
+          throw new UnknownMoleculeTypeException(codecConfig)
       }
     }
     if (codecConfig.type === moleculeTypes.array) {
@@ -281,7 +281,7 @@ export class MoleculeStorage<T extends DynamicParam> extends ChainStorage<GetMol
         }
         return wrapUnion(codecParams, keys)
       default:
-        throw new UnexpectedMoleculeTypeException('unknown')
+        throw new UnknownMoleculeTypeException('unknown')
     }
   }
 
