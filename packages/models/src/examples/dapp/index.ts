@@ -1,7 +1,9 @@
 import { cwd } from 'node:process'
 import { resolve } from 'node:path'
-import { Actor, Registry } from '../../'
+import { Actor, ActorReference, Registry } from '../../'
 import { Step } from './actors/base'
+import { ParentActor } from './actors/parent'
+import { ChildActor } from './actors/child'
 
 /**
  * initialize the registry, should be done by the framework
@@ -13,8 +15,8 @@ registry.load(resolve(cwd(), 'src', 'examples', 'dapp'))
  * initialize the message queue, should be done by the framekwork
  */
 
-const parent = registry.find('local://parent')
-const child = registry.find('local://parent/child')
+const parent = registry.find(ActorReference.fromURI('local://parent'), ParentActor)
+const child = registry.find(ActorReference.fromURI('local://parent/child'), ChildActor)
 
 if (!parent || !child) {
   throw new Error()

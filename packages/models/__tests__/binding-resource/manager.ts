@@ -128,10 +128,13 @@ describe('Test resource binding', () => {
         return Promise.resolve([
           {
             witness,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             blockNumber: cell.blockNumber!,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             outPoint: cell.outPoint!,
             output: cell.cellOutput,
             outputData: cell.data,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             txIndex: cell.outPoint!.index,
           },
         ])

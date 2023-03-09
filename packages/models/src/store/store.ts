@@ -1,6 +1,6 @@
 import { bytes } from '@ckb-lumos/codec'
 import type { Script } from '@ckb-lumos/base'
-import type { ActorMessage, MessagePayload } from '../actor'
+import type { ActorMessage, ActorRef, MessagePayload } from '../actor'
 import type {
   OutPointString,
   StoreMessage,
@@ -69,7 +69,8 @@ export class Store<
   }
 
   constructor(
-    schemaOption: GetStorageOption<StructSchema>,
+    ref?: ActorRef,
+    schemaOption?: GetStorageOption<StructSchema>,
     params?: {
       states?: Record<OutPointString, GetStorageStruct<StructSchema>>
       chainData?: Record<OutPointString, UpdateStorageValue>
@@ -78,15 +79,24 @@ export class Store<
       options?: Option
     },
   ) {
-    super()
-    this.cellPattern = Reflect.getMetadata(ProviderKey.CellPattern, this.constructor) || params?.cellPattern
+    super(ref)
+    const resourceBindingRegister = Reflect.getMetadata(
+      ProviderKey.ResourceBindingRegister,
+      this.constructor,
+      this.ref.uri,
+    )
+    if (resourceBindingRegister) {
+      this.call('local://resource', resourceBindingRegister)
+    }
+    this.cellPattern =
+      Reflect.getMetadata(ProviderKey.CellPattern, this.constructor, this.ref.uri) || params?.cellPattern
     this.schemaPattern = Reflect.getMetadata(ProviderKey.SchemaPattern, this.constructor) || params?.schemaPattern
     this.schemaOption = schemaOption
     this.states = params?.states || {}
     this.chainData = params?.chainData || {}
     this.options = params?.options
-    this.#lock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor)
-    this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor)
+    this.#lock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor, this.ref.uri)
+    this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor, this.ref.uri)
   }
 
   public load(path?: string) {
@@ -240,6 +250,7 @@ export class Store<
   private serializeField(type: StorageLocation, offChainValue: unknown) {
     if (!this.schemaOption || typeof this.schemaOption !== 'object') return { hexString: '0x', offset: 0, length: 0 }
     this.assertStorage(this.getStorage(type))
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const hexString = bytes.hexify(this.getStorage(type)!.serialize(offChainValue))
     if (typeof type === 'string') {
       if (!(type in this.schemaOption)) throw new NoSchemaException(type)
@@ -350,7 +361,7 @@ export class Store<
       }
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new (<any>this.constructor)(this.schemaOption, {
+    return new (<any>this.constructor)(undefined, this.schemaOption, {
       states,
       options: this.options,
       chainData: this.cloneChainData(),

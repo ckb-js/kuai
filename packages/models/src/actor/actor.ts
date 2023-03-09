@@ -44,11 +44,12 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
     return this.#ref
   }
 
-  constructor() {
+  constructor(ref?: ActorRef) {
     const metadata: { ref: ActorRef | undefined } = Reflect.getMetadata(ProviderKey.Actor, this.constructor)
     // TODO: add explicit error message
-    if (!metadata?.ref?.uri) throw new Error()
-    this.#ref = metadata?.ref
+    ref = ref ? ref : metadata?.ref
+    if (!ref) throw new Error()
+    this.#ref = ref
     this.receiveMail()
   }
 

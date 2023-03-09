@@ -20,7 +20,7 @@ function createRoute<
   Q extends Record<string, string> = Record<string, string>,
   P extends Record<string, string> = Record<string, string>,
   B extends object = object,
->(options: { path: Path; middleware: Middleware<RouterContext<Q, P, B>>; method: Method }): Route<Q, P, B> {
+>(options: { path: Path; middlewares: Middleware<RouterContext<Q, P, B>>[]; method: Method }): Route<Q, P, B> {
   const keys: Key[] = []
   const regexp = pathToRegexp(options.path, keys)
 
@@ -41,8 +41,8 @@ export class KuaiRouter {
   public get<
     Q extends Record<string, string> = Record<string, string>,
     P extends Record<string, string> = Record<string, string>,
-  >(path: Path, middleware: Middleware<RouterContext<Q, P, Record<string, never>>>): this {
-    this.routes.push(createRoute({ path, method: 'GET', middleware }) as Route)
+  >(path: Path, ...middlewares: Middleware<RouterContext<Q, P, Record<string, never>>>[]): this {
+    this.routes.push(createRoute({ path, method: 'GET', middlewares }) as Route)
     return this
   }
 
@@ -50,8 +50,8 @@ export class KuaiRouter {
     Q extends Record<string, string> = Record<string, string>,
     P extends Record<string, string> = Record<string, string>,
     B extends object = object,
-  >(path: Path, middleware: Middleware<RouterContext<Q, P, B>>): this {
-    this.routes.push(createRoute({ path, method: 'POST', middleware }) as Route)
+  >(path: Path, ...middlewares: Middleware<RouterContext<Q, P, B>>[]): this {
+    this.routes.push(createRoute({ path, method: 'POST', middlewares }) as Route)
     return this
   }
 
@@ -59,8 +59,8 @@ export class KuaiRouter {
     Q extends Record<string, string> = Record<string, string>,
     P extends Record<string, string> = Record<string, string>,
     B extends object = object,
-  >(path: Path, middleware: Middleware<RouterContext<Q, P, B>>): this {
-    this.routes.push(createRoute({ path, method: 'PUT', middleware }) as Route)
+  >(path: Path, ...middlewares: Middleware<RouterContext<Q, P, B>>[]): this {
+    this.routes.push(createRoute({ path, method: 'PUT', middlewares }) as Route)
     return this
   }
 
@@ -68,8 +68,8 @@ export class KuaiRouter {
     Q extends Record<string, string> = Record<string, string>,
     P extends Record<string, string> = Record<string, string>,
     B extends object = object,
-  >(path: Path, middleware: Middleware<RouterContext<Q, P, B>>): this {
-    this.routes.push(createRoute({ path, method: 'DELETE', middleware }) as Route)
+  >(path: Path, ...middlewares: Middleware<RouterContext<Q, P, B>>[]): this {
+    this.routes.push(createRoute({ path, method: 'DELETE', middlewares }) as Route)
     return this
   }
 
@@ -77,8 +77,8 @@ export class KuaiRouter {
     Q extends Record<string, string> = Record<string, string>,
     P extends Record<string, string> = Record<string, string>,
     B extends object = object,
-  >(path: Path, middleware: Middleware<RouterContext<Q, P, B>>): this {
-    this.routes.push(createRoute({ path, method: 'PATCH', middleware }) as Route)
+  >(path: Path, ...middlewares: Middleware<RouterContext<Q, P, B>>[]): this {
+    this.routes.push(createRoute({ path, method: 'PATCH', middlewares }) as Route)
     return this
   }
 
@@ -86,8 +86,8 @@ export class KuaiRouter {
     Q extends Record<string, string> = Record<string, string>,
     P extends Record<string, string> = Record<string, string>,
     B extends object = object,
-  >(path: Path, middleware: Middleware<RouterContext<Q, P, B>>): this {
-    this.routes.push(createRoute({ path, method: 'HEAD', middleware }) as Route)
+  >(path: Path, ...middlewares: Middleware<RouterContext<Q, P, B>>[]): this {
+    this.routes.push(createRoute({ path, method: 'HEAD', middlewares }) as Route)
     return this
   }
 
@@ -95,8 +95,8 @@ export class KuaiRouter {
     Q extends Record<string, string> = Record<string, string>,
     P extends Record<string, string> = Record<string, string>,
     B extends object = object,
-  >(path: Path, middleware: Middleware<RouterContext<Q, P, B>>): this {
-    this.routes.push(createRoute({ path, method: 'OPTIONS', middleware }) as Route)
+  >(path: Path, ...middlewares: Middleware<RouterContext<Q, P, B>>[]): this {
+    this.routes.push(createRoute({ path, method: 'OPTIONS', middlewares }) as Route)
     return this
   }
 

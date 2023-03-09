@@ -1,4 +1,11 @@
-import { CellPattern, JSONStore, OutPointString, SchemaPattern, UpdateStorageValue } from '@ckb-js/kuai-models'
+import {
+  ActorRef,
+  CellPattern,
+  JSONStore,
+  OutPointString,
+  SchemaPattern,
+  UpdateStorageValue,
+} from '@ckb-js/kuai-models'
 import { Cell } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
 import { BI } from '@ckb-lumos/bi'
@@ -25,6 +32,7 @@ export type StoreType = {
 
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
   constructor(
+    ref?: ActorRef,
     _schemaOption?: { data: { offset: number } },
     params?: {
       states?: Record<OutPointString, StoreType>
@@ -33,7 +41,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
       schemaPattern?: SchemaPattern
     },
   ) {
-    super({ data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, params)
+    super(ref, { data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, params)
   }
 
   update(newValue: StoreType['data']) {
@@ -47,10 +55,13 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
     const outputs: Cell[] = [
       {
         cellOutput: {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           ...inputs[0]!.cell.cellOutput,
           capacity: outputCapacity.toHexString(),
         },
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         data: `${inputs[0]!.cell.data.slice(0, 2 + this.schemaOption!.data.offset * 2)}${data.slice(
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           2 + this.schemaOption!.data.offset * 2,
         )}`,
       },

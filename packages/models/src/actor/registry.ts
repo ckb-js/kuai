@@ -17,13 +17,31 @@ export class Registry {
     return this.#actors.has(uri)
   }
 
-  find = <T = Actor>(uri: ActorURI): T | undefined => {
+  find = <T = Actor>(
+    ref: ActorRef,
+    module: new (ref?: ActorRef | undefined, ...args: Array<unknown>) => unknown,
+    bind = false,
+  ): T | undefined => {
     try {
-      return this.#container.get<T>(uri)
+      return this.#container.get<T>(ref.uri)
     } catch (e) {
       console.log('Registry `find` catch error', e)
+      if (bind) {
+        this.#bind(module, { ref })
+        const actor = this.#container.get<T>(ref.uri)
+        return actor
+      }
       return undefined
     }
+  }
+
+  findOrBind = <T = Actor>(
+    ref: ActorRef,
+    module: new (ref?: ActorRef | undefined, ...args: Array<unknown>) => unknown,
+  ): T => {
+    const actor = this.find<T>(ref, module, true)
+    if (!actor) throw new Error('module bind error')
+    return actor
   }
 
   list = (): IterableIterator<ActorURI> => {
@@ -54,10 +72,13 @@ export class Registry {
   /**
    * this method is defined as public for testing
    */
-  bind = (module: new (...args: Array<unknown>) => unknown): void => this.#bind(module)
+  bind = (module: new (...args: Array<unknown>) => unknown): void =>
+    this.#bind(module, Reflect.getMetadata(ProviderKey.Actor, module))
 
-  #bind = (module: new (...args: Array<unknown>) => unknown): void => {
-    const metadata: Record<'ref', ActorRef> | undefined = Reflect.getMetadata(ProviderKey.Actor, module)
+  #bind = (
+    module: new (ref?: ActorRef | undefined, ...args: Array<unknown>) => unknown,
+    metadata?: Record<'ref', ActorRef>,
+  ): void => {
     if (!metadata) return
     if (!metadata.ref.uri) {
       throw new InvalidActorURIException(metadata.ref.uri)
@@ -65,7 +86,11 @@ export class Registry {
     if (this.isLive(metadata.ref.uri)) {
       throw new DuplicatedActorException(metadata.ref.uri)
     }
-    this.#container.bind(metadata.ref.uri).to(module).inSingletonScope()
+    this.#container
+      .bind(metadata.ref.uri)
+      .toDynamicValue(() => new module(metadata.ref))
+      .inSingletonScope()
+
     this.#actors.add(metadata.ref.uri)
   }
 }
