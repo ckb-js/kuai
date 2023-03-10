@@ -17,7 +17,7 @@ export class Registry {
     return this.#actors.has(uri)
   }
 
-  find = <T = Actor>(
+  find = <T extends Actor = Actor>(
     ref: ActorRef,
     module: new (ref?: ActorRef | undefined, ...args: Array<unknown>) => unknown,
     bind = false,
@@ -35,7 +35,7 @@ export class Registry {
     }
   }
 
-  findOrBind = <T = Actor>(
+  findOrBind = <T extends Actor = Actor>(
     ref: ActorRef,
     module: new (ref?: ActorRef | undefined, ...args: Array<unknown>) => unknown,
   ): T => {

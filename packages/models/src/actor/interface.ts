@@ -10,7 +10,8 @@ export interface ActorRef {
   uri: ActorURI
 }
 
-export type MessagePayload<Payload = string | number | object> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type MessagePayload<Payload = any> = {
   pattern: string
   value?: Payload
 } | null
