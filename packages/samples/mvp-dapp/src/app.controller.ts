@@ -23,15 +23,15 @@ const getLock = (address: string) => {
 router.get<never, { address: string }>(
   '/meta/:address',
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resourceBindingRegisterMiddleware('omnilock', OmnilockModel as any),
+  resourceBindingRegisterMiddleware('omnilock', OmnilockModel),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  lockMiddleware('omnilock', OmnilockModel as any),
+  lockMiddleware('omnilock', OmnilockModel),
   cellPatternMiddleware(),
   async (ctx) => {
     const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
       new ActorReference('omnilock', `/${computeScriptHash(getLock(ctx.payload.params.address))}/`),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      OmnilockModel as any,
+      OmnilockModel,
     )
 
     ctx.ok(MvpResponse.ok(omniLockModel?.meta))
@@ -41,9 +41,9 @@ router.get<never, { address: string }>(
 router.post<never, { address: string }, { capacity: HexString }>(
   '/claim/:address',
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resourceBindingRegisterMiddleware('omnilock', OmnilockModel as any),
+  resourceBindingRegisterMiddleware('omnilock', OmnilockModel),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  lockMiddleware('omnilock', OmnilockModel as any),
+  lockMiddleware('omnilock', OmnilockModel),
   cellPatternMiddleware(),
   async (ctx) => {
     const { body, params } = ctx.payload
@@ -55,7 +55,7 @@ router.post<never, { address: string }, { capacity: HexString }>(
     const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
       new ActorReference('omnilock', `/${computeScriptHash(getLock(params?.address))}/`),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      OmnilockModel as any,
+      OmnilockModel,
     )
     const result = omniLockModel.claim(body.capacity)
     ctx.ok(MvpResponse.ok(Tx.toJsonString(result)))
@@ -65,7 +65,7 @@ router.post<never, { address: string }, { capacity: HexString }>(
 router.get<never, { path: string; address: string }>(
   '/load/:address/:path',
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resourceBindingRegisterMiddleware('record', RecordModel as any),
+  resourceBindingRegisterMiddleware('record', RecordModel),
   recordPatternMiddleware(),
   async (ctx) => {
     const { params } = ctx.payload
@@ -76,8 +76,7 @@ router.get<never, { path: string; address: string }>(
 
     const recordModel = appRegistry.findOrBind<RecordModel>(
       new ActorReference('record', `/${computeScriptHash(getLock(params?.address))}/`),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      RecordModel as any,
+      RecordModel,
     )
     const value = recordModel.load(`data.${params.path}`)
     if (value) {
@@ -90,14 +89,12 @@ router.get<never, { path: string; address: string }>(
 
 router.get<never, { address: string }>(
   '/load/:address',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resourceBindingRegisterMiddleware('record', RecordModel as any),
+  resourceBindingRegisterMiddleware('record', RecordModel),
   recordPatternMiddleware(),
   async (ctx) => {
     const recordModel = appRegistry.findOrBind<RecordModel>(
       new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      RecordModel as any,
+      RecordModel,
     )
     const key = recordModel.getOneOfKey()
     if (!key) {
@@ -109,14 +106,12 @@ router.get<never, { address: string }>(
 
 router.post<never, { address: string }, { value: StoreType['data'] }>(
   '/set/:address',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resourceBindingRegisterMiddleware('record', RecordModel as any),
+  resourceBindingRegisterMiddleware('record', RecordModel),
   recordPatternMiddleware(),
   async (ctx) => {
     const recordModel = appRegistry.findOrBind<RecordModel>(
       new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      RecordModel as any,
+      RecordModel,
     )
     const result = recordModel.update(ctx.payload.body.value)
     ctx.ok(MvpResponse.ok(Tx.toJsonString(result)))
@@ -125,14 +120,12 @@ router.post<never, { address: string }, { value: StoreType['data'] }>(
 
 router.post<never, { address: string }>(
   '/clear/:address',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resourceBindingRegisterMiddleware('record', RecordModel as any),
+  resourceBindingRegisterMiddleware('record', RecordModel),
   recordPatternMiddleware(),
   async (ctx) => {
     const recordModel = appRegistry.findOrBind<RecordModel>(
       new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      RecordModel as any,
+      RecordModel,
     )
     const result = recordModel.clear()
     ctx.ok(MvpResponse.ok(await Tx.toJsonString(result)))

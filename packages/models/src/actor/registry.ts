@@ -19,7 +19,8 @@ export class Registry {
 
   find = <T extends Actor = Actor>(
     ref: ActorRef,
-    module: new (ref?: ActorRef | undefined, ...args: Array<unknown>) => unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    module: new (ref?: ActorRef | undefined, ...args: Array<any>) => unknown,
     bind = false,
   ): T | undefined => {
     try {
@@ -37,7 +38,8 @@ export class Registry {
 
   findOrBind = <T extends Actor = Actor>(
     ref: ActorRef,
-    module: new (ref?: ActorRef | undefined, ...args: Array<unknown>) => unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    module: new (ref?: ActorRef | undefined, ...args: Array<any>) => unknown,
   ): T => {
     const actor = this.find<T>(ref, module, true)
     if (!actor) throw new Error('module bind error')
@@ -72,11 +74,13 @@ export class Registry {
   /**
    * this method is defined as public for testing
    */
-  bind = (module: new (...args: Array<unknown>) => unknown): void =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  bind = (module: new (ref?: ActorRef | undefined, ...args: Array<any>) => unknown): void =>
     this.#bind(module, Reflect.getMetadata(ProviderKey.Actor, module))
 
   #bind = (
-    module: new (ref?: ActorRef | undefined, ...args: Array<unknown>) => unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    module: new (ref?: ActorRef | undefined, ...args: Array<any>) => unknown,
     metadata?: Record<'ref', ActorRef>,
   ): void => {
     if (!metadata) return

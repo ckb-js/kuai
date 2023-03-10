@@ -2,12 +2,13 @@ import type { Middleware, RouterContext } from '@ckb-js/kuai-io/lib/types'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
 import { helpers } from '@ckb-lumos/lumos'
 import { BadRequest } from 'http-errors'
-import { ActorName, ActorReference } from '../actor'
+import { ActorName, ActorRef, ActorReference } from '../actor'
 import { ProviderKey } from '../utils'
 
 export function lockMiddleware(
   actorName: ActorName,
-  module: new (...args: Array<unknown>) => unknown,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  module: new (ref?: ActorRef | undefined, ...args: Array<any>) => unknown,
 ): Middleware<RouterContext> {
   return async (ctx) => {
     const address = ctx.payload?.params?.address
