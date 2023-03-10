@@ -19,15 +19,17 @@ export function resourceBindingRegisterMiddleware(
 
       const lockHash = computeScriptHash(lock)
       const actorRef = new ActorReference(actorName, `/${lockHash}/`)
-      Reflect.defineMetadata(
-        ProviderKey.ResourceBindingRegister,
-        {
-          pattern: lockHash,
-          value: { type: 'register', register: { lockScript: lock, uri: actorRef.uri, pattern: lockHash } },
-        },
-        module,
-        actorRef.uri,
-      )
+      if (!Reflect.getMetadata(ProviderKey.ResourceBindingRegister, module, actorRef.uri)) {
+        Reflect.defineMetadata(
+          ProviderKey.ResourceBindingRegister,
+          {
+            pattern: lockHash,
+            value: { type: 'register', register: { lockScript: lock, uri: actorRef.uri, pattern: lockHash } },
+          },
+          module,
+          actorRef.uri,
+        )
+      }
     } catch {
       throw new BadRequest('invalid address')
     }
