@@ -12,6 +12,6 @@
     "@types/dockerode": "3.3.14"
   },
   "dependencies": {
-    "dockerode": "3.3.4"
+    "dockerode": "3.3.5"
   }
 }
