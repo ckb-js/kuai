@@ -46,8 +46,20 @@ export class UnmatchLengthException extends Error {
   }
 }
 
-export class UnexpectedSchemaOptException extends Error {
+export class UnknownMoleculeTypeException extends Error {
+  constructor(type: string) {
+    super(`Unexpected molecule type with ${type} when create codec`)
+  }
+}
+
+export class NoCodecForMolecueException extends Error {
   constructor() {
-    super(`Unexpected schema options without object`)
+    super(`No codec for serialize or deserialize`)
+  }
+}
+
+export class UnionShouldOnlyOneKeyException extends Error {
+  constructor() {
+    super(`Molecule union type should only have one key for pack`)
   }
 }
