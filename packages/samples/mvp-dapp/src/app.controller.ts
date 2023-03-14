@@ -1,7 +1,7 @@
 import type { StoreType } from './actors/record.model'
 import { KuaiRouter } from '@ckb-js/kuai-io'
 import { HexString, helpers } from '@ckb-lumos/lumos'
-import { ActorReference, resourceBindingRegisterMiddleware, lockMiddleware } from '@ckb-js/kuai-models'
+import { ActorReference } from '@ckb-js/kuai-models'
 import { BadRequest } from 'http-errors'
 import { appRegistry, OmnilockModel, RecordModel } from './actors'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
@@ -20,30 +20,18 @@ const getLock = (address: string) => {
   }
 }
 
-router.get<never, { address: string }>(
-  '/meta/:address',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resourceBindingRegisterMiddleware('omnilock', OmnilockModel),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  lockMiddleware('omnilock', OmnilockModel),
-  cellPatternMiddleware(),
-  async (ctx) => {
-    const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
-      new ActorReference('omnilock', `/${computeScriptHash(getLock(ctx.payload.params.address))}/`),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      OmnilockModel,
-    )
+router.get<never, { address: string }>('/meta/:address', cellPatternMiddleware(), async (ctx) => {
+  const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
+    new ActorReference('omnilock', `/${computeScriptHash(getLock(ctx.payload.params.address))}/`),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    OmnilockModel,
+  )
 
-    ctx.ok(MvpResponse.ok(omniLockModel?.meta))
-  },
-)
+  ctx.ok(MvpResponse.ok(omniLockModel?.meta))
+})
 
 router.post<never, { address: string }, { capacity: HexString }>(
   '/claim/:address',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resourceBindingRegisterMiddleware('omnilock', OmnilockModel),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  lockMiddleware('omnilock', OmnilockModel),
   cellPatternMiddleware(),
   async (ctx) => {
     const { body, params } = ctx.payload
@@ -62,51 +50,39 @@ router.post<never, { address: string }, { capacity: HexString }>(
   },
 )
 
-router.get<never, { path: string; address: string }>(
-  '/load/:address/:path',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resourceBindingRegisterMiddleware('record', RecordModel),
-  recordPatternMiddleware(),
-  async (ctx) => {
-    const { params } = ctx.payload
+router.get<never, { path: string; address: string }>('/load/:address/:path', recordPatternMiddleware(), async (ctx) => {
+  const { params } = ctx.payload
 
-    if (!params?.path) {
-      throw new BadRequest('invalid path')
-    }
+  if (!params?.path) {
+    throw new BadRequest('invalid path')
+  }
 
-    const recordModel = appRegistry.findOrBind<RecordModel>(
-      new ActorReference('record', `/${computeScriptHash(getLock(params?.address))}/`),
-      RecordModel,
-    )
-    const value = recordModel.load(`data.${params.path}`)
-    if (value) {
-      ctx.ok(MvpResponse.ok(MvpResponse.ok(value)))
-    } else {
-      throw new MvpError('field is not found', '404')
-    }
-  },
-)
+  const recordModel = appRegistry.findOrBind<RecordModel>(
+    new ActorReference('record', `/${computeScriptHash(getLock(params?.address))}/`),
+    RecordModel,
+  )
+  const value = recordModel.load(`data.${params.path}`)
+  if (value) {
+    ctx.ok(MvpResponse.ok(MvpResponse.ok(value)))
+  } else {
+    throw new MvpError('field is not found', '404')
+  }
+})
 
-router.get<never, { address: string }>(
-  '/load/:address',
-  resourceBindingRegisterMiddleware('record', RecordModel),
-  recordPatternMiddleware(),
-  async (ctx) => {
-    const recordModel = appRegistry.findOrBind<RecordModel>(
-      new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
-      RecordModel,
-    )
-    const key = recordModel.getOneOfKey()
-    if (!key) {
-      throw new MvpError('store is not found', '404')
-    }
-    ctx.ok(MvpResponse.ok(recordModel.load('data')))
-  },
-)
+router.get<never, { address: string }>('/load/:address', recordPatternMiddleware(), async (ctx) => {
+  const recordModel = appRegistry.findOrBind<RecordModel>(
+    new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
+    RecordModel,
+  )
+  const key = recordModel.getOneOfKey()
+  if (!key) {
+    throw new MvpError('store is not found', '404')
+  }
+  ctx.ok(MvpResponse.ok(recordModel.load('data')))
+})
 
 router.post<never, { address: string }, { value: StoreType['data'] }>(
   '/set/:address',
-  resourceBindingRegisterMiddleware('record', RecordModel),
   recordPatternMiddleware(),
   async (ctx) => {
     const recordModel = appRegistry.findOrBind<RecordModel>(
@@ -118,18 +94,13 @@ router.post<never, { address: string }, { value: StoreType['data'] }>(
   },
 )
 
-router.post<never, { address: string }>(
-  '/clear/:address',
-  resourceBindingRegisterMiddleware('record', RecordModel),
-  recordPatternMiddleware(),
-  async (ctx) => {
-    const recordModel = appRegistry.findOrBind<RecordModel>(
-      new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
-      RecordModel,
-    )
-    const result = recordModel.clear()
-    ctx.ok(MvpResponse.ok(await Tx.toJsonString(result)))
-  },
-)
+router.post<never, { address: string }>('/clear/:address', recordPatternMiddleware(), async (ctx) => {
+  const recordModel = appRegistry.findOrBind<RecordModel>(
+    new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
+    RecordModel,
+  )
+  const result = recordModel.clear()
+  ctx.ok(MvpResponse.ok(await Tx.toJsonString(result)))
+})
 
 export { router }

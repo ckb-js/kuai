@@ -28,7 +28,7 @@ import {
   NoSchemaException,
   UnmatchLengthException,
 } from '../exceptions'
-import { ProviderKey, CellPattern, SchemaPattern, isStringList, ResourceBindingKey } from '../utils'
+import { ProviderKey, CellPattern, SchemaPattern, isStringList } from '../utils'
 import { outPointToOutPointString } from '../resource-binding'
 import { MoleculeStorage, DynamicParam, GetCodecConfig, isCodecConfig, GetMoleculeOffChain } from './molecule-storage'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
@@ -96,21 +96,18 @@ export class Store<
     if (!this.#lock) return
 
     const lockHash = computeScriptHash(this.#lock)
-    const resourceBindingRegister = Reflect.getMetadata(ResourceBindingKey.ResourceBindingRegister, this.constructor)
-    if (resourceBindingRegister) {
-      this.call('local://resource', {
-        pattern: lockHash,
-        value: {
-          type: 'register',
-          register: {
-            lockScript: this.#lock,
-            typeScript: this.#type,
-            uri: this.ref.uri,
-            pattern: lockHash,
-          },
+    this.call('local://resource', {
+      pattern: lockHash,
+      value: {
+        type: 'register',
+        register: {
+          lockScript: this.#lock,
+          typeScript: this.#type,
+          uri: this.ref.uri,
+          pattern: lockHash,
         },
-      })
-    }
+      },
+    })
   }
 
   public load(path?: string) {

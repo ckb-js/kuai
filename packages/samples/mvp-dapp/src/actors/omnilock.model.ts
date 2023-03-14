@@ -1,8 +1,10 @@
 import {
-  ActorRef,
+  ActorProvider,
+  ActorReference,
   CellPattern,
   JSONStore,
   OutPointString,
+  ProviderKey,
   SchemaPattern,
   UpdateStorageValue,
 } from '@ckb-js/kuai-models'
@@ -10,13 +12,16 @@ import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { InternalServerError } from 'http-errors'
 import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
+import { inject } from 'inversify'
+import { config } from '@ckb-lumos/lumos'
 
 /**
  * add business logic in an actor
  */
+@ActorProvider({ name: 'omnilock', path: `/:args/` })
 export class OmnilockModel extends JSONStore<Record<string, never>> {
   constructor(
-    ref?: ActorRef,
+    @inject('args') args: string,
     _schemaOption?: void,
     params?: {
       states?: Record<OutPointString, never>
@@ -25,11 +30,21 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       schemaPattern?: SchemaPattern
     },
   ) {
+    const ref = new ActorReference('omnilock', `/${args}/`)
+    Reflect.defineMetadata(
+      ProviderKey.LockPattern,
+      {
+        codeHash: config.getConfig().SCRIPTS.CODE_HASH,
+        hashType: config.getConfig().SCRIPTS.HASH_TYPE,
+        args,
+      },
+      OmnilockModel,
+      ref.uri,
+    )
     super(ref, undefined, params)
     if (!this.lockScript) {
       throw new Error('lock script is required')
     }
-
     this.registerResourceBinding()
   }
 

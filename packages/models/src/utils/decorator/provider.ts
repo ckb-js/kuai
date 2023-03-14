@@ -5,6 +5,7 @@ import { ActorProviderException } from '../exception'
 
 export const ProviderKey = {
   Actor: Symbol('container:actor'),
+  ActorURIParams: Symbol('container:actor_uri:params'),
   SchemaPattern: Symbol('store:schema:pattern'),
   CellPattern: Symbol('store:cell:pattern'),
   LockPattern: Symbol('store:lock:pattern'),
@@ -12,10 +13,34 @@ export const ProviderKey = {
   ResourceBindingRegister: Symbol('resource-binding:register'),
 }
 
+function getParamsFromUri(uri: string): [param: string, index: number][] {
+  const regex = /:(\w+)/g
+  const params: [param: string, index: number][] = []
+  let match
+  while ((match = regex.exec(uri)) !== null) {
+    params.push([match[1], match.index])
+  }
+
+  uri.split('/').forEach((segment, i) => {
+    if (segment.startsWith(':')) {
+      params.push([segment.substr(1), i])
+    }
+  })
+
+  return params
+}
+
 export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>> = {}) => {
   return (target: unknown): void => {
     if (!target || typeof target !== 'function') {
       throw new ActorProviderException()
+    }
+
+    if (actorRef.path) {
+      const params = getParamsFromUri(actorRef.path)
+      if (params.length > 0) {
+        Reflect.defineMetadata(ProviderKey.ActorURIParams, params, target)
+      }
     }
 
     Reflect.defineMetadata(

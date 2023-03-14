@@ -1,5 +1,6 @@
 import {
-  ActorRef,
+  ActorProvider,
+  ActorReference,
   CellPattern,
   JSONStore,
   OutPointString,
@@ -10,6 +11,7 @@ import { Cell } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
 import { BI } from '@ckb-lumos/bi'
 import { DAPP_DATA_PREFIX_LEN, TX_FEE } from '../const'
+import { inject } from 'inversify'
 
 export type ItemData = {
   key: string
@@ -29,10 +31,10 @@ export type StoreType = {
 /**
  * add business logic in an actor
  */
-
+@ActorProvider({ name: 'record', path: '/:lockHash/' })
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
   constructor(
-    ref?: ActorRef,
+    @inject('lockHash') lockHash: string,
     _schemaOption?: { data: { offset: number } },
     params?: {
       states?: Record<OutPointString, StoreType>
@@ -41,6 +43,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
       schemaPattern?: SchemaPattern
     },
   ) {
+    const ref = new ActorReference('record', `/${lockHash}`)
     super(ref, { data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, params)
 
     this.registerResourceBinding()
