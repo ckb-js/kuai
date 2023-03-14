@@ -9,7 +9,7 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "@types/dockerode": "3.3.14"
+    "@types/dockerode": "3.3.15"
   },
   "dependencies": {
     "dockerode": "3.3.5"
