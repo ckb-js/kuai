@@ -28,9 +28,10 @@ import {
   NoSchemaException,
   UnmatchLengthException,
 } from '../exceptions'
-import { ProviderKey, CellPattern, SchemaPattern, isStringList } from '../utils'
+import { ProviderKey, CellPattern, SchemaPattern, isStringList, ResourceBindingKey } from '../utils'
 import { outPointToOutPointString } from '../resource-binding'
 import { MoleculeStorage, DynamicParam, GetCodecConfig, isCodecConfig, GetMoleculeOffChain } from './molecule-storage'
+import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
 
 const ByteCharLen = 2
 
@@ -80,14 +81,6 @@ export class Store<
     },
   ) {
     super(ref)
-    const resourceBindingRegister = Reflect.getMetadata(
-      ProviderKey.ResourceBindingRegister,
-      this.constructor,
-      this.ref.uri,
-    )
-    if (resourceBindingRegister) {
-      this.call('local://resource', resourceBindingRegister)
-    }
     this.cellPattern =
       Reflect.getMetadata(ProviderKey.CellPattern, this.constructor, this.ref.uri) || params?.cellPattern
     this.schemaPattern = Reflect.getMetadata(ProviderKey.SchemaPattern, this.constructor) || params?.schemaPattern
@@ -97,6 +90,27 @@ export class Store<
     this.options = params?.options
     this.#lock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor, this.ref.uri)
     this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor, this.ref.uri)
+  }
+
+  protected registerResourceBinding() {
+    if (!this.#lock) return
+
+    const lockHash = computeScriptHash(this.#lock)
+    const resourceBindingRegister = Reflect.getMetadata(ResourceBindingKey.ResourceBindingRegister, this.constructor)
+    if (resourceBindingRegister) {
+      this.call('local://resource', {
+        pattern: lockHash,
+        value: {
+          type: 'register',
+          register: {
+            lockScript: this.#lock,
+            typeScript: this.#type,
+            uri: this.ref.uri,
+            pattern: lockHash,
+          },
+        },
+      })
+    }
   }
 
   public load(path?: string) {
@@ -467,7 +481,7 @@ export class MoleculeStore<R extends StorageSchema<DynamicParam>> extends Store<
       options: GetMoleculeConfig<R>
     },
   ) {
-    super(schemaOption, params)
+    super(undefined, schemaOption, params)
   }
 
   #moleculeStorageCache: Partial<Record<StorageLocation, MoleculeStorage<DynamicParam>>> = {}

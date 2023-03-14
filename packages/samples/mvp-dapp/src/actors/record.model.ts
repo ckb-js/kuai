@@ -42,6 +42,8 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
     },
   ) {
     super(ref, { data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, params)
+
+    this.registerResourceBinding()
   }
 
   update(newValue: StoreType['data']) {

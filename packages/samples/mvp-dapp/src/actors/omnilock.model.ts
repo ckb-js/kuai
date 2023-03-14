@@ -29,6 +29,8 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     if (!this.lockScript) {
       throw new Error('lock script is required')
     }
+
+    this.registerResourceBinding()
   }
 
   get meta(): Record<'capacity', string> {
