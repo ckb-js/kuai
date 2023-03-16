@@ -1,4 +1,4 @@
-import type { ActorRef, ActorName, ActorURI } from './interface'
+import type { ActorRef, ActorName, ActorURI, ActorRefParam } from './interface'
 import { basename } from 'node:path'
 import { InvalidActorURIException, InvalidPathException, PROTOCOL } from '../utils'
 
@@ -19,6 +19,7 @@ export class ActorReference {
   #path: string
   #protocol: string
   #uri: ActorURI
+  #params: ActorRefParam[]
 
   get name(): ActorName {
     return this.#name
@@ -36,12 +37,17 @@ export class ActorReference {
     return this.#uri
   }
 
+  get params(): ActorRefParam[] {
+    return this.#params
+  }
+
   get json(): ActorRef {
     return {
       name: this.name,
       path: this.path,
       protocol: this.protocol,
       uri: this.uri,
+      params: this.#params,
     }
   }
 
@@ -51,11 +57,18 @@ export class ActorReference {
     this.#protocol = protocol
     this.#path = path
 
-    if (this.#path !== '/' && !/^\/\w+\/$/.test(this.#path)) {
+    if (this.#path !== '/' && !/^\/(?:[\w-]+\/)*(?::\w+\/?)?(?:[\w-]+\/)*(?::\w+\/?)?$/.test(this.#path)) {
       throw new InvalidPathException(this.#path)
     }
 
     this.#uri = this.#protocol + ':/' + this.#path + this.#name.toString()
+
+    this.#params = this.#uri
+      .split('/')
+      .filter((segment) => segment.startsWith(':'))
+      .map((param, index) => {
+        return { param: param.slice(1), index }
+      })
   }
 
   toString(): string {

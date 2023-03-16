@@ -2,12 +2,19 @@ import { Behavior } from '../utils'
 
 export type ActorName = string | symbol
 export type ActorURI = string
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ConstructorFunction = new (...args: Array<any>) => unknown
 
+export interface ActorRefParam {
+  param: string
+  index: number
+}
 export interface ActorRef {
   name: ActorName
   protocol: string
   path: string
   uri: ActorURI
+  params: ActorRefParam[]
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -5,7 +5,7 @@ import fs from 'node:fs'
 import { resolve } from 'node:path'
 
 import { Container } from 'inversify'
-import type { ActorRef, ActorURI } from './interface'
+import type { ActorRef, ActorURI, ConstructorFunction } from './interface'
 import type { Actor } from './actor'
 import { DuplicatedActorException, InvalidActorURIException, ProviderKey } from '../utils'
 
@@ -17,12 +17,7 @@ export class Registry {
     return this.#actors.has(uri)
   }
 
-  find = <T extends Actor = Actor>(
-    ref: ActorRef,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    module: new (...args: Array<any>) => unknown,
-    bind = false,
-  ): T | undefined => {
+  find = <T extends Actor = Actor>(ref: ActorRef, module: ConstructorFunction, bind = false): T | undefined => {
     try {
       return this.#container.get<T>(ref.uri)
     } catch (e) {
@@ -36,11 +31,7 @@ export class Registry {
     }
   }
 
-  findOrBind = <T extends Actor = Actor>(
-    ref: ActorRef,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    module: new (...args: Array<any>) => unknown,
-  ): T => {
+  findOrBind = <T extends Actor = Actor>(ref: ActorRef, module: ConstructorFunction): T => {
     const actor = this.find<T>(ref, module, true)
     if (!actor) throw new Error('module bind error')
     return actor
@@ -74,15 +65,9 @@ export class Registry {
   /**
    * this method is defined as public for testing
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  bind = (module: new (...args: Array<any>) => unknown): void =>
-    this.#bind(module, Reflect.getMetadata(ProviderKey.Actor, module))
+  bind = (module: ConstructorFunction): void => this.#bind(module, Reflect.getMetadata(ProviderKey.Actor, module))
 
-  #bind = (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    module: new (...args: Array<any>) => unknown,
-    metadata?: Record<'ref', ActorRef>,
-  ): void => {
+  #bind = (module: ConstructorFunction, metadata?: Record<'ref', ActorRef>): void => {
     if (!metadata) return
     if (!metadata.ref.uri) {
       throw new InvalidActorURIException(metadata.ref.uri)
