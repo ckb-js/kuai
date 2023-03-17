@@ -7,11 +7,13 @@ import { resolve } from 'node:path'
 import { Container } from 'inversify'
 import type { ActorRef, ActorURI, ConstructorFunction } from './interface'
 import type { Actor } from './actor'
-import { DuplicatedActorException, InvalidActorURIException, ProviderKey } from '../utils'
+import { ActorNotFoundException, DuplicatedActorException, ProviderKey } from '../utils'
+import { Router } from './router'
 
 export class Registry {
   #actors: Set<ActorURI> = new Set()
   #container: Container = new Container({ skipBaseClassChecks: true })
+  #router: Router
 
   isLive = (uri: ActorURI): boolean => {
     return this.#actors.has(uri)
@@ -23,7 +25,7 @@ export class Registry {
     } catch (e) {
       console.log('Registry `find` catch error', e)
       if (bind) {
-        this.#bind(module, { ref })
+        this.#bind(ref)
         const actor = this.#container.get<T>(ref.uri)
         return actor
       }
@@ -58,6 +60,10 @@ export class Registry {
     for (const m in exports) {
       const module = exports[m]
       if (typeof module !== 'function') continue
+      const ref = Reflect.getMetadata(ProviderKey.Actor, module)
+      if (ref) {
+        this.#router.insert(ref, module)
+      }
       this.#bind(module)
     }
   }
@@ -65,21 +71,20 @@ export class Registry {
   /**
    * this method is defined as public for testing
    */
-  bind = (module: ConstructorFunction): void => this.#bind(module, Reflect.getMetadata(ProviderKey.Actor, module))
+  bind = (module: ConstructorFunction): void => this.#bind(Reflect.getMetadata(ProviderKey.Actor, module), module)
 
-  #bind = (module: ConstructorFunction, metadata?: Record<'ref', ActorRef>): void => {
-    if (!metadata) return
-    if (!metadata.ref.uri) {
-      throw new InvalidActorURIException(metadata.ref.uri)
+  #bind = (ref: ActorRef, module?: ConstructorFunction): void => {
+    if (this.isLive(ref.uri)) {
+      throw new DuplicatedActorException(ref.uri)
     }
-    if (this.isLive(metadata.ref.uri)) {
-      throw new DuplicatedActorException(metadata.ref.uri)
-    }
-    this.#container
-      .bind(metadata.ref.uri)
-      .toDynamicValue(() => new module(metadata.ref))
-      .inSingletonScope()
 
-    this.#actors.add(metadata.ref.uri)
+    module = module ?? this.#router.matchFirst(ref)
+    if (!module) {
+      throw new ActorNotFoundException(ref.uri)
+    }
+
+    this.#container.bind(ref.uri).toConstantValue(new module(ref))
+
+    this.#actors.add(ref.uri)
   }
 }
