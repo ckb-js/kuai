@@ -5,7 +5,6 @@ import { ActorProviderException } from '../exception'
 
 export const ProviderKey = {
   Actor: Symbol('container:actor'),
-  ActorURIParams: Symbol('container:actor_uri:params'),
   SchemaPattern: Symbol('store:schema:pattern'),
   CellPattern: Symbol('store:cell:pattern'),
   LockPattern: Symbol('store:lock:pattern'),
