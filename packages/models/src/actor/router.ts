@@ -30,6 +30,32 @@ class Node {
   insert = (paths: string[]) => {
     this.#insert(paths, this)
   }
+
+  #matchPattern = (paths: string[], parent: Node): string | undefined => {
+    const path = paths.shift()
+
+    let wiled: Node | undefined = undefined
+    let node = parent.#children.find((child) => {
+      if (child._part.startsWith(':')) {
+        wiled = child
+      }
+
+      if (path == child._part) {
+        return true
+      }
+    })
+    node = node ?? wiled
+
+    if (!node) return undefined
+
+    if (paths.length == 0) {
+      return node?._pattern
+    }
+
+    return this.#matchPattern(paths, node)
+  }
+
+  matchPattern = (paths: string[]) => this.#matchPattern(paths, this)
 }
 
 export class Router {
@@ -42,5 +68,5 @@ export class Router {
   }
 
   matchFirst = (ref: ActorRef): ConstructorFunction | undefined =>
-    this.#modules.get(this.#root.matchPattern(ref.uri.split('/')))
+    this.#modules.get(this.#root.matchPattern(ref.uri.split('/')) ?? '')
 }
