@@ -10,7 +10,6 @@ export const ProviderKey = {
   CellPattern: Symbol('store:cell:pattern'),
   LockPattern: Symbol('store:lock:pattern'),
   TypePattern: Symbol('store:type:pattern'),
-  ResourceBindingRegister: Symbol('resource-binding:register'),
 }
 
 export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>> = {}) => {
