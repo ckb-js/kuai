@@ -13,13 +13,9 @@ import { Router } from './router'
 export class Registry {
   #actors: Set<ActorURI> = new Set()
   #container: Container = new Container({ skipBaseClassChecks: true })
-  #router: Router
+  #router = new Router()
 
-  isLive = (uri: ActorURI): boolean => {
-    return this.#actors.has(uri)
-  }
-
-  find = <T extends Actor = Actor>(ref: ActorRef, module: ConstructorFunction, bind = false): T | undefined => {
+  #find = <T extends Actor = Actor>(ref: ActorRef, bind = false): T | undefined => {
     try {
       return this.#container.get<T>(ref.uri)
     } catch (e) {
@@ -33,8 +29,14 @@ export class Registry {
     }
   }
 
-  findOrBind = <T extends Actor = Actor>(ref: ActorRef, module: ConstructorFunction): T => {
-    const actor = this.find<T>(ref, module, true)
+  isLive = (uri: ActorURI): boolean => {
+    return this.#actors.has(uri)
+  }
+
+  find = <T extends Actor = Actor>(ref: ActorRef): T | undefined => this.#find(ref)
+
+  findOrBind = <T extends Actor = Actor>(ref: ActorRef): T => {
+    const actor = this.#find<T>(ref, true)
     if (!actor) throw new Error('module bind error')
     return actor
   }
@@ -62,7 +64,7 @@ export class Registry {
       if (typeof module !== 'function') continue
       const ref = Reflect.getMetadata(ProviderKey.Actor, module)
       if (ref) {
-        this.#router.insert(ref, module)
+        this.#router.addPath(ref, module)
       }
       this.#bind(module)
     }

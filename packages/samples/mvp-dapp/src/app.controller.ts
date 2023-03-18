@@ -23,8 +23,6 @@ const getLock = (address: string) => {
 router.get<never, { address: string }>('/meta/:address', cellPatternMiddleware(), async (ctx) => {
   const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
     new ActorReference('omnilock', `/${computeScriptHash(getLock(ctx.payload.params.address))}/`),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    OmnilockModel,
   )
 
   ctx.ok(MvpResponse.ok(omniLockModel?.meta))
@@ -42,8 +40,6 @@ router.post<never, { address: string }, { capacity: HexString }>(
 
     const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
       new ActorReference('omnilock', `/${computeScriptHash(getLock(params?.address))}/`),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      OmnilockModel,
     )
     const result = omniLockModel.claim(body.capacity)
     ctx.ok(MvpResponse.ok(Tx.toJsonString(result)))
@@ -59,7 +55,6 @@ router.get<never, { path: string; address: string }>('/load/:address/:path', rec
 
   const recordModel = appRegistry.findOrBind<RecordModel>(
     new ActorReference('record', `/${computeScriptHash(getLock(params?.address))}/`),
-    RecordModel,
   )
   const value = recordModel.load(`data.${params.path}`)
   if (value) {
@@ -72,7 +67,6 @@ router.get<never, { path: string; address: string }>('/load/:address/:path', rec
 router.get<never, { address: string }>('/load/:address', recordPatternMiddleware(), async (ctx) => {
   const recordModel = appRegistry.findOrBind<RecordModel>(
     new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
-    RecordModel,
   )
   const key = recordModel.getOneOfKey()
   if (!key) {
@@ -87,7 +81,6 @@ router.post<never, { address: string }, { value: StoreType['data'] }>(
   async (ctx) => {
     const recordModel = appRegistry.findOrBind<RecordModel>(
       new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
-      RecordModel,
     )
     const result = recordModel.update(ctx.payload.body.value)
     ctx.ok(MvpResponse.ok(Tx.toJsonString(result)))
@@ -97,7 +90,6 @@ router.post<never, { address: string }, { value: StoreType['data'] }>(
 router.post<never, { address: string }>('/clear/:address', recordPatternMiddleware(), async (ctx) => {
   const recordModel = appRegistry.findOrBind<RecordModel>(
     new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
-    RecordModel,
   )
   const result = recordModel.clear()
   ctx.ok(MvpResponse.ok(await Tx.toJsonString(result)))
