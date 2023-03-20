@@ -71,6 +71,15 @@ export class ActorReference {
       })
   }
 
+  matchParams(ref: ActorRef): Map<string, string> {
+    let params = new Map<string, string>()
+    const paths = ref.path.split('/')
+    this.params.forEach((param) => {
+      params = params.set(param.param, paths[param.index])
+    })
+    return params
+  }
+
   toString(): string {
     return this.uri
   }

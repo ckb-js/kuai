@@ -1,5 +1,6 @@
 import {
   ActorProvider,
+  Param,
   ActorReference,
   CellPattern,
   JSONStore,
@@ -12,7 +13,6 @@ import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { InternalServerError } from 'http-errors'
 import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
-import { inject } from 'inversify'
 import { config } from '@ckb-lumos/lumos'
 
 /**
@@ -21,7 +21,7 @@ import { config } from '@ckb-lumos/lumos'
 @ActorProvider({ name: 'omnilock', path: `/:args/` })
 export class OmnilockModel extends JSONStore<Record<string, never>> {
   constructor(
-    @inject('args') args: string,
+    @Param('args') args: string,
     _schemaOption?: void,
     params?: {
       states?: Record<OutPointString, never>

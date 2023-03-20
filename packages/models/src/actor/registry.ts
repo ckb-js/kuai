@@ -5,17 +5,18 @@ import fs from 'node:fs'
 import { resolve } from 'node:path'
 
 import { Container } from 'inversify'
-import type { ActorRef, ActorURI, ConstructorFunction } from './interface'
+import type { ActorURI, ConstructorFunction } from './interface'
 import type { Actor } from './actor'
-import { ActorNotFoundException, DuplicatedActorException, ProviderKey } from '../utils'
+import { ActorNotFoundException, DuplicatedActorException, ProviderKey, ActorParamType } from '../utils'
 import { Router } from './router'
+import { ActorReference } from './actor-reference'
 
 export class Registry {
   #actors: Set<ActorURI> = new Set()
   #container: Container = new Container({ skipBaseClassChecks: true })
   #router = new Router()
 
-  #find = <T extends Actor = Actor>(ref: ActorRef, bind = false): T | undefined => {
+  #find = <T extends Actor = Actor>(ref: ActorReference, bind = false): T | undefined => {
     try {
       return this.#container.get<T>(ref.uri)
     } catch (e) {
@@ -33,9 +34,9 @@ export class Registry {
     return this.#actors.has(uri)
   }
 
-  find = <T extends Actor = Actor>(ref: ActorRef): T | undefined => this.#find(ref)
+  find = <T extends Actor = Actor>(ref: ActorReference): T | undefined => this.#find(ref)
 
-  findOrBind = <T extends Actor = Actor>(ref: ActorRef): T => {
+  findOrBind = <T extends Actor = Actor>(ref: ActorReference): T => {
     const actor = this.#find<T>(ref, true)
     if (!actor) throw new Error('module bind error')
     return actor
@@ -75,7 +76,7 @@ export class Registry {
    */
   bind = (module: ConstructorFunction): void => this.#bind(Reflect.getMetadata(ProviderKey.Actor, module), module)
 
-  #bind = (ref: ActorRef, module?: ConstructorFunction): void => {
+  #bind = (ref: ActorReference, module?: ConstructorFunction): void => {
     if (this.isLive(ref.uri)) {
       throw new DuplicatedActorException(ref.uri)
     }
@@ -85,7 +86,21 @@ export class Registry {
       throw new ActorNotFoundException(ref.uri)
     }
 
-    this.#container.bind(ref.uri).toConstantValue(new module(ref))
+    const paramPattern = Reflect.getMetadata(ProviderKey.ActorParam, module)
+    if (!paramPattern) {
+      this.#container.bind(ref.uri).to(module).inSingletonScope()
+    } else {
+      const routerPattern = Reflect.getMetadata(ProviderKey.Actor, module) as ActorReference
+      if (!routerPattern) {
+        return
+      }
+      const params = routerPattern.matchParams(ref)
+      this.#container
+        .bind(ref.uri)
+        .toConstantValue(
+          new module(...(paramPattern as ActorParamType[]).map((pattern) => params.get(pattern.routerParam))),
+        )
+    }
 
     this.#actors.add(ref.uri)
   }

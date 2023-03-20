@@ -5,6 +5,7 @@ import { ActorProviderException } from '../exception'
 
 export const ProviderKey = {
   Actor: Symbol('container:actor'),
+  ActorParam: Symbol('container:actor:param'),
   SchemaPattern: Symbol('store:schema:pattern'),
   CellPattern: Symbol('store:cell:pattern'),
   LockPattern: Symbol('store:lock:pattern'),
@@ -24,6 +25,21 @@ export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>>
       },
       target,
     )
+  }
+}
+
+export interface ActorParamType {
+  routerParam: string
+  parameterIndex: number
+}
+
+export const Param = (routerParam: string): ParameterDecorator => {
+  return (target: object, propertyKey: string | symbol, parameterIndex: number): void => {
+    const params: ActorParamType[] = Reflect.getMetadata(ProviderKey.ActorParam, target) ?? []
+
+    params.push({ routerParam, parameterIndex })
+    params.sort((a, b) => a.parameterIndex - b.parameterIndex)
+    Reflect.defineMetadata(ProviderKey.ActorParam, params, target)
   }
 }
 
