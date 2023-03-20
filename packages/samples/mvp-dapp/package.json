@@ -4,7 +4,8 @@
     "dev": "ts-node src/main.ts",
     "build": "tsc",
     "build:watch": "tsc -w",
-    "start:prod": "node ./dist/main.js"
+    "start:prod": "node ./dist/main.js",
+    "test": "kuai test"
   },
   "dependencies": {
     "@ckb-js/kuai-core": "0.0.1",
