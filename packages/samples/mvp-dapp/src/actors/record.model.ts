@@ -10,7 +10,7 @@ import {
 import { Cell } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
 import { BI } from '@ckb-lumos/bi'
-import { DAPP_DATA_PREFIX_LEN, TX_FEE } from '../const'
+import { DAPP_DATA_PREFIX, DAPP_DATA_PREFIX_LEN, TX_FEE } from '../const'
 import { inject } from 'inversify'
 
 export type ItemData = {
@@ -45,6 +45,16 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
   ) {
     const ref = new ActorReference('record', `/${lockHash}`)
     super(ref, { data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, params)
+
+    this.cellPattern = (value: UpdateStorageValue) => {
+      const cellLock = value.cell.cellOutput.lock
+      return (
+        cellLock.args === this.lockScript?.args &&
+        cellLock.codeHash === this.lockScript?.codeHash &&
+        cellLock.hashType === this.lockScript?.hashType &&
+        value.cell.data.startsWith(DAPP_DATA_PREFIX)
+      )
+    }
 
     this.registerResourceBinding()
   }

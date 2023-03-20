@@ -45,6 +45,15 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     if (!this.lockScript) {
       throw new Error('lock script is required')
     }
+    this.cellPattern = (value: UpdateStorageValue) => {
+      const cellLock = value.cell.cellOutput.lock
+      return (
+        cellLock.args === this.lockScript?.args &&
+        cellLock.codeHash === this.lockScript?.codeHash &&
+        cellLock.hashType === this.lockScript?.hashType &&
+        value.cell.data === '0x'
+      )
+    }
     this.registerResourceBinding()
   }
 

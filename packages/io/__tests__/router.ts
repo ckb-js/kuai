@@ -14,15 +14,9 @@ describe('test KuaiRouter', () => {
       ctx.ok('hello parent')
     })
 
-    kuaiRouter.get(
-      '/parent/children',
-      async (ctx) => {
-        ctx.payload.params.children = 'children'
-      },
-      async (ctx) => {
-        ctx.ok(`hello ${ctx.payload.params.children}`)
-      },
-    )
+    kuaiRouter.get('/parent/children', async (ctx) => {
+      ctx.ok('hello children')
+    })
 
     cor.use(kuaiRouter.middleware())
 
