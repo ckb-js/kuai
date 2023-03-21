@@ -14,6 +14,7 @@ import { BI } from '@ckb-lumos/bi'
 import { InternalServerError } from 'http-errors'
 import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
 import { config } from '@ckb-lumos/lumos'
+import { createScriptRegistry } from '@ckb-lumos/experiment-tx-assembler'
 
 /**
  * add business logic in an actor
@@ -33,11 +34,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     const ref = new ActorReference('omnilock', `/${args}/`)
     Reflect.defineMetadata(
       ProviderKey.LockPattern,
-      {
-        codeHash: config.getConfig().SCRIPTS.CODE_HASH,
-        hashType: config.getConfig().SCRIPTS.HASH_TYPE,
-        args,
-      },
+      createScriptRegistry(config.getConfig().SCRIPTS).newScript('OMNILOCK', args),
       OmnilockModel,
       ref.uri,
     )

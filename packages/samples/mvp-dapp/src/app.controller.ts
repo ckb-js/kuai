@@ -60,8 +60,9 @@ router.get<never, { path: string; address: string }>('/load/:address/:path', asy
 })
 
 router.get<never, { address: string }>('/load/:address', async (ctx) => {
+  const lock = getLock(ctx.payload.params?.address)
   const recordModel = appRegistry.findOrBind<RecordModel>(
-    new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
+    new ActorReference('record', `/${lock.codeHash}/${lock.hashType}/${lock.args}/`),
   )
   const key = recordModel.getOneOfKey()
   if (!key) {

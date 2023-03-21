@@ -5,7 +5,7 @@ type NodeType = 'fixed' | 'param'
 class Node {
   #children: Node[] = []
 
-  constructor(private _type: NodeType = 'fixed', private _part = '', private _pattern = '/') {}
+  constructor(private _type: NodeType = 'fixed', private _part = '', private _pattern = '') {}
 
   #insert = (paths: string[], parent: Node) => {
     const path = paths.shift()
@@ -18,7 +18,9 @@ class Node {
     })
 
     if (!node) {
-      node = new Node(path?.startsWith(':') ? 'param' : 'fixed', path, `${parent._pattern}/${path}`)
+      node = path?.startsWith(':')
+        ? new Node('param', ':', `${parent._pattern}/:`)
+        : new Node('fixed', path, `${parent._pattern}/${path}`)
       parent.#children.push(node)
     }
 
@@ -28,7 +30,10 @@ class Node {
   }
 
   insert = (paths: string[]) => {
-    this.#insert(paths, this)
+    this.#insert(
+      paths.filter((path) => path != ''),
+      this,
+    )
   }
 
   #matchPattern = (paths: string[], parent: Node): string | undefined => {
@@ -55,7 +60,11 @@ class Node {
     return this.#matchPattern(paths, node)
   }
 
-  matchPattern = (paths: string[]) => this.#matchPattern(paths, this)
+  matchPattern = (paths: string[]) =>
+    this.#matchPattern(
+      paths.filter((path) => path != ''),
+      this,
+    )
 }
 
 export class Router {
@@ -63,10 +72,15 @@ export class Router {
   #modules = new Map<string, ConstructorFunction>()
 
   addPath = (ref: ActorRef, module: ConstructorFunction) => {
-    this.#root.insert(ref.uri.split('/'))
-    this.#modules.set(ref.uri, module)
+    const paths = `${ref.path}${ref.name.toString()}`.split('/')
+    this.#root.insert(paths)
+    const pattern = this.#root.matchPattern(paths)
+    if (pattern) {
+      this.#modules.set(pattern, module)
+    }
   }
 
-  matchFirst = (ref: ActorRef): ConstructorFunction | undefined =>
-    this.#modules.get(this.#root.matchPattern(ref.uri.split('/')) ?? '')
+  matchFirst = (ref: ActorRef): ConstructorFunction | undefined => {
+    return this.#modules.get(this.#root.matchPattern(`${ref.path}${ref.name.toString()}`.split('/')) ?? '')
+  }
 }

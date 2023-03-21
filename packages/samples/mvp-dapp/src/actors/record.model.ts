@@ -7,6 +7,7 @@ import {
   OutPointString,
   SchemaPattern,
   UpdateStorageValue,
+  ProviderKey,
 } from '@ckb-js/kuai-models'
 import { Cell } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
@@ -31,10 +32,12 @@ export type StoreType = {
 /**
  * add business logic in an actor
  */
-@ActorProvider({ name: 'record', path: '/:lockHash/' })
+@ActorProvider({ name: 'record', path: '/:codeHash/:hashType/:args/' })
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
   constructor(
-    @Param('lockHash') lockHash: string,
+    @Param('codeHash') codeHash: string,
+    @Param('hashType') hashType: string,
+    @Param('args') args: string,
     _schemaOption?: { data: { offset: number } },
     params?: {
       states?: Record<OutPointString, StoreType>
@@ -43,7 +46,17 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
       schemaPattern?: SchemaPattern
     },
   ) {
-    const ref = new ActorReference('record', `/${lockHash}`)
+    const ref = new ActorReference('record', `/${codeHash}/${hashType}/${args}/`)
+    Reflect.defineMetadata(
+      ProviderKey.LockPattern,
+      {
+        codeHash,
+        hashType,
+        args,
+      },
+      RecordModel,
+      ref.uri,
+    )
     super(ref, { data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, params)
 
     this.cellPattern = (value: UpdateStorageValue) => {

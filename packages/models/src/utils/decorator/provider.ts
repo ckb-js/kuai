@@ -12,7 +12,7 @@ export const ProviderKey = {
   TypePattern: Symbol('store:type:pattern'),
 }
 
-export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>> = {}) => {
+export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>> = {}, bindWhenBootstrap = false) => {
   return (target: unknown): void => {
     if (!target || typeof target !== 'function') {
       throw new ActorProviderException()
@@ -21,7 +21,8 @@ export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>>
     Reflect.defineMetadata(
       ProviderKey.Actor,
       {
-        ref: new ActorReference(actorRef.name || Date.now().toString(), actorRef.path || '/').json, // TODO: use uuid in actor name
+        ref: new ActorReference(actorRef.name || Date.now().toString(), actorRef.path || '/'), // TODO: use uuid in actor name
+        bindWhenBootstrap,
       },
       target,
     )
@@ -33,8 +34,8 @@ export interface ActorParamType {
   parameterIndex: number
 }
 
-export const Param = (routerParam: string): ParameterDecorator => {
-  return (target: object, propertyKey: string | symbol, parameterIndex: number): void => {
+export const Param = (routerParam: string) => {
+  return (target: object, propertyKey: string | symbol | undefined, parameterIndex: number): void => {
     const params: ActorParamType[] = Reflect.getMetadata(ProviderKey.ActorParam, target) ?? []
 
     params.push({ routerParam, parameterIndex })

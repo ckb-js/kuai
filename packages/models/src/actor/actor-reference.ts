@@ -1,6 +1,7 @@
 import type { ActorRef, ActorName, ActorURI, ActorRefParam } from './interface'
 import { basename } from 'node:path'
 import { InvalidActorURIException, InvalidPathException, PROTOCOL } from '../utils'
+import { compact } from 'lodash'
 
 export class ActorReference {
   static fromURI = (uri: string): ActorReference => {
@@ -57,24 +58,23 @@ export class ActorReference {
     this.#protocol = protocol
     this.#path = path
 
-    if (this.#path !== '/' && !/^\/(?:[\w-]+\/)*(?::\w+\/?)?(?:[\w-]+\/)*(?::\w+\/?)?$/.test(this.#path)) {
+    if (this.#path !== '/' && !/^\/([\w:]+\/)*$/.test(this.#path)) {
       throw new InvalidPathException(this.#path)
     }
 
     this.#uri = this.#protocol + ':/' + this.#path + this.#name.toString()
 
-    this.#params = this.#uri
-      .split('/')
-      .filter((segment) => segment.startsWith(':'))
-      .map((param, index) => {
-        return { param: param.slice(1), index }
-      })
+    this.#params = compact(
+      this.#path.split('/').map((param, index) => {
+        if (param.startsWith(':')) return { param: param.slice(1), index }
+      }),
+    )
   }
 
-  matchParams(ref: ActorRef): Map<string, string> {
+  matchParams(pattern: ActorRef): Map<string, string> {
     let params = new Map<string, string>()
-    const paths = ref.path.split('/')
-    this.params.forEach((param) => {
+    const paths = this.#path.split('/')
+    pattern.params.forEach((param) => {
       params = params.set(param.param, paths[param.index])
     })
     return params

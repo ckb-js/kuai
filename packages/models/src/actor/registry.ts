@@ -63,18 +63,18 @@ export class Registry {
     for (const m in exports) {
       const module = exports[m]
       if (typeof module !== 'function') continue
-      const ref = Reflect.getMetadata(ProviderKey.Actor, module)
-      if (ref) {
-        this.#router.addPath(ref, module)
+      const metadata = Reflect.getMetadata(ProviderKey.Actor, module)
+      if (metadata.ref) {
+        this.#router.addPath(metadata.ref, module)
       }
-      this.#bind(module)
+      if (metadata.bindWhenBootstrap) this.#bind(metadata.ref, module)
     }
   }
 
   /**
    * this method is defined as public for testing
    */
-  bind = (module: ConstructorFunction): void => this.#bind(Reflect.getMetadata(ProviderKey.Actor, module), module)
+  bind = (module: ConstructorFunction): void => this.#bind(Reflect.getMetadata(ProviderKey.Actor, module).ref, module)
 
   #bind = (ref: ActorReference, module?: ConstructorFunction): void => {
     if (this.isLive(ref.uri)) {
@@ -90,16 +90,13 @@ export class Registry {
     if (!paramPattern) {
       this.#container.bind(ref.uri).to(module).inSingletonScope()
     } else {
-      const routerPattern = Reflect.getMetadata(ProviderKey.Actor, module) as ActorReference
-      if (!routerPattern) {
-        return
-      }
-      const params = routerPattern.matchParams(ref)
+      const params = ref.matchParams(Reflect.getMetadata(ProviderKey.Actor, module).ref)
       this.#container
         .bind(ref.uri)
-        .toConstantValue(
-          new module(...(paramPattern as ActorParamType[]).map((pattern) => params.get(pattern.routerParam))),
+        .toDynamicValue(
+          () => new module!(...(paramPattern as ActorParamType[]).map((pattern) => params.get(pattern.routerParam))),
         )
+        .inSingletonScope()
     }
 
     this.#actors.add(ref.uri)
