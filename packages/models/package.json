@@ -36,7 +36,8 @@
     "ioredis": "5.3.1",
     "lodash": "4.17.21",
     "reflect-metadata": "0.1.13",
-    "tslib": "2.5.0"
+    "tslib": "2.5.0",
+    "undici": "5.21.0"
   },
   "devDependencies": {
     "@jest/globals": "29.5.0",

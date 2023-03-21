@@ -1,1 +1,2 @@
-// TODO: https://github.com/ckb-js/kuai/issues/3
+export * from './contract'
+export * from './interface'
