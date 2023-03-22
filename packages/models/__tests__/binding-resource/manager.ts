@@ -38,6 +38,7 @@ const ref = {
   protocol: 'local',
   path: '/',
   uri: 'local://store',
+  params: [],
 }
 
 const ref1 = {

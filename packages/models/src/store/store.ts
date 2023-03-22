@@ -82,14 +82,14 @@ export class Store<
   ) {
     super(params?.ref)
     this.cellPattern =
-      Reflect.getMetadata(ProviderKey.CellPattern, this.constructor, this.ref.uri) || params?.cellPattern
+      Reflect.getMetadata(ProviderKey.CellPattern, this.constructor, this.ref?.uri) || params?.cellPattern
     this.schemaPattern = Reflect.getMetadata(ProviderKey.SchemaPattern, this.constructor) || params?.schemaPattern
     this.schemaOption = schemaOption
     this.states = params?.states || {}
     this.chainData = params?.chainData || {}
     this.options = params?.options
-    this.#lock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor, this.ref.uri)
-    this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor, this.ref.uri)
+    this.#lock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor, this.ref?.uri)
+    this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor, this.ref?.uri)
   }
 
   protected registerResourceBinding() {
