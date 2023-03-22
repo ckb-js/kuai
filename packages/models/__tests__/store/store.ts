@@ -17,6 +17,7 @@ import {
   UTF8String,
   StoreMessage,
   outPointToOutPointString,
+  ActorReference,
 } from '../../src'
 
 const mockXAdd = jest.fn()
@@ -33,6 +34,7 @@ const ref = {
   protocol: '',
   path: '',
   uri: 'json',
+  params: [],
 }
 
 type CustomType = string
@@ -129,7 +131,7 @@ describe('test store', () => {
   describe('use json storage', () => {
     describe('test init chain data', () => {
       it('init with data', () => {
-        const store = new JSONStore<{ data: { a: BigNumber } }>(undefined, { data: true })
+        const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
         const chainData = store.initOnChain({ data: { a: BigNumber(20) } })
         const expected = bytes.hexify(new JSONStorage().serialize({ a: BigNumber(20) }))
         expect(chainData.data).toBe(expected)
@@ -138,7 +140,7 @@ describe('test store', () => {
         expect(chainData.typeArgs).toBeUndefined()
       })
       it('init with witness', () => {
-        const store = new JSONStore<{ witness: { a: BigNumber } }>(undefined, { witness: true })
+        const store = new JSONStore<{ witness: { a: BigNumber } }>({ witness: true })
         const chainData = store.initOnChain({ witness: { a: BigNumber(20) } })
         const expected = bytes.hexify(new JSONStorage().serialize({ a: BigNumber(20) }))
         expect(chainData.witness).toBe(expected)
@@ -147,7 +149,7 @@ describe('test store', () => {
         expect(chainData.typeArgs).toBeUndefined()
       })
       it('init with lock', () => {
-        const store = new JSONStore<{ lockArgs: BigNumber }>(undefined, {
+        const store = new JSONStore<{ lockArgs: BigNumber }>({
           lockArgs: true,
         })
         const chainData = store.initOnChain({ lockArgs: BigNumber(20) })
@@ -158,7 +160,7 @@ describe('test store', () => {
         expect(chainData.typeArgs).toBeUndefined()
       })
       it('init with type', () => {
-        const store = new JSONStore<{ typeArgs: BigNumber }>(undefined, {
+        const store = new JSONStore<{ typeArgs: BigNumber }>({
           typeArgs: true,
         })
         const chainData = store.initOnChain({ typeArgs: BigNumber(20) })
@@ -172,14 +174,14 @@ describe('test store', () => {
 
     describe('test handleCall with add', () => {
       it('add data success', () => {
-        const store = new JSONStore<{ data: { a: BigNumber } }>(undefined, { data: true })
+        const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
         const initValue = { a: BigNumber(1) }
         const onchainData = store.initOnChain({ data: initValue })
         store.handleCall(createUpdateParams({ data: onchainData.data }))
         expect(store.get(defaultOutpointString)).toStrictEqual({ data: initValue })
       })
       it('add witness success', () => {
-        const store = new JSONStore<{ witness: { a: BigNumber } }>(undefined, { witness: true })
+        const store = new JSONStore<{ witness: { a: BigNumber } }>({ witness: true })
         const initValue = { a: BigNumber(1) }
         const onchainData = store.initOnChain({ witness: initValue })
         store.handleCall(createUpdateParams({ witness: onchainData.witness }))
@@ -206,7 +208,7 @@ describe('test store', () => {
         expect(store.get(defaultOutpointString)).toStrictEqual({ data: initValue })
       })
       it('add lock without offset', () => {
-        const lockStore = new JSONStore<{ lockArgs: BigNumber }>(undefined, { lockArgs: true })
+        const lockStore = new JSONStore<{ lockArgs: BigNumber }>({ lockArgs: true })
         const initValue = { lockArgs: BigNumber(1) }
         const onchainData = lockStore.initOnChain(initValue)
         lockStore.handleCall(
@@ -215,7 +217,7 @@ describe('test store', () => {
         expect(lockStore.get(defaultOutpointString)).toStrictEqual(initValue)
       })
       it('add lock with offset', () => {
-        const lockStore = new JSONStore<{ lockArgs: { offset: 10; schema: BigNumber } }>(undefined, {
+        const lockStore = new JSONStore<{ lockArgs: { offset: 10; schema: BigNumber } }>({
           lockArgs: { offset: 10 },
         })
         const initValue = { lockArgs: BigNumber(10) }
@@ -226,14 +228,14 @@ describe('test store', () => {
         expect(lockStore.get(defaultOutpointString)).toStrictEqual(initValue)
       })
       it('add type without offset', () => {
-        const store = new JSONStore<{ typeArgs: BigNumber }>(undefined, { typeArgs: true })
+        const store = new JSONStore<{ typeArgs: BigNumber }>({ typeArgs: true })
         const initValue = { typeArgs: BigNumber(1) }
         const onchainData = store.initOnChain(initValue)
         store.handleCall(createUpdateParams({ type: { args: onchainData.typeArgs, codeHash: '', hashType: 'data' } }))
         expect(store.get(defaultOutpointString)).toStrictEqual(initValue)
       })
       it('add type with offset', () => {
-        const store = new JSONStore<{ typeArgs: { offset: 10; schema: BigNumber } }>(undefined, {
+        const store = new JSONStore<{ typeArgs: { offset: 10; schema: BigNumber } }>({
           typeArgs: { offset: 10 },
         })
         const initValue = { typeArgs: BigNumber(10) }
@@ -244,7 +246,7 @@ describe('test store', () => {
     })
 
     describe('test handleCall with sub', () => {
-      const store = new JSONStore<{ data: { a: BigNumber } }>(undefined, { data: true })
+      const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
       beforeEach(() => {
         const initValue = { a: BigNumber(1) }
         const onchainData = store.initOnChain({ data: initValue })
@@ -262,21 +264,21 @@ describe('test store', () => {
 
     describe('test clone', () => {
       it('clone data and witness', () => {
-        const store = new JSONStore<{ data: { a: BigNumber }; witness: { b: string } }>(undefined, {
+        const store = new JSONStore<{ data: { a: BigNumber }; witness: { b: string } }>({
           data: true,
           witness: true,
         })
         const onchainData = store.initOnChain({ data: { a: BigNumber(1) }, witness: { b: 'BigNumber(20)' } })
         store.handleCall(createUpdateParams({ data: onchainData.data, witness: onchainData.witness }))
         const cloneRes = store.clone()
-        expect(cloneRes.get(defaultOutpoint) === store.get(defaultOutpoint)).toBeFalsy()
-        expect(cloneRes.get(defaultOutpoint)).toStrictEqual(store.get(defaultOutpoint))
+        expect(cloneRes.get(defaultOutpointString) === store.get(defaultOutpointString)).toBeFalsy()
+        expect(cloneRes.get(defaultOutpointString)).toStrictEqual(store.get(defaultOutpointString))
         expect(cloneRes instanceof JSONStore).toBe(true)
         expect(cloneRes.getChainData(defaultOutpointString).cell).toStrictEqual(createCell({ data: onchainData.data }))
         expect(cloneRes.getChainData(defaultOutpointString).witness).toEqual(onchainData.witness)
       })
       it('clone with lock', () => {
-        const store = new JSONStore<{ lockArgs: BigNumber }>(undefined, {
+        const store = new JSONStore<{ lockArgs: BigNumber }>({
           lockArgs: true,
         })
         const onchainData = store.initOnChain({ lockArgs: BigNumber(1) })
@@ -293,7 +295,7 @@ describe('test store', () => {
         expect(cloneRes.getChainData(defaultOutpointString).witness).toBeUndefined()
       })
       it('clone with type and offset', () => {
-        const store = new JSONStore<{ typeArgs: BigNumber }>(undefined, {
+        const store = new JSONStore<{ typeArgs: BigNumber }>({
           typeArgs: true,
         })
         const onchainData = store.initOnChain({ typeArgs: BigNumber(1) })
@@ -317,7 +319,7 @@ describe('test store', () => {
         witness: boolean
         lockArgs: BigNumber
         typeArgs: { a: BigNumber }
-      }>(undefined, {
+      }>({
         data: true,
         witness: true,
         lockArgs: true,
@@ -374,7 +376,7 @@ describe('test store', () => {
         witness: boolean
         lockArgs: BigNumber
         typeArgs: { a: BigNumber }
-      }>(undefined, {
+      }>({
         data: true,
         witness: true,
         lockArgs: true,
@@ -545,12 +547,12 @@ describe('test store', () => {
     Reflect.defineMetadata(ProviderKey.LockPattern, { codeHash: 'lock' }, StoreBoundScripts, ref.uri)
     Reflect.defineMetadata(ProviderKey.TypePattern, { codeHash: 'type' }, StoreBoundScripts, ref.uri)
     it('should bind lock script', () => {
-      const store = new StoreBoundScripts(ref, {})
+      const store = new StoreBoundScripts({}, { ref })
       expect(store.lockScript?.codeHash).toBe('lock')
     })
 
     it('should bind type script', () => {
-      const store = new StoreBoundScripts(ref, {})
+      const store = new StoreBoundScripts({}, { ref })
       expect(store.typeScript?.codeHash).toBe('type')
     })
   })

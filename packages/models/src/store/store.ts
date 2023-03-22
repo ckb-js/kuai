@@ -70,7 +70,6 @@ export class Store<
   }
 
   constructor(
-    ref?: ActorRef,
     schemaOption?: GetStorageOption<StructSchema>,
     params?: {
       states?: Record<OutPointString, GetStorageStruct<StructSchema>>
@@ -78,9 +77,10 @@ export class Store<
       cellPattern?: CellPattern
       schemaPattern?: SchemaPattern
       options?: Option
+      ref?: ActorRef
     },
   ) {
-    super(ref)
+    super(params?.ref)
     this.cellPattern =
       Reflect.getMetadata(ProviderKey.CellPattern, this.constructor, this.ref.uri) || params?.cellPattern
     this.schemaPattern = Reflect.getMetadata(ProviderKey.SchemaPattern, this.constructor) || params?.schemaPattern
@@ -372,7 +372,7 @@ export class Store<
       }
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new (<any>this.constructor)(undefined, this.schemaOption, {
+    return new (<any>this.constructor)(this.schemaOption, {
       states,
       options: this.options,
       chainData: this.cloneChainData(),
@@ -478,7 +478,7 @@ export class MoleculeStore<R extends StorageSchema<DynamicParam>> extends Store<
       options: GetMoleculeConfig<R>
     },
   ) {
-    super(undefined, schemaOption, params)
+    super(schemaOption, params)
   }
 
   #moleculeStorageCache: Partial<Record<StorageLocation, MoleculeStorage<DynamicParam>>> = {}

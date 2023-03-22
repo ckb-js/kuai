@@ -38,7 +38,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       OmnilockModel,
       ref.uri,
     )
-    super(ref, undefined, params)
+    super(undefined, { ...params, ref })
     if (!this.lockScript) {
       throw new Error('lock script is required')
     }

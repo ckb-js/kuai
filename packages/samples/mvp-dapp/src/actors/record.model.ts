@@ -57,7 +57,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
       RecordModel,
       ref.uri,
     )
-    super(ref, { data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, params)
+    super({ data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, { ...params, ref })
 
     this.cellPattern = (value: UpdateStorageValue) => {
       const cellLock = value.cell.cellOutput.lock
