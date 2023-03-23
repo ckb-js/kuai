@@ -54,7 +54,8 @@ export function Pattern({
   cellPattern,
   schemaPattern,
 }: {
-  cellPattern?: CellPattern
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cellPattern?: (...args: Array<any>) => CellPattern
   schemaPattern?: SchemaPattern
 }): ClassDecorator {
   return function (target) {
@@ -65,4 +66,38 @@ export function Pattern({
       Reflect.defineMetadata(ProviderKey.SchemaPattern, schemaPattern, target)
     }
   }
+}
+
+export function DataCellPattern(data: string): ClassDecorator {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cellPattern = (obj: any) => {
+    return (value: UpdateStorageValue) => {
+      const cellLock = value.cell.cellOutput.lock
+      return (
+        cellLock.args === obj.lockScript?.args &&
+        cellLock.codeHash === obj.lockScript?.codeHash &&
+        cellLock.hashType === obj.lockScript?.hashType &&
+        value.cell.data === data
+      )
+    }
+  }
+
+  return Pattern({ cellPattern })
+}
+
+export function DataPrefixCellPattern(prefix: string): ClassDecorator {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cellPattern = (obj: any) => {
+    return (value: UpdateStorageValue) => {
+      const cellLock = value.cell.cellOutput.lock
+      return (
+        cellLock.args === obj.lockScript?.args &&
+        cellLock.codeHash === obj.lockScript?.codeHash &&
+        cellLock.hashType === obj.lockScript?.hashType &&
+        value.cell.data.startsWith(prefix)
+      )
+    }
+  }
+
+  return Pattern({ cellPattern })
 }

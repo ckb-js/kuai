@@ -8,6 +8,7 @@ import {
   ProviderKey,
   SchemaPattern,
   UpdateStorageValue,
+  DataCellPattern,
 } from '@ckb-js/kuai-models'
 import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
@@ -20,6 +21,7 @@ import { createScriptRegistry } from '@ckb-lumos/experiment-tx-assembler'
  * add business logic in an actor
  */
 @ActorProvider({ name: 'omnilock', path: `/:args/` })
+@DataCellPattern('0x')
 export class OmnilockModel extends JSONStore<Record<string, never>> {
   constructor(
     @Param('args') args: string,
@@ -41,15 +43,6 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     super(undefined, { ...params, ref })
     if (!this.lockScript) {
       throw new Error('lock script is required')
-    }
-    this.cellPattern = (value: UpdateStorageValue) => {
-      const cellLock = value.cell.cellOutput.lock
-      return (
-        cellLock.args === this.lockScript?.args &&
-        cellLock.codeHash === this.lockScript?.codeHash &&
-        cellLock.hashType === this.lockScript?.hashType &&
-        value.cell.data === '0x'
-      )
     }
     this.registerResourceBinding()
   }

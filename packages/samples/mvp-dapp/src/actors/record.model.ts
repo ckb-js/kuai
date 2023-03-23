@@ -8,6 +8,7 @@ import {
   SchemaPattern,
   UpdateStorageValue,
   ProviderKey,
+  DataPrefixCellPattern,
 } from '@ckb-js/kuai-models'
 import { Cell } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
@@ -33,6 +34,7 @@ export type StoreType = {
  * add business logic in an actor
  */
 @ActorProvider({ name: 'record', path: '/:codeHash/:hashType/:args/' })
+@DataPrefixCellPattern(DAPP_DATA_PREFIX)
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
   constructor(
     @Param('codeHash') codeHash: string,
@@ -58,16 +60,6 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
       ref.uri,
     )
     super({ data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, { ...params, ref })
-
-    this.cellPattern = (value: UpdateStorageValue) => {
-      const cellLock = value.cell.cellOutput.lock
-      return (
-        cellLock.args === this.lockScript?.args &&
-        cellLock.codeHash === this.lockScript?.codeHash &&
-        cellLock.hashType === this.lockScript?.hashType &&
-        value.cell.data.startsWith(DAPP_DATA_PREFIX)
-      )
-    }
 
     this.registerResourceBinding()
   }
