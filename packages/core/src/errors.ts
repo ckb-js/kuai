@@ -2,7 +2,13 @@ import { ErrorDescriptor, ERRORS } from './errors-list'
 
 const inspect = Symbol.for('nodejs.util.inspect.custom')
 
-export class CustomError extends Error {
+export class KError extends Error {
+  constructor(message: string) {
+    super(message)
+  }
+}
+
+export class CustomError extends KError {
   private _stack: string
 
   constructor(message: string, public readonly parent?: Error) {

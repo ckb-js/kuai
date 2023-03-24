@@ -1,6 +1,8 @@
 import { jest, describe, it, expect } from '@jest/globals'
 import { CoR } from '../src/cor'
 import { Middleware } from '../src/types'
+import { KuaiError } from '@ckb-js/kuai-core'
+import { NotFound } from 'http-errors'
 
 describe('Test CoR', () => {
   function isThirteenPayload(x: unknown): x is { type: 'is-thirteen'; value: unknown } {
@@ -100,5 +102,34 @@ describe('Test CoR', () => {
     expect(result).toMatch('ok')
     expect(mockBefore).toBeCalled()
     expect(mockAfter).toBeCalled()
+  })
+
+  it(`should call error handler`, async () => {
+    const err = new Error('this is error')
+    const httpErr = new NotFound()
+    const kuaiErr = new KuaiError({
+      code: 'test',
+      message: 'this is http error',
+    })
+
+    let cor = CoR.defaultCoR()
+    cor.use(async (_ctx, _next) => {
+      throw err
+    })
+
+    await expect(cor.dispatch({})).rejects.toThrow(`UNKNOWN ERROR`)
+
+    cor = CoR.defaultCoR()
+    cor.use(async (_ctx, _next) => {
+      throw httpErr
+    })
+
+    await expect(cor.dispatch({})).rejects.toThrow(`Not Found`)
+
+    cor = CoR.defaultCoR()
+    cor.use(async (_ctx, _next) => {
+      throw kuaiErr
+    })
+    await expect(cor.dispatch({})).rejects.toThrow(`this is http error`)
   })
 })

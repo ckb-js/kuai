@@ -60,7 +60,7 @@ async function bootstrap() {
   app.use(koaBody())
 
   // init kuai io
-  const cor = new CoR()
+  const cor = CoR.defaultCoR()
   cor.use(router.middleware())
 
   const koaRouterAdapter = new KoaRouterAdapter(cor)
