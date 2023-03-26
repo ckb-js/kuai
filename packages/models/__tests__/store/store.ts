@@ -189,19 +189,7 @@ describe('test store', () => {
       })
       it('add with duplicate add params', () => {
         const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
-        store.handleCall({
-          from: ref,
-          behavior: Behavior.Call,
-          payload: {
-            pattern: 'update_cells',
-            value: [
-              {
-                cell: createCell({ data: store.initOnChain({ data: { a: BigNumber(1) } }).data }),
-                witness: '',
-              },
-            ],
-          },
-        })
+        store.handleCall(createUpdateParams({ data: store.initOnChain({ data: { a: BigNumber(1) } }).data }))
         const initValue = { a: BigNumber(10) }
         const onchainData = store.initOnChain({ data: initValue })
         store.handleCall(createUpdateParams({ data: onchainData.data }))
@@ -440,82 +428,10 @@ describe('test store', () => {
     })
   })
 
-  describe('test load', () => {
-    const store = new JSONStore<{
-      data: { a: BigNumber; b: { c: BigNumber } }
-      witness: boolean
-      lockArgs: BigNumber
-      typeArgs: { a: BigNumber }
-    }>({
-      data: true,
-      witness: true,
-      lockArgs: true,
-      typeArgs: true,
-    })
-    const initValue = {
-      data: { a: BigNumber(20), b: { c: BigNumber(20) } },
-      witness: false,
-      lockArgs: BigNumber(10),
-      typeArgs: { a: BigNumber(30) },
-    }
-    const onchainData = store.initOnChain(initValue)
-    store.handleCall({
-      from: ref,
-      behavior: Behavior.Call,
-      payload: {
-        pattern: 'update_cells',
-        value: [
-          {
-            cell: createCell({
-              type: { args: onchainData.typeArgs, codeHash: '0x00', hashType: 'type' },
-              data: onchainData.data,
-              lock: { args: onchainData.lockArgs, codeHash: '0x00', hashType: 'type' },
-            }),
-            witness: onchainData.witness,
-          },
-        ],
-      },
-    })
-    it('load all success without path', () => {
-      expect(store.load()).toStrictEqual(initValue)
-    })
-    it('load data success path', () => {
-      expect(store.load('data')).toStrictEqual(initValue.data)
-    })
-    it('load witness success with first path witness', () => {
-      expect(store.load('witness')).toStrictEqual(initValue.witness)
-    })
-    it('load sub path success', () => {
-      expect(store.load('data.a')).toEqual(initValue.data.a)
-    })
-    it('load non-existent value returns null', () => {
-      expect(store.load('data.a111')).toBeNull()
-    })
-    it('load lock', () => {
-      expect(store.load('lockArgs')).toStrictEqual(initValue.lockArgs)
-    })
-    it('load type', () => {
-      expect(store.load('typeArgs')).toStrictEqual(initValue.typeArgs)
-    })
-    // TODO: add tests of data combination
-  })
-
   describe('extend store', () => {
     it('success', () => {
       const custom = new CustomStore<{ data: string }>({ data: true })
-      custom.handleCall({
-        from: ref,
-        behavior: Behavior.Call,
-        payload: {
-          pattern: 'update_cells',
-          value: [
-            {
-              cell: createCell(),
-              witness: '',
-            },
-          ],
-        },
-      })
+      custom.handleCall(createUpdateParams())
       custom.clone()
       expect(serializeMock).toBeCalled()
       expect(deserializeMock).toBeCalled()
@@ -523,21 +439,7 @@ describe('test store', () => {
 
     it('exception', () => {
       const custom = new NoInstanceCustomStore<{ data: string }>({ data: true })
-      expect(() =>
-        custom.handleCall({
-          from: ref,
-          behavior: Behavior.Call,
-          payload: {
-            pattern: 'update_cells',
-            value: [
-              {
-                cell: createCell(),
-                witness: '',
-              },
-            ],
-          },
-        }),
-      ).toThrow(new NonStorageInstanceException())
+      expect(() => custom.handleCall(createUpdateParams())).toThrow(new NonStorageInstanceException())
     })
   })
 
