@@ -16,14 +16,11 @@ export class ActorReference {
   }
 
   static newWithPattern(module: ConstructorFunction, path = '/'): ActorReference | undefined {
-    if (module) {
-      const pattern = Reflect.getMetadata(ProviderKey.Actor, module)?.ref
-      if (pattern && pattern instanceof ActorReference) {
-        const ref = new ActorReference(pattern.name, path, pattern.protocol)
-        ref.matchParams(pattern)
-        return ref
-      }
-    }
+    const pattern = Reflect.getMetadata(ProviderKey.Actor, module)?.ref
+    if (!pattern || !(pattern instanceof ActorReference)) return
+    const ref = new ActorReference(pattern.name, path, pattern.protocol)
+    ref.matchParams(pattern)
+    return ref
   }
 
   #name: ActorName
