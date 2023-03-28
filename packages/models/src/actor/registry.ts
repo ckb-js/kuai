@@ -9,7 +9,7 @@ import type { ActorURI, ConstructorFunction } from './interface'
 import type { Actor } from './actor'
 import { ActorNotFoundException, DuplicatedActorException, ProviderKey, ActorParamType } from '../utils'
 import { Router } from './router'
-import { ActorReference } from './actor-reference'
+import type { ActorReference } from './actor-reference'
 
 export class Registry {
   #actors: Set<ActorURI> = new Set()
