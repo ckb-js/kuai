@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals'
 import { CoR } from '../src/cor'
-import { BaseController, Get, Post, Body, Param, Query } from '../src'
+import { BaseController, Get, Post, Body, Param, Query, Controller } from '../src'
 
 class AppController extends BaseController {
   @Get()
@@ -34,6 +34,14 @@ class AppController extends BaseController {
   }
 }
 
+@Controller('prefix')
+class PrefixController extends BaseController {
+  @Get()
+  async hello() {
+    return 'hello prefix'
+  }
+}
+
 describe('test Controller', () => {
   it(`should use Controller`, async () => {
     const cor = new CoR()
@@ -63,5 +71,16 @@ describe('test Controller', () => {
 
     const queryResult = await cor.dispatch({ method: 'GET', path: '/test-query', query: { username: 'celia' } })
     expect(queryResult).toMatch('hello celia by query')
+  })
+
+  it(`controller support prefix path`, async () => {
+    const cor = new CoR()
+    const controller = new PrefixController()
+    cor.use(controller.middleware())
+
+    console.log('_routes', controller._routes)
+
+    const result = await cor.dispatch({ method: 'GET', path: '/prefix' })
+    expect(result).toMatch('hello prefix')
   })
 })

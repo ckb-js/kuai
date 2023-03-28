@@ -2,10 +2,12 @@ import { Middleware, Route, Path, RouterContext, RoutePayload, Method } from './
 import type { Key } from 'path-to-regexp'
 import { pathToRegexp } from 'path-to-regexp'
 import { NotFound } from 'http-errors'
+import { addLeadingSlash, concatPaths } from './helper'
 import {
   KUAI_ROUTE_METADATA_METHOD,
   KUAI_ROUTE_METADATA_PATH,
   KUAI_ROUTE_ARGS_METADATA,
+  KUAI_ROUTE_CONTROLLER_PATH,
   RouteParamtypes,
 } from './metadata'
 import { RouteParamMetadata } from './decorator'
@@ -16,7 +18,7 @@ function isRoutePayload(x: unknown): x is RoutePayload {
 }
 
 function matchPath(path: Path, route: Route): boolean {
-  return route.regexp.test(path)
+  return route.regexp.test(addLeadingSlash(path))
 }
 
 function createRoute<
@@ -47,6 +49,8 @@ const getMethods = (obj: object): string[] => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class BaseController {
+  _routes: Route[] = this.getRoutes()
+
   createMiddleware(key: string | symbol): Middleware<RouterContext> {
     return (ctx) => {
       const argsMetadata: Record<number, RouteParamMetadata> =
@@ -116,7 +120,10 @@ export class BaseController {
 
     return routeMethodNames.map((key) =>
       createRoute({
-        path: Reflect.getMetadata(KUAI_ROUTE_METADATA_PATH, this, key),
+        path: concatPaths(
+          Reflect.getMetadata(KUAI_ROUTE_CONTROLLER_PATH, Object.getPrototypeOf(this).constructor) || '/',
+          Reflect.getMetadata(KUAI_ROUTE_METADATA_PATH, this, key),
+        ),
         method: Reflect.getMetadata(KUAI_ROUTE_METADATA_METHOD, this, key),
         middleware: this.createMiddleware(key),
       }),
@@ -131,9 +138,9 @@ export class BaseController {
         return next()
       }
 
-      const route = this.getRoutes().find((route) => route.method === payload.method && matchPath(payload.path, route))
+      const route = this._routes.find((route) => route.method === payload.method && matchPath(payload.path, route))
       if (route) {
-        const result = route.regexp.exec(ctx.payload.path)
+        const result = route.regexp.exec(addLeadingSlash(ctx.payload.path))
 
         if (result) {
           ctx.payload.params = route.paramKeys.reduce((a, b, index) => ({ ...a, [b.name]: result[index + 1] }), {})
