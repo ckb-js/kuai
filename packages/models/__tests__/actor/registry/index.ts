@@ -27,10 +27,8 @@ describe(`Test Registry`, () => {
 
   beforeEach(() => {
     registry = new Registry()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    registry.bind(ParentActor as any)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    registry.bind(ChildActor as any)
+    registry.bind(ParentActor)
+    registry.bind(ChildActor)
   })
 
   describe.skip(`should have method Registry#load`, () => {
