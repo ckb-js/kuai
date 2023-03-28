@@ -27,8 +27,18 @@ const CHILD_REF = {
   protocol: `local`,
   uri: `local://parent/child`,
 }
+
+const THIRD_REF = {
+  name: `third`,
+  path: `/`,
+  protocol: `local`,
+  uri: `local://third`,
+  params: new Map(),
+}
+
 class ParentActor extends ActorBase {}
 class ChildActor extends ActorBase {}
+class ThirdActor extends ActorBase {}
 
 Reflect.defineMetadata(ProviderKey.Actor, { ref: PARENT_REF }, ParentActor)
 Reflect.defineMetadata(ProviderKey.Actor, { ref: CHILD_REF }, ChildActor)
@@ -48,6 +58,11 @@ describe(`Test Actor`, () => {
     it(`should be a child path if parent is non-nil`, () => {
       const actor = new ChildActor()
       expect(actor.ref).toMatchObject(CHILD_REF)
+    })
+
+    it(`should be a third path`, () => {
+      const actor = new ThirdActor(THIRD_REF)
+      expect(actor.ref).toMatchObject(THIRD_REF)
     })
   })
 
