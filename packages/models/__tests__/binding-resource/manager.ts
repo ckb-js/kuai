@@ -38,7 +38,7 @@ const ref = {
   protocol: 'local',
   path: '/',
   uri: 'local://store',
-  params: [],
+  params: new Map(),
 }
 
 const ref1 = {

@@ -79,7 +79,7 @@ describe(`Test Actor Reference`, () => {
         path: '/test_path/',
         protocol: 'http',
         uri: `http://test_path/test_name`,
-        params: [],
+        params: new Map(),
       }
       expect(ActorReference.fromURI(REF.uri).json).toEqual(REF)
     })
@@ -90,7 +90,7 @@ describe(`Test Actor Reference`, () => {
         path: '/',
         name: 'test_name',
         uri: 'local://test_name',
-        params: [],
+        params: new Map(),
       }
       expect(ActorReference.fromURI(REF.uri).json).toEqual(REF)
     })

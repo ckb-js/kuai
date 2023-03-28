@@ -34,7 +34,7 @@ const ref = {
   protocol: '',
   path: '',
   uri: 'json',
-  params: [],
+  params: new Map(),
 }
 
 type CustomType = string
@@ -446,8 +446,14 @@ describe('test store', () => {
   describe('should be bound with scripts', () => {
     class StoreBoundScripts<R extends StorageSchema<CustomType>> extends Store<StorageCustom<CustomType>, R> {}
     const ref = ActorReference.fromURI('local://test')
-    Reflect.defineMetadata(ProviderKey.LockPattern, { codeHash: 'lock' }, StoreBoundScripts, ref.uri)
-    Reflect.defineMetadata(ProviderKey.TypePattern, { codeHash: 'type' }, StoreBoundScripts, ref.uri)
+    Reflect.defineMetadata(
+      ProviderKey.LockPattern,
+      () => {
+        return { codeHash: 'lock' }
+      },
+      StoreBoundScripts,
+    )
+    Reflect.defineMetadata(ProviderKey.TypePattern, { codeHash: 'type' }, StoreBoundScripts)
     it('should bind lock script', () => {
       const store = new StoreBoundScripts({}, { ref })
       expect(store.lockScript?.codeHash).toBe('lock')

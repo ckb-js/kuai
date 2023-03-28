@@ -86,11 +86,17 @@ export class Store<
     this.states = params?.states || {}
     this.chainData = params?.chainData || {}
     this.options = params?.options
-    this.#lock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor, this.ref?.uri)
-    this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor, this.ref?.uri)
+
+    this.initiateLock(params?.ref)
+    this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor)
 
     const cellPatternFactory = Reflect.getMetadata(ProviderKey.CellPattern, this.constructor, this.ref?.uri)
     this.cellPattern = cellPatternFactory ? cellPatternFactory(this) : params?.cellPattern
+  }
+
+  private initiateLock(ref?: ActorRef) {
+    const createLock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor)
+    if (typeof createLock == 'function') this.#lock = createLock(ref)
   }
 
   protected registerResourceBinding() {

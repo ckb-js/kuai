@@ -1,5 +1,6 @@
 import {
   ActorProvider,
+  Lock,
   Param,
   ActorReference,
   CellPattern,
@@ -7,7 +8,6 @@ import {
   OutPointString,
   SchemaPattern,
   UpdateStorageValue,
-  ProviderKey,
   DataPrefixCellPattern,
 } from '@ckb-js/kuai-models'
 import { Cell } from '@ckb-lumos/base'
@@ -35,6 +35,7 @@ export type StoreType = {
  */
 @ActorProvider({ name: 'record', path: '/:codeHash/:hashType/:args/' })
 @DataPrefixCellPattern(DAPP_DATA_PREFIX)
+@Lock()
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
   constructor(
     @Param('codeHash') codeHash: string,
@@ -48,18 +49,13 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
       schemaPattern?: SchemaPattern
     },
   ) {
-    const ref = new ActorReference('record', `/${codeHash}/${hashType}/${args}/`)
-    Reflect.defineMetadata(
-      ProviderKey.LockPattern,
+    super(
+      { data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } },
       {
-        codeHash,
-        hashType,
-        args,
+        ...params,
+        ref: ActorReference.newWithPattern(RecordModel, `/${codeHash}/${hashType}/${args}/`),
       },
-      RecordModel,
-      ref.uri,
     )
-    super({ data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, { ...params, ref })
 
     this.registerResourceBinding()
   }

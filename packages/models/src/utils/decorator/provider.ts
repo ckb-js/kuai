@@ -1,7 +1,10 @@
+import { Script } from '@ckb-lumos/base'
 import type { ActorRef } from '../../actor'
 import { ActorReference } from '../../actor'
 import { UpdateStorageValue } from '../../store'
 import { ActorProviderException } from '../exception'
+import { createScriptRegistry } from '@ckb-lumos/experiment-tx-assembler'
+import { config } from '@ckb-lumos/lumos'
 
 export const ProviderKey = {
   Actor: Symbol('container:actor'),
@@ -10,6 +13,7 @@ export const ProviderKey = {
   CellPattern: Symbol('store:cell:pattern'),
   LockPattern: Symbol('store:lock:pattern'),
   TypePattern: Symbol('store:type:pattern'),
+  LockParam: Symbol('store:lock:param'),
 }
 
 export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>> = {}, bindWhenBootstrap = false) => {
@@ -100,4 +104,30 @@ export function DataPrefixCellPattern(prefix: string): ClassDecorator {
   }
 
   return Pattern({ cellPattern })
+}
+
+export function Lock(script?: Partial<Script>): ClassDecorator {
+  return (target: object) => {
+    Reflect.defineMetadata(
+      ProviderKey.LockPattern,
+      (ref?: ActorRef) => {
+        const codeHash = script?.codeHash ?? ref?.params.get('codeHash')?.value
+        const hashType = script?.hashType ?? ref?.params.get('hashType')?.value
+        const args = script?.args ?? ref?.params.get('args')?.value ?? '0x'
+        return codeHash && hashType ? { codeHash, hashType, args } : undefined
+      },
+      target,
+    )
+  }
+}
+
+export function Omnilock(): ClassDecorator {
+  return (target: object) => {
+    Reflect.defineMetadata(
+      ProviderKey.LockPattern,
+      (ref?: ActorRef) =>
+        createScriptRegistry(config.getConfig().SCRIPTS).newScript('OMNILOCK', ref?.params.get('args')?.value ?? '0x'),
+      target,
+    )
+  }
 }

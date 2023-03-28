@@ -1,11 +1,11 @@
 import {
   ActorProvider,
+  Omnilock,
   Param,
   ActorReference,
   CellPattern,
   JSONStore,
   OutPointString,
-  ProviderKey,
   SchemaPattern,
   UpdateStorageValue,
   DataCellPattern,
@@ -14,14 +14,13 @@ import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { InternalServerError } from 'http-errors'
 import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
-import { config } from '@ckb-lumos/lumos'
-import { createScriptRegistry } from '@ckb-lumos/experiment-tx-assembler'
 
 /**
  * add business logic in an actor
  */
 @ActorProvider({ name: 'omnilock', path: `/:args/` })
 @DataCellPattern('0x')
+@Omnilock()
 export class OmnilockModel extends JSONStore<Record<string, never>> {
   constructor(
     @Param('args') args: string,
@@ -33,14 +32,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       schemaPattern?: SchemaPattern
     },
   ) {
-    const ref = new ActorReference('omnilock', `/${args}/`)
-    Reflect.defineMetadata(
-      ProviderKey.LockPattern,
-      createScriptRegistry(config.getConfig().SCRIPTS).newScript('OMNILOCK', args),
-      OmnilockModel,
-      ref.uri,
-    )
-    super(undefined, { ...params, ref })
+    super(undefined, { ...params, ref: ActorReference.newWithPattern(OmnilockModel, `/${args}/`) })
     if (!this.lockScript) {
       throw new Error('lock script is required')
     }

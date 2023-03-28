@@ -93,8 +93,10 @@ export class Registry {
       const params = ref.matchParams(Reflect.getMetadata(ProviderKey.Actor, module).ref)
       this.#container
         .bind(ref.uri)
-        .toDynamicValue(
-          () => new module!(...(paramPattern as ActorParamType[]).map((pattern) => params.get(pattern.routerParam))),
+        .toDynamicValue(() =>
+          module
+            ? new module(...(paramPattern as ActorParamType[]).map((pattern) => params.get(pattern.routerParam)?.value))
+            : undefined,
         )
         .inSingletonScope()
     }

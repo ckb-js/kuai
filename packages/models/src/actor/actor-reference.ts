@@ -1,7 +1,6 @@
-import type { ActorRef, ActorName, ActorURI, ActorRefParam } from './interface'
+import type { ActorRef, ActorName, ActorURI, ActorRefParam, ConstructorFunction } from './interface'
 import { basename } from 'node:path'
-import { InvalidActorURIException, InvalidPathException, PROTOCOL } from '../utils'
-import { compact } from 'lodash'
+import { InvalidActorURIException, InvalidPathException, PROTOCOL, ProviderKey } from '../utils'
 
 export class ActorReference {
   static fromURI = (uri: string): ActorReference => {
@@ -16,11 +15,22 @@ export class ActorReference {
     return new ActorReference(name, path, protocol)
   }
 
+  static newWithPattern(module: ConstructorFunction, path = '/'): ActorReference | undefined {
+    if (module) {
+      const pattern = Reflect.getMetadata(ProviderKey.Actor, module)?.ref
+      if (pattern && pattern instanceof ActorReference) {
+        const ref = new ActorReference(pattern.name, path, pattern.protocol)
+        ref.matchParams(pattern)
+        return ref
+      }
+    }
+  }
+
   #name: ActorName
   #path: string
   #protocol: string
   #uri: ActorURI
-  #params: ActorRefParam[]
+  #params = new Map<string, ActorRefParam>()
 
   get name(): ActorName {
     return this.#name
@@ -38,8 +48,12 @@ export class ActorReference {
     return this.#uri
   }
 
-  get params(): ActorRefParam[] {
+  get params(): Map<string, ActorRefParam> {
     return this.#params
+  }
+
+  getParam(key: string): ActorRefParam | undefined {
+    return this.#params.get(key)
   }
 
   get json(): ActorRef {
@@ -48,7 +62,7 @@ export class ActorReference {
       path: this.path,
       protocol: this.protocol,
       uri: this.uri,
-      params: this.#params,
+      params: this.params,
     }
   }
 
@@ -64,20 +78,22 @@ export class ActorReference {
 
     this.#uri = this.#protocol + ':/' + this.#path + this.#name.toString()
 
-    this.#params = compact(
-      this.#path.split('/').map((param, index) => {
-        if (param.startsWith(':')) return { param: param.slice(1), index }
-      }),
-    )
+    this.#params = this.#path.split('/').reduce((params, param, index) => {
+      if (param.startsWith(':')) {
+        param = param.slice(1)
+        return params.set(param, { param, index })
+      }
+      return params
+    }, new Map())
   }
 
-  matchParams(pattern: ActorRef): Map<string, string> {
-    let params = new Map<string, string>()
+  matchParams(pattern: ActorRef): Map<string, ActorRefParam> {
     const paths = this.#path.split('/')
     pattern.params.forEach((param) => {
-      params = params.set(param.param, paths[param.index])
+      this.#params.set(param.param, { ...param, value: paths[param.index] })
     })
-    return params
+
+    return this.#params
   }
 
   toString(): string {
