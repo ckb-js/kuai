@@ -1,27 +1,36 @@
 import { describe, it, expect } from '@jest/globals'
 import { CoR } from '../src/cor'
-import { BaseController, Get } from '../src'
-import type { Context } from '../src/types'
+import { BaseController, Get, Post, Body, Param, Query } from '../src'
 
 class AppController extends BaseController {
   @Get()
-  async hello(ctx: Context) {
-    ctx.ok('hello root')
+  async hello() {
+    return 'hello root'
   }
 
   @Get('/parent')
-  async parent(ctx: Context) {
-    ctx.ok('hello parent')
+  async parent() {
+    return 'hello parent'
   }
 
   @Get('/parent/children')
-  async children(ctx: Context) {
-    ctx.ok('hello children')
+  async children() {
+    return 'hello children'
+  }
+
+  @Post('/test-body')
+  async body(@Body() body: { username: string }) {
+    return `hello ${body.username} by body`
+  }
+
+  @Get('/test-query')
+  async query(@Query() query: { username: string }) {
+    return `hello ${query.username} by query`
   }
 
   @Get('/:username')
-  async username(ctx: Context<{ payload: { params: { username?: string } } }>) {
-    ctx.ok(`hello ${ctx.payload.params?.username}`)
+  async username(@Param('username') username: string) {
+    return `hello ${username} by param`
   }
 }
 
@@ -47,6 +56,12 @@ describe('test Controller', () => {
     cor.use(appController.middleware())
 
     const result = await cor.dispatch({ method: 'GET', path: '/alice' })
-    expect(result).toMatch('hello alice')
+    expect(result).toMatch('hello alice by param')
+
+    const bodyResult = await cor.dispatch({ method: 'POST', path: '/test-body', body: { username: 'bob' } })
+    expect(bodyResult).toMatch('hello bob by body')
+
+    const queryResult = await cor.dispatch({ method: 'GET', path: '/test-query', query: { username: 'celia' } })
+    expect(queryResult).toMatch('hello celia by query')
   })
 })
