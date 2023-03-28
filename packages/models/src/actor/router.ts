@@ -1,26 +1,26 @@
 import { ActorRef, ConstructorFunction } from './interface'
 
-type NodeType = 'fixed' | 'param'
+type NodeType = 'static' | 'dynamic'
 
 class Node {
   #children: Node[] = []
 
-  constructor(private _type: NodeType = 'fixed', private _part = '', private _pattern = '') {}
+  constructor(private _type: NodeType = 'static', private _part = '', private _pattern = '') {}
 
   #insert = (paths: string[], parent: Node) => {
     const path = paths.shift()
     let node = parent.#children.find((child) => {
       if (path?.startsWith(':')) {
-        return child._type == 'param'
+        return child._type == 'dynamic'
       } else {
-        return child._type == 'fixed' && child._part == path
+        return child._type == 'static' && child._part == path
       }
     })
 
     if (!node) {
       node = path?.startsWith(':')
-        ? new Node('param', ':', `${parent._pattern}/:`)
-        : new Node('fixed', path, `${parent._pattern}/${path}`)
+        ? new Node('dynamic', ':', `${parent._pattern}/:`)
+        : new Node('static', path, `${parent._pattern}/${path}`)
       parent.#children.push(node)
     }
 
