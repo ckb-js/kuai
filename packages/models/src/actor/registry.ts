@@ -64,10 +64,10 @@ export class Registry {
       const module = exports[m]
       if (typeof module !== 'function') continue
       const metadata = Reflect.getMetadata(ProviderKey.Actor, module)
-      if (metadata.ref) {
+      if (metadata?.ref) {
         this.#router.addPath(metadata.ref, module)
       }
-      if (metadata.bindWhenBootstrap) {
+      if (metadata?.bindWhenBootstrap) {
         this.#bind(metadata.ref, module)
       }
     }
@@ -76,7 +76,7 @@ export class Registry {
   /**
    * this method is defined as public for testing
    */
-  bind = (module: ConstructorFunction): void => this.#bind(Reflect.getMetadata(ProviderKey.Actor, module).ref, module)
+  bind = (module: ConstructorFunction): void => this.#bind(Reflect.getMetadata(ProviderKey.Actor, module)?.ref, module)
 
   #bind = (ref: ActorReference, module?: ConstructorFunction): void => {
     if (this.isLive(ref.uri)) {
