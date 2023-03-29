@@ -78,8 +78,6 @@ describe('test Controller', () => {
     const controller = new PrefixController()
     cor.use(controller.middleware())
 
-    console.log('_routes', controller._routes)
-
     const result = await cor.dispatch({ method: 'GET', path: '/prefix' })
     expect(result).toMatch('hello prefix')
   })

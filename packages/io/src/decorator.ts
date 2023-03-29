@@ -57,17 +57,7 @@ export type ControllerOptions = {
 }
 
 export function Controller(prefixOrOptions?: string | ControllerOptions): ClassDecorator {
-  const path = (() => {
-    if (typeof prefixOrOptions === 'string') {
-      return prefixOrOptions
-    }
-
-    if (typeof prefixOrOptions === 'object') {
-      return prefixOrOptions.prefix || '/'
-    }
-
-    return '/'
-  })()
+  const path = typeof prefixOrOptions === 'string' ? prefixOrOptions : prefixOrOptions?.prefix || '/'
 
   return (target: object) => {
     Reflect.defineMetadata(KUAI_ROUTE_CONTROLLER_PATH, path, target)

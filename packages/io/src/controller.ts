@@ -49,7 +49,7 @@ const getMethods = (obj: object): string[] => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class BaseController {
-  _routes: Route[] = this.getRoutes()
+  #routes: Route[] = this.getRoutes()
 
   createMiddleware(key: string | symbol): Middleware<RouterContext> {
     return (ctx) => {
@@ -127,7 +127,7 @@ export class BaseController {
         return next()
       }
 
-      const route = this._routes.find((route) => route.method === payload.method && matchPath(payload.path, route))
+      const route = this.#routes.find((route) => route.method === payload.method && matchPath(payload.path, route))
       if (route) {
         const result = route.regexp.exec(addLeadingSlash(ctx.payload.path))
 
