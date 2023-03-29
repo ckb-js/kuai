@@ -24,6 +24,7 @@ const DEPENDENCIES: Dependencies = {
 }
 
 const DEV_DEPENDENCIES: Dependencies = {
+  'ts-node': '10.9.1',
   typescript: '4.9.4',
 }
 

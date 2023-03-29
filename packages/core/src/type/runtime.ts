@@ -1,3 +1,5 @@
+import type { Config as JestConfig } from 'jest'
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TaskArguments = any
 
@@ -9,6 +11,7 @@ export interface KuaiArguments {
 export interface KuaiConfig {
   kuaiArguments?: KuaiArguments
   network?: HttpNetworkConfig
+  jest?: JestConfig
 }
 
 export type HttpNetworkConfig = {
