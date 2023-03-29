@@ -7,9 +7,15 @@ import { resolve } from 'node:path'
 import { Container } from 'inversify'
 import type { ActorURI, ConstructorFunction } from './interface'
 import type { Actor } from './actor'
-import { ActorNotFoundException, DuplicatedActorException, ProviderKey, ActorParamType } from '../utils'
+import {
+  ActorNotFoundException,
+  DuplicatedActorException,
+  ProviderKey,
+  ActorParamType,
+  InvalidActorURIException,
+} from '../utils'
 import { Router } from './router'
-import type { ActorReference } from './actor-reference'
+import { ActorReference } from './actor-reference'
 
 export class Registry {
   #actors: Set<ActorURI> = new Set()
@@ -79,6 +85,10 @@ export class Registry {
   bind = (module: ConstructorFunction): void => this.#bind(Reflect.getMetadata(ProviderKey.Actor, module)?.ref, module)
 
   #bind = (ref: ActorReference, module?: ConstructorFunction): void => {
+    if (!(ref instanceof ActorReference)) {
+      throw new InvalidActorURIException(ref)
+    }
+
     if (this.isLive(ref.uri)) {
       throw new DuplicatedActorException(ref.uri)
     }
