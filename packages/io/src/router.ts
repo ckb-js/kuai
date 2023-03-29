@@ -1,5 +1,6 @@
 import { Middleware, Route, Path, RouterContext, RoutePayload, Method } from './types'
 import type { Key } from 'path-to-regexp'
+import { addLeadingSlash } from './helper'
 import { pathToRegexp } from 'path-to-regexp'
 import { NotFound } from 'http-errors'
 
@@ -12,7 +13,7 @@ export function isRoute(x: unknown): x is Route {
 }
 
 function matchPath(path: Path, route: Route): boolean {
-  return route.regexp.test(path)
+  return route.regexp.test(addLeadingSlash(path))
 }
 
 function createRoute<
@@ -113,7 +114,7 @@ export class KuaiRouter {
 
       const route = this.routes.find((route) => route.method === payload.method && matchPath(payload.path, route))
       if (route) {
-        const result = route.regexp.exec(ctx.payload.path)
+        const result = route.regexp.exec(addLeadingSlash(ctx.payload.path))
 
         if (result) {
           ctx.payload.params = route.paramKeys.reduce((a, b, index) => ({ ...a, [b.name]: result[index + 1] }), {})

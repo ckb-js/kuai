@@ -11,6 +11,7 @@ import { MvpError } from './exception'
 import { MvpResponse } from './response'
 
 const router = new KuaiRouter()
+
 function createCellPattern(lock: Script) {
   return (value: UpdateStorageValue) => {
     const cellLock = value.cell.cellOutput.lock
