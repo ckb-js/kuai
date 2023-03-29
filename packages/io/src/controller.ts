@@ -59,39 +59,28 @@ export class BaseController {
       const args = Object.values(argsMetadata)
         .map((arg) => {
           const value = (() => {
-            if (arg.paramtype === RouteParamtypes.BODY) {
-              if (arg.data === undefined) {
-                return ctx.payload.body
-              }
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              return (ctx.payload.body as any)[arg.data]
+            let typeValue
+            switch (arg.paramtype) {
+              case RouteParamtypes.BODY:
+                typeValue = ctx.payload.body
+                break
+              case RouteParamtypes.HEADERS:
+                typeValue = ctx.payload.header
+                break
+              case RouteParamtypes.PARAM:
+                typeValue = ctx.payload.params
+                break
+              case RouteParamtypes.QUERY:
+                typeValue = ctx.payload.query
+                break
+              default:
+                typeValue = undefined
+                break
             }
 
-            if (arg.paramtype === RouteParamtypes.HEADERS) {
-              if (arg.data === undefined) {
-                return ctx.payload.header
-              }
-              return ctx.payload.header[arg.data]
-            }
-
-            if (arg.paramtype === RouteParamtypes.PARAM) {
-              if (arg.data === undefined) {
-                return ctx.payload.params
-              }
-              return ctx.payload.params[arg.data]
-            }
-
-            if (arg.paramtype === RouteParamtypes.QUERY) {
-              if (ctx.payload.query === undefined) {
-                return undefined
-              }
-              if (arg.data === undefined) {
-                return ctx.payload.query
-              }
-              return ctx.payload.query[arg.data]
-            }
-
-            return undefined
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (arg.data !== undefined) return (typeValue as any)?.[arg.data]
+            return typeValue
           })()
 
           return {

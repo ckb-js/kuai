@@ -23,8 +23,12 @@ export interface RouteParamMetadata {
   data?: ParamData
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function assignMetadata<TArgs = any>(args: TArgs, paramtype: RouteParamtypes, index: number, data?: ParamData) {
+export function assignMetadata<TArgs = Record<number, RouteParamtypes>>(
+  args: TArgs,
+  paramtype: RouteParamtypes,
+  index: number,
+  data?: ParamData,
+) {
   return {
     ...args,
     [`${paramtype}:${index}`]: {
