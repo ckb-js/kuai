@@ -18,7 +18,7 @@ import { CellChangeBuffer } from './cell-change-buffer'
 
 type Registry = Map<ActorURI, ResourceBindingRegistry>
 
-@ActorProvider({ name: 'manager' }, true)
+@ActorProvider({ ref: { name: 'manager' }, bindWhenBootstrap: true })
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
   #registry: Map<TypeScriptHash, Map<LockScriptHash, Registry>> = new Map()
   #registryOutPoint: Map<OutPointString, Registry> = new Map()

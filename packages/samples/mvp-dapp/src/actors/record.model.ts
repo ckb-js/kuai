@@ -33,7 +33,7 @@ export type StoreType = {
 /**
  * add business logic in an actor
  */
-@ActorProvider({ name: 'record', path: '/:codeHash/:hashType/:args/' })
+@ActorProvider({ ref: { name: 'record', path: '/:codeHash/:hashType/:args/' } })
 @DataPrefixCellPattern(DAPP_DATA_PREFIX)
 @Lock()
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {

@@ -16,7 +16,11 @@ export const ProviderKey = {
   LockParam: Symbol('store:lock:param'),
 }
 
-export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>> = {}, bindWhenBootstrap = false) => {
+export const ActorProvider = (params: {
+  ref: Partial<Pick<ActorRef, 'name' | 'path'>>
+  bindWhenBootstrap?: boolean
+}) => {
+  const { ref, bindWhenBootstrap } = params
   return (target: unknown): void => {
     if (!target || typeof target !== 'function') {
       throw new ActorProviderException()
@@ -25,7 +29,7 @@ export const ActorProvider = (actorRef: Partial<Pick<ActorRef, 'name' | 'path'>>
     Reflect.defineMetadata(
       ProviderKey.Actor,
       {
-        ref: new ActorReference(actorRef.name || Date.now().toString(), actorRef.path || '/'), // TODO: use uuid in actor name
+        ref: new ActorReference(ref.name || Date.now().toString(), ref.path || '/'), // TODO: use uuid in actor name
         bindWhenBootstrap,
       },
       target,
