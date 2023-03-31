@@ -23,6 +23,6 @@
   },
   "devDependencies": {
     "@types/koa__cors": "4.0.0",
-    "typescript": "5.0.2"
+    "typescript": "5.0.3"
   }
 }
