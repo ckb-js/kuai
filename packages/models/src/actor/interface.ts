@@ -6,7 +6,6 @@ export type ActorURI = string
 export type ConstructorFunction = new (...args: Array<any>) => unknown
 
 export interface ActorRefParam {
-  param: string
   index: number
   value?: string
 }

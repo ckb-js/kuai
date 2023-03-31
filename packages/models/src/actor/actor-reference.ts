@@ -78,7 +78,7 @@ export class ActorReference {
     this.#params = this.#path.split('/').reduce((params, param, index) => {
       if (param.startsWith(':')) {
         param = param.slice(1)
-        return params.set(param, { param, index })
+        return params.set(param, { index })
       }
       return params
     }, new Map())
@@ -86,8 +86,8 @@ export class ActorReference {
 
   matchParams(pattern: ActorRef): Map<string, ActorRefParam> {
     const paths = this.#path.split('/')
-    pattern.params.forEach((param) => {
-      this.#params.set(param.param, { ...param, value: paths[param.index] })
+    pattern.params.forEach((param, key) => {
+      this.#params.set(key, { ...param, value: paths[param.index] })
     })
 
     return this.#params
