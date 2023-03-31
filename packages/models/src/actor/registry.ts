@@ -13,6 +13,7 @@ import {
   ProviderKey,
   ActorParamType,
   InvalidActorURIException,
+  InvalidActorException,
 } from '../utils'
 import { Router } from './router'
 import { ActorReference } from './actor-reference'
@@ -28,7 +29,11 @@ export class Registry {
     } catch (e) {
       console.log('Registry `find` catch error', e)
       if (bind) {
-        this.#bind(ref)
+        const module = this.#router.matchFirst(ref)
+        if (!module) {
+          throw new ActorNotFoundException(ref.uri)
+        }
+        this.#bind(ref, module)
         const actor = this.#container.get<T>(ref.uri)
         return actor
       }
@@ -82,20 +87,21 @@ export class Registry {
   /**
    * this method is defined as public for testing
    */
-  bind = (module: ConstructorFunction): void => this.#bind(Reflect.getMetadata(ProviderKey.Actor, module)?.ref, module)
+  bind = (module: ConstructorFunction): void => {
+    this.#bind(Reflect.getMetadata(ProviderKey.Actor, module)?.ref, module)
+  }
 
-  #bind = (ref: ActorReference, module?: ConstructorFunction): void => {
+  #bind = (ref: ActorReference, module: ConstructorFunction): void => {
+    if (!module) {
+      throw new InvalidActorException()
+    }
+
     if (!(ref instanceof ActorReference)) {
       throw new InvalidActorURIException(ref)
     }
 
     if (this.isLive(ref.uri)) {
       throw new DuplicatedActorException(ref.uri)
-    }
-
-    module = module ?? this.#router.matchFirst(ref)
-    if (!module) {
-      throw new ActorNotFoundException(ref.uri)
     }
 
     const paramPattern = Reflect.getMetadata(ProviderKey.ActorParam, module)

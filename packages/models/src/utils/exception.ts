@@ -23,6 +23,12 @@ export class ActorNotFoundException extends Error {
   }
 }
 
+export class InvalidActorException extends Error {
+  constructor() {
+    super(`try to bind an invalid actor`)
+  }
+}
+
 export class SendMailException extends Error {
   constructor(from: string, to: string) {
     super(`failed to send mail from ${from} to ${to}`)
