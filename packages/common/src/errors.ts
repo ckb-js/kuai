@@ -3,7 +3,7 @@ export interface ErrorDescriptor {
   message: string
 }
 
-const INTERNAL = {
+export const INTERNAL = {
   TEMPLATE_INVALID_VARIABLE_NAME: {
     code: 'TEMPLATE_INVALID_VARIABLE_NAME',
     message: 'Variable names can only include ascii letters and numbers, and start with a letter, but got %var%',

@@ -1,7 +1,7 @@
 import { jest, describe, it, expect } from '@jest/globals'
 import { CoR } from '../src/cor'
 import { Middleware } from '../src/types'
-import { KuaiError } from '@ckb-js/kuai-core'
+import { KuaiError } from '@ckb-js/kuai-common'
 import { NotFound } from 'http-errors'
 
 describe('Test CoR', () => {

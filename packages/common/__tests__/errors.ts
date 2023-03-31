@@ -1,9 +1,8 @@
 import { describe, it } from '@jest/globals'
 
-import { applyErrorMsgTemplate } from '../../common/src/errors'
+import { applyErrorMsgTemplate, INTERNAL, ErrorDescriptor } from '../src/errors'
 import { expect } from '@jest/globals'
-import { KuaiError } from '../../common/src/errors'
-import { ErrorDescriptor, INTERNAL } from '@ckb-js/kuai-common'
+import { KuaiError } from '../src/errors'
 
 describe('applyErrorMessageTemplate', () => {
   describe('Variable names', () => {

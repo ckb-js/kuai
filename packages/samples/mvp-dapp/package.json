@@ -5,7 +5,7 @@
     "build": "tsc",
     "build:watch": "tsc -w",
     "start:prod": "node ./dist/main.js",
-    "test": "kuai test"
+    "test": "jest test"
   },
   "dependencies": {
     "@ckb-js/kuai-core": "0.0.1",
