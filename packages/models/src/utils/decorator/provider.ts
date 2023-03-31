@@ -115,9 +115,9 @@ export function Lock(script?: Partial<Script>): ClassDecorator {
     Reflect.defineMetadata(
       ProviderKey.LockPattern,
       (ref?: ActorRef) => {
-        const codeHash = script?.codeHash ?? ref?.params.get('codeHash')?.value
-        const hashType = script?.hashType ?? ref?.params.get('hashType')?.value
-        const args = script?.args ?? ref?.params.get('args')?.value ?? '0x'
+        const codeHash = script?.codeHash ?? ref?.params?.get('codeHash')?.value
+        const hashType = script?.hashType ?? ref?.params?.get('hashType')?.value
+        const args = script?.args ?? ref?.params?.get('args')?.value ?? '0x'
         return codeHash && hashType ? { codeHash, hashType, args } : undefined
       },
       target,
@@ -130,7 +130,7 @@ export function Omnilock(): ClassDecorator {
     Reflect.defineMetadata(
       ProviderKey.LockPattern,
       (ref?: ActorRef) =>
-        createScriptRegistry(config.getConfig().SCRIPTS).newScript('OMNILOCK', ref?.params.get('args')?.value ?? '0x'),
+        createScriptRegistry(config.getConfig().SCRIPTS).newScript('OMNILOCK', ref?.params?.get('args')?.value ?? '0x'),
       target,
     )
   }

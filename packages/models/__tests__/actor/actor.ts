@@ -18,7 +18,6 @@ const PARENT_REF = {
   path: `/`,
   protocol: `local`,
   uri: `local://parent`,
-  params: new Map(),
 }
 
 const CHILD_REF = {
@@ -33,7 +32,6 @@ const THIRD_REF = {
   path: `/`,
   protocol: `local`,
   uri: `local://third`,
-  params: new Map(),
 }
 
 class ParentActor extends ActorBase {}

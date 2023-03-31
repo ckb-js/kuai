@@ -34,7 +34,6 @@ const ref = {
   protocol: '',
   path: '',
   uri: 'json',
-  params: new Map(),
 }
 
 type CustomType = string

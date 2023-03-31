@@ -45,7 +45,7 @@ export class ActorReference {
     return this.#uri
   }
 
-  get params(): Map<string, ActorRefParam> {
+  get params(): Map<string, ActorRefParam> | undefined {
     return this.#params
   }
 
@@ -85,6 +85,10 @@ export class ActorReference {
   }
 
   matchParams(pattern: ActorRef): Map<string, ActorRefParam> {
+    if (!pattern.params) {
+      return new Map()
+    }
+
     const paths = this.#path.split('/')
     pattern.params.forEach((param, key) => {
       this.#params.set(key, { ...param, value: paths[param.index] })

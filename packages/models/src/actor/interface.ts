@@ -14,7 +14,7 @@ export interface ActorRef {
   protocol: string
   path: string
   uri: ActorURI
-  params: Map<string, ActorRefParam>
+  params?: Map<string, ActorRefParam>
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
