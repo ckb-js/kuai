@@ -1,7 +1,7 @@
 import { task, subtask } from '../config/config-env'
 import { paramTypes } from '../params'
 import { CkbDockerNetwork } from '@ckb-js/kuai-docker-node'
-import { KuaiError } from '../errors'
+import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import '../type/runtime'
 

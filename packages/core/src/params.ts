@@ -1,5 +1,5 @@
 import { ArgumentType } from './type'
-import { KuaiError } from './errors'
+import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from './errors-list'
 
 const string: ArgumentType = {

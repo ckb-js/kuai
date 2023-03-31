@@ -1,4 +1,22 @@
-import { ErrorDescriptor, ERRORS } from './errors-list'
+export interface ErrorDescriptor {
+  code: string
+  message: string
+}
+
+const INTERNAL = {
+  TEMPLATE_INVALID_VARIABLE_NAME: {
+    code: 'TEMPLATE_INVALID_VARIABLE_NAME',
+    message: 'Variable names can only include ascii letters and numbers, and start with a letter, but got %var%',
+  },
+  TEMPLATE_VARIABLE_TAG_MISSING: {
+    code: 'TEMPLATE_VARIABLE_TAG_MISSING',
+    message: "Variable %var%'s tag not present in the template",
+  },
+  TEMPLATE_VALUE_CONTAINS_VARIABLE_TAG: {
+    code: 'TEMPLATE_VALUE_CONTAINS_VARIABLE_TAG',
+    message: "Template values can't include variable tags, but %var%'s value includes one",
+  },
+}
 
 const inspect = Symbol.for('nodejs.util.inspect.custom')
 
@@ -77,7 +95,7 @@ export function applyErrorMsgTemplate(template: string, values: { [templateVar: 
 function _applyErrorMsgTemplate(template: string, values: { [templateVar: string]: any }): string {
   for (const varName of Object.keys(values)) {
     if (varName.match(/^[a-zA-Z][a-zA-Z0-9]*$/) === null) {
-      throw new KuaiError(ERRORS.INTERNAL.TEMPLATE_INVALID_VARIABLE_NAME, {
+      throw new KuaiError(INTERNAL.TEMPLATE_INVALID_VARIABLE_NAME, {
         var: varName,
       })
     }
@@ -85,7 +103,7 @@ function _applyErrorMsgTemplate(template: string, values: { [templateVar: string
     const varTag = `%${varName}%`
 
     if (!template.includes(varTag)) {
-      throw new KuaiError(ERRORS.INTERNAL.TEMPLATE_VARIABLE_TAG_MISSING, {
+      throw new KuaiError(INTERNAL.TEMPLATE_VARIABLE_TAG_MISSING, {
         var: varName,
       })
     }
@@ -104,7 +122,7 @@ function _applyErrorMsgTemplate(template: string, values: { [templateVar: string
     const varTag = `%${varName}%`
 
     if (varValue.match(/%([a-zA-Z][a-zA-Z0-9]*)?%/) !== null) {
-      throw new KuaiError(ERRORS.INTERNAL.TEMPLATE_VALUE_CONTAINS_VARIABLE_TAG, { var: varName })
+      throw new KuaiError(INTERNAL.TEMPLATE_VALUE_CONTAINS_VARIABLE_TAG, { var: varName })
     }
 
     template = template.split(varTag).join(varValue)

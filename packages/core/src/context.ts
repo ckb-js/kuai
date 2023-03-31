@@ -1,7 +1,7 @@
 import { RuntimeEnvironment } from './type'
 import { TasksLoader } from './task-loader'
 import { ExtenderManager } from './extenders'
-import { KuaiError } from './errors'
+import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from './errors-list'
 
 export class KuaiContext {

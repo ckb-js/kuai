@@ -9,7 +9,7 @@ import {
   TaskMap,
 } from './type'
 import { OverrideTask } from './task'
-import { KuaiError } from './errors'
+import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from './errors-list'
 
 export class KuaiRuntimeEnvironment implements RuntimeEnvironment {

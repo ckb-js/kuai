@@ -1,5 +1,5 @@
 import { resolveConfigPath } from './config/config-loading'
-import { KuaiError } from './errors'
+import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from './errors-list'
 
 let cachedIsTypescriptSupported: boolean | undefined

@@ -1,7 +1,14 @@
 import { CoR as ICoR, Middleware, Context, JsonValue } from './types'
 import compose from 'koa-compose'
 import { isHttpError } from 'http-errors'
-import { CustomError, KError } from '@ckb-js/kuai-core'
+import { KuaiError } from '@ckb-js/kuai-common'
+
+export const UNKNOWN = {
+  UNKNOWN_ERROR: {
+    code: 'UNKNOWN ERROR',
+    message: 'UNKNOWN ERROR',
+  },
+}
 
 export class CoR<ContextT extends object = Record<string, never>> implements ICoR<ContextT> {
   private _middlewares: Middleware<ContextT>[] = []
@@ -35,10 +42,10 @@ export class CoR<ContextT extends object = Record<string, never>> implements ICo
       try {
         await next()
       } catch (e) {
-        if (e instanceof KError || isHttpError(e)) {
+        if (e instanceof KuaiError || isHttpError(e)) {
           context.err(e)
         } else {
-          context.err(new CustomError('UNKNOWN ERROR', e as Error))
+          context.err(new KuaiError(UNKNOWN.UNKNOWN_ERROR, e as Error))
         }
       }
     }
