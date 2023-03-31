@@ -42,6 +42,7 @@ export function assignMetadata<TArgs = Record<number, RouteParamtypes>>(
 function createRouteParamDecorator(paramtype: RouteParamtypes) {
   return (data?: ParamData): ParameterDecorator =>
     (target, key, index) => {
+      if (key === undefined) throw new Error('key in route param decorator is undefined')
       const args = Reflect.getMetadata(KUAI_ROUTE_ARGS_METADATA, target, key) || {}
       Reflect.defineMetadata(
         KUAI_ROUTE_ARGS_METADATA,
