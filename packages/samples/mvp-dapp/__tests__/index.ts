@@ -4,9 +4,9 @@ import { router } from '../src/app.controller'
 
 describe('controller test', () => {
   test('/load', async () => {
-    const cor = new CoR()
+    const cor = CoR.defaultCoR()
     cor.use(router.middleware())
 
-    await expect(cor.dispatch({ method: 'GET', path: '/load/mistakeaddress' })).rejects.toThrow(/invalid address/)
+    await expect(cor.dispatch({ method: 'GET', path: '/load/mistakeaddress' })).rejects.toThrow('invalid address')
   })
 })

@@ -1,13 +1,15 @@
-import { Context, HttpError, Next } from 'koa'
+import { Context, Next } from 'koa'
 import { MvpResponse } from './response'
+import { isHttpError } from 'http-errors'
 
 export function handleException() {
   return async (ctx: Context, next: Next) => {
     try {
       await next()
     } catch (err) {
-      if (err instanceof HttpError) {
+      if (isHttpError(err)) {
         ctx.body = { message: err.message }
+        ctx.status = err.status
       } else if (err instanceof MvpError) {
         ctx.status = 200
         ctx.body = MvpResponse.err(err.message, err.code)

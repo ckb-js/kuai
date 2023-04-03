@@ -28,11 +28,7 @@ function createRoute<
     path: options.path,
     method: options.method,
     middleware: async (ctx, next) => {
-      try {
-        await options.middleware(ctx, next)
-      } catch (e) {
-        ctx.err(e)
-      }
+      await options.middleware(ctx, next)
     },
     regexp,
     paramKeys: keys,
@@ -122,8 +118,7 @@ export class KuaiRouter {
 
         return route.middleware(ctx, next)
       } else {
-        ctx.err(new NotFound())
-        return next()
+        throw new NotFound()
       }
     }
   }
