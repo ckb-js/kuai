@@ -33,14 +33,14 @@ describe(`Test providers`, () => {
         protocol: 'local',
         uri: 'local://test_name',
       })
-      expect(metadata.bindWhenBootstrap).toBeFalsy()
+      expect(metadata.autoBind).toBeFalsy()
     })
 
     it(`should add metadata of actor ref with bind option`, () => {
       const target = () => {
         // ignore
       }
-      ActorProvider({ ref: { name: 'test_name' }, bindWhenBootstrap: true })(target)
+      ActorProvider({ ref: { name: 'test_name' }, autoBind: true })(target)
       const metadata = Reflect.getMetadata(ProviderKey.Actor, target)
       expect(metadata.ref).toMatchObject({
         name: 'test_name',
@@ -48,7 +48,7 @@ describe(`Test providers`, () => {
         protocol: 'local',
         uri: 'local://test_name',
       })
-      expect(metadata.bindWhenBootstrap).toBeTruthy()
+      expect(metadata.autoBind).toBeTruthy()
     })
   })
 })

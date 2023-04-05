@@ -78,7 +78,7 @@ export class Registry {
       if (metadata?.ref) {
         this.#router.addPath(metadata.ref, module)
       }
-      if (metadata?.bindWhenBootstrap) {
+      if (metadata?.autoBind) {
         this.#bind(metadata.ref, module)
       }
     }

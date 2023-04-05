@@ -19,9 +19,9 @@ export const ProviderKey = {
 
 export const ActorProvider = (params: {
   ref: Partial<Pick<ActorRef, 'name' | 'path'>>
-  bindWhenBootstrap?: boolean
+  autoBind?: boolean
 }): ClassDecorator => {
-  const { ref, bindWhenBootstrap } = params
+  const { ref, autoBind } = params
   return (target: unknown): void => {
     if (!target || typeof target !== 'function') {
       throw new ActorProviderException()
@@ -31,7 +31,7 @@ export const ActorProvider = (params: {
       ProviderKey.Actor,
       {
         ref: new ActorReference(ref.name || Date.now().toString(), ref.path || '/'), // TODO: use uuid in actor name
-        bindWhenBootstrap,
+        autoBind,
       },
       target,
     )
