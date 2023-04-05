@@ -20,7 +20,7 @@ export const ProviderKey = {
 export const ActorProvider = (params: {
   ref: Partial<Pick<ActorRef, 'name' | 'path'>>
   bindWhenBootstrap?: boolean
-}) => {
+}): ClassDecorator => {
   const { ref, bindWhenBootstrap } = params
   return (target: unknown): void => {
     if (!target || typeof target !== 'function') {
@@ -43,7 +43,7 @@ export interface ActorParamType {
   parameterIndex: number
 }
 
-export const Param = (routerParam: string) => {
+export const Param = (routerParam: string): ParameterDecorator => {
   return (target: object, propertyKey: string | symbol | undefined, parameterIndex: number): void => {
     const params: ActorParamType[] = Reflect.getMetadata(ProviderKey.ActorParam, target) ?? []
 
