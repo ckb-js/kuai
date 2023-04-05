@@ -64,8 +64,7 @@ describe(`Test Registry`, () => {
   describe(`should have method bind`, () => {
     it(`should throw an exception if bind repeatedly`, () => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        registry.bind(ParentActor as any)
+        registry.bind(ParentActor)
       } catch (e) {
         expect(e).toBeInstanceOf(DuplicatedActorException)
       }
@@ -75,8 +74,7 @@ describe(`Test Registry`, () => {
       try {
         class InvalidActor extends ActorBase {}
         Reflect.defineMetadata(ProviderKey.Actor, { ref: { uri: '' } }, InvalidActor)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        registry.bind(InvalidActor as any)
+        registry.bind(InvalidActor)
       } catch (e) {
         expect(e).toBeInstanceOf(InvalidActorURIException)
       }
