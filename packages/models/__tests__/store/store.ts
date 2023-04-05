@@ -251,10 +251,7 @@ describe('test store', () => {
 
     describe('test clone', () => {
       it('clone data and witness', () => {
-        const store = new JSONStore<{ data: { a: BigNumber }; witness: { b: string } }>({
-          data: true,
-          witness: true,
-        })
+        const store = new JSONStore<{ data: { a: BigNumber }; witness: { b: string } }>({ data: true, witness: true })
         const onchainData = store.initOnChain({ data: { a: BigNumber(1) }, witness: { b: 'BigNumber(20)' } })
         store.handleCall(createUpdateParams({ data: onchainData.data, witness: onchainData.witness }))
         const cloneRes = store.clone()
