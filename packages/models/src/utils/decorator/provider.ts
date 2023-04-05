@@ -9,6 +9,7 @@ import { config } from '@ckb-lumos/lumos'
 export const ProviderKey = {
   Actor: Symbol('container:actor'),
   ActorParam: Symbol('container:actor:param'),
+  ActorRoute: Symbol('container:actor:route'),
   SchemaPattern: Symbol('store:schema:pattern'),
   CellPattern: Symbol('store:cell:pattern'),
   LockPattern: Symbol('store:lock:pattern'),
@@ -115,9 +116,9 @@ export function Lock(script?: Partial<Script>): ClassDecorator {
     Reflect.defineMetadata(
       ProviderKey.LockPattern,
       (ref?: ActorRef) => {
-        const codeHash = script?.codeHash ?? ref?.params?.get('codeHash')?.value
-        const hashType = script?.hashType ?? ref?.params?.get('hashType')?.value
-        const args = script?.args ?? ref?.params?.get('args')?.value ?? '0x'
+        const codeHash = script?.codeHash ?? ref?.params?.codeHash
+        const hashType = script?.hashType ?? ref?.params?.hashType
+        const args = script?.args ?? ref?.params?.args ?? '0x'
         return codeHash && hashType ? { codeHash, hashType, args } : undefined
       },
       target,
@@ -130,7 +131,7 @@ export function Omnilock(): ClassDecorator {
     Reflect.defineMetadata(
       ProviderKey.LockPattern,
       (ref?: ActorRef) =>
-        createScriptRegistry(config.getConfig().SCRIPTS).newScript('OMNILOCK', ref?.params?.get('args')?.value ?? '0x'),
+        createScriptRegistry(config.getConfig().SCRIPTS).newScript('OMNILOCK', ref?.params?.args ?? '0x'),
       target,
     )
   }

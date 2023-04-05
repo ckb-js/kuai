@@ -5,16 +5,12 @@ export type ActorURI = string
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ConstructorFunction = new (...args: Array<any>) => unknown
 
-export interface ActorRefParam {
-  index: number
-  value?: string
-}
 export interface ActorRef {
   name: ActorName
   protocol: string
   path: string
   uri: ActorURI
-  params?: Map<string, ActorRefParam>
+  params?: Record<string, string>
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -2,7 +2,7 @@ import { Middleware, Route, Path, RouterContext, RoutePayload, Method } from './
 import type { Key } from 'path-to-regexp'
 import { pathToRegexp } from 'path-to-regexp'
 import { NotFound } from 'http-errors'
-import { addLeadingSlash, concatPaths } from './helper'
+import { addLeadingSlash, concatPaths, matchParams } from './helper'
 import {
   KUAI_ROUTE_METADATA_METHOD,
   KUAI_ROUTE_METADATA_PATH,
@@ -128,12 +128,8 @@ export class BaseController {
       }
 
       const route = this.#routes.find((route) => route.method === payload.method && matchPath(payload.path, route))
-      if (route) {
-        const result = route.regexp.exec(addLeadingSlash(ctx.payload.path))
-
-        if (result) {
-          ctx.payload.params = route.paramKeys.reduce((a, b, index) => ({ ...a, [b.name]: result[index + 1] }), {})
-        }
+      if (route && route.middleware) {
+        ctx.payload.params = matchParams({ path: ctx.payload.path, route })
 
         return route.middleware(ctx, next)
       } else {

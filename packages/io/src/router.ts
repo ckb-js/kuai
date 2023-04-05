@@ -109,7 +109,7 @@ export class KuaiRouter {
       }
 
       const route = this.routes.find((route) => route.method === payload.method && matchPath(payload.path, route))
-      if (route) {
+      if (route && route.middleware) {
         const result = route.regexp.exec(addLeadingSlash(ctx.payload.path))
 
         if (result) {

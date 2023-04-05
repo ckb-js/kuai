@@ -9,7 +9,8 @@
     ".": {
       "import": "./lib/index.js",
       "types": "./lib/index.d.ts",
-      "default": "./lib/index.js"
+      "default": "./lib/index.js",
+      "helper": "./lib/index.d.ts"
     }
   },
   "directories": {

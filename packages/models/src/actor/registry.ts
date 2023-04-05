@@ -29,12 +29,12 @@ export class Registry {
     } catch (e) {
       console.log('Registry `find` catch error', e)
       if (bind) {
-        const module = this.#router.matchFirst(ref)
+        const { module, parsedRef } = this.#router.matchFirst(ref)
         if (!module) {
           throw new ActorNotFoundException(ref.uri)
         }
-        this.#bind(ref, module)
-        const actor = this.#container.get<T>(ref.uri)
+        this.#bind(parsedRef, module)
+        const actor = this.#container.get<T>(parsedRef.uri)
         return actor
       }
       return undefined
@@ -104,16 +104,17 @@ export class Registry {
       throw new DuplicatedActorException(ref.uri)
     }
 
-    const paramPattern = Reflect.getMetadata(ProviderKey.ActorParam, module)
-    if (!paramPattern) {
+    const params = Reflect.getMetadata(ProviderKey.ActorParam, module)
+    if (!params) {
       this.#container.bind(ref.uri).to(module).inSingletonScope()
     } else {
-      const params = ref.matchParams(Reflect.getMetadata(ProviderKey.Actor, module).ref)
       this.#container
         .bind(ref.uri)
         .toDynamicValue(() =>
           module
-            ? new module(...(paramPattern as ActorParamType[]).map((pattern) => params.get(pattern.routerParam)?.value))
+            ? new module(
+                ...(params as ActorParamType[]).map((param) => param.routerParam).map((param) => ref.params[param]),
+              )
             : undefined,
         )
         .inSingletonScope()

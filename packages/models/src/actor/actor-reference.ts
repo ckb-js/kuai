@@ -1,6 +1,8 @@
-import type { ActorRef, ActorName, ActorURI, ActorRefParam, ConstructorFunction } from './interface'
+import type { ActorRef, ActorName, ActorURI, ConstructorFunction } from './interface'
 import { basename } from 'node:path'
 import { InvalidActorURIException, InvalidPathException, PROTOCOL, ProviderKey } from '../utils'
+import { matchParams } from '@ckb-js/kuai-io'
+import { Route } from '@ckb-js/kuai-io/lib/types'
 
 export class ActorReference {
   static fromURI = (uri: string): ActorReference => {
@@ -19,7 +21,11 @@ export class ActorReference {
     const pattern = Reflect.getMetadata(ProviderKey.Actor, module)?.ref
     if (!pattern || !(pattern instanceof ActorReference)) return
     const ref = new ActorReference(pattern.name, path, pattern.protocol)
-    ref.matchParams(pattern)
+    const route = Reflect.getMetadata(ProviderKey.ActorRoute, module)
+
+    if (route) {
+      ref.matchParams(route)
+    }
     return ref
   }
 
@@ -27,7 +33,7 @@ export class ActorReference {
   #path: string
   #protocol: string
   #uri: ActorURI
-  #params = new Map<string, ActorRefParam>()
+  #params: Record<string, string> = {}
 
   get name(): ActorName {
     return this.#name
@@ -45,12 +51,8 @@ export class ActorReference {
     return this.#uri
   }
 
-  get params(): Map<string, ActorRefParam> | undefined {
+  get params(): Record<string, string> {
     return this.#params
-  }
-
-  getParam(key: string): ActorRefParam | undefined {
-    return this.#params.get(key)
   }
 
   get json(): ActorRef {
@@ -74,30 +76,23 @@ export class ActorReference {
     }
 
     this.#uri = this.#protocol + ':/' + this.#path + this.#name.toString()
-
-    this.#params = this.#path.split('/').reduce((params, param, index) => {
-      if (param.startsWith(':')) {
-        param = param.slice(1)
-        return params.set(param, { index })
-      }
-      return params
-    }, new Map())
   }
 
-  matchParams(pattern: ActorRef): Map<string, ActorRefParam> {
-    if (!pattern.params) {
-      return new Map()
-    }
-
-    const paths = this.#path.split('/')
-    pattern.params.forEach((param, key) => {
-      this.#params.set(key, { ...param, value: paths[param.index] })
-    })
+  matchParams(route: Route): Record<string, string> {
+    const path = `${this.#path}${this.#name.toString()}`
+    this.#params = matchParams({ path, route })
 
     return this.#params
   }
 
   toString(): string {
     return this.uri
+  }
+
+  clone(): ActorReference {
+    const ref = new ActorReference(this.name, this.#path, this.#protocol)
+    ref.#params = this.#params
+
+    return ref
   }
 }
