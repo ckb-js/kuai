@@ -7,7 +7,8 @@ describe(`Test providers`, () => {
   describe(`Test ActorProvider`, () => {
     it(`should throw an exception if target is undefined`, () => {
       try {
-        ActorProvider({ ref: {} })(undefined)
+        const decorator = ActorProvider({ ref: {} }) as (target: unknown) => void
+        decorator(undefined)
       } catch (e) {
         expect(e).toBeInstanceOf(ActorProviderException)
       }
@@ -15,7 +16,8 @@ describe(`Test providers`, () => {
 
     it(`should throw an exception if target is not a function`, () => {
       try {
-        ActorProvider({ ref: {} })('1')
+        const decorator = ActorProvider({ ref: {} }) as (target: unknown) => void
+        decorator('1')
       } catch (e) {
         expect(e).toBeInstanceOf(ActorProviderException)
       }

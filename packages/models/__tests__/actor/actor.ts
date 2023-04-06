@@ -219,7 +219,7 @@ describe(`Test Actor`, () => {
       it('should call handle call message', () => {
         expect(handleCallSpy).toBeCalledWith({
           behavior: 'call',
-          from: { name: 'parent', path: '/', protocol: 'local', uri: 'local://parent', params: new Map() },
+          from: { name: 'parent', path: '/', protocol: 'local', uri: 'local://parent', params: {} },
           payload: { pattern: 'one' },
           timeout: 0,
         })
@@ -227,7 +227,7 @@ describe(`Test Actor`, () => {
       it('should call handle cast message', () => {
         expect(handleCastSpy).toBeCalledWith({
           behavior: 'cast',
-          from: { name: 'parent', path: '/', protocol: 'local', uri: 'local://parent', params: new Map() },
+          from: { name: 'parent', path: '/', protocol: 'local', uri: 'local://parent', params: {} },
           payload: { pattern: 'two' },
           timeout: 0,
         })
