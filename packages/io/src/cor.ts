@@ -6,7 +6,7 @@ import { KuaiError } from '@ckb-js/kuai-common'
 export const UNKNOWN = {
   UNKNOWN_ERROR: {
     code: 'UNKNOWN ERROR',
-    message: 'UNKNOWN ERROR',
+    message: 'code: %code%, UNKNOWN ERROR',
   },
 }
 

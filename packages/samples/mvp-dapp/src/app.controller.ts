@@ -102,7 +102,7 @@ router.post<never, { address: string }, { capacity: HexString }>('/claim/:addres
 
   const omnilockModel = await getOmnilockModel(params?.address)
   const result = omnilockModel.claim(body.capacity)
-  ctx.ok(MvpResponse.ok(Tx.toJsonString(result)))
+  ctx.ok(MvpResponse.ok(await Tx.toJsonString(result)))
 })
 
 router.get<never, { path: string; address: string }>('/load/:address/:path', async (ctx) => {
