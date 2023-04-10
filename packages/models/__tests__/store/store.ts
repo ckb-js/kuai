@@ -1,9 +1,16 @@
 import { bytes, molecule, number } from '@ckb-lumos/codec'
-import type { Cell, HexString, Script } from '@ckb-lumos/base'
+import type { Cell, HexString, OutPoint, Script } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import BigNumber from 'bignumber.js'
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
-import { NonExistentException, NonStorageInstanceException } from '../../src/exceptions'
+import { NoCellToUseException, NonExistentException, NonStorageInstanceException } from '../../src/exceptions'
+import {
+  GetStorageStruct,
+  GetStorageStructByTemplate,
+  JSONStorageOffChain,
+  UpdateStorageValue,
+  UseLatestStrategy,
+} from '../../src'
 import {
   ChainStorage,
   JSONStore,
@@ -51,6 +58,17 @@ class StorageCustom<T extends CustomType = CustomType> extends ChainStorage<T> {
     deserializeMock()
     return data.toString() as T
   }
+
+  isSimpleType(value: unknown): boolean {
+    const vType = typeof value
+    return (
+      vType === 'string' ||
+      vType === 'boolean' ||
+      vType === 'number' ||
+      vType === 'undefined' ||
+      value instanceof BigNumber
+    )
+  }
 }
 
 class CustomStore<R extends StorageSchema<CustomType>> extends Store<StorageCustom<CustomType>, R> {
@@ -76,10 +94,12 @@ const createCell = ({
   lock,
   data,
   type,
+  outPoint,
 }: {
   type?: Script
   lock?: Script
   data?: HexString
+  outPoint?: OutPoint
 } = {}): Cell => {
   return {
     cellOutput: {
@@ -92,7 +112,7 @@ const createCell = ({
       type,
     },
     data: data || '0x',
-    outPoint: defaultOutpoint,
+    outPoint: outPoint ?? defaultOutpoint,
   }
 }
 
@@ -102,6 +122,7 @@ const createUpdateParams = (
     lock?: Script
     data?: HexString
     witness?: HexString
+    outPoint?: OutPoint
   } = {},
 ) => ({
   from: ref,
@@ -172,6 +193,14 @@ describe('test store', () => {
     })
 
     describe('test handleCall with add', () => {
+      it('add in section store', () => {
+        const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
+        const initValue = { a: BigNumber(1) }
+        const onchainData = store.initOnChain({ data: initValue })
+        const sectionStore = store.cloneSection()
+        sectionStore.handleCall(createUpdateParams({ data: onchainData.data }))
+        expect(sectionStore.get(defaultOutpointString)).toBeUndefined()
+      })
       it('add data success', () => {
         const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
         const initValue = { a: BigNumber(1) }
@@ -342,8 +371,8 @@ describe('test store', () => {
         )
       })
       it('get with non existent exception', () => {
-        expect(() => store.get(defaultOutpointString, ['data', 'a111'])).toThrow(
-          new NonExistentException(`${defaultOutpointString}:${['data', 'a111'].join('.')}`),
+        expect(() => store.get(defaultOutpointString, ['data', 'a111', 'a222'])).toThrow(
+          new NonExistentException(`${defaultOutpointString}:${['data', 'a111', 'a222'].join('.')}`),
         )
       })
       it('get lock', () => {
@@ -382,13 +411,13 @@ describe('test store', () => {
         }),
       )
       it('set success without path', () => {
-        store.set(defaultOutpointString, {
+        const changedStore = store.set(defaultOutpointString, {
           data: { a: BigNumber(1), b: { c: BigNumber(2) } },
           witness: true,
           lockArgs: BigNumber(3),
           typeArgs: { a: BigNumber(4) },
         })
-        expect(store.get(defaultOutpointString)).toStrictEqual({
+        expect(changedStore.get(defaultOutpointString)).toStrictEqual({
           data: { a: BigNumber(1), b: { c: BigNumber(2) } },
           witness: true,
           lockArgs: BigNumber(3),
@@ -406,20 +435,239 @@ describe('test store', () => {
         ).toThrow(new NonExistentException('0x1234'))
       })
       it('set success with data path', () => {
-        store.set(defaultOutpointString, { a: BigNumber(2), b: { c: BigNumber(1) } }, ['data'])
-        expect(store.get(defaultOutpointString, ['data'])).toStrictEqual({ a: BigNumber(2), b: { c: BigNumber(1) } })
+        const changedStore = store.set(defaultOutpointString, ['data'], { a: BigNumber(2), b: { c: BigNumber(1) } })
+        expect(changedStore.get(defaultOutpointString, ['data'])).toStrictEqual({
+          a: BigNumber(2),
+          b: { c: BigNumber(1) },
+        })
       })
       it('set success with data inner path', () => {
-        store.set(defaultOutpointString, { c: BigNumber(1) }, ['data', 'b'])
-        expect(store.get(defaultOutpointString, ['data', 'b'])).toStrictEqual({ c: BigNumber(1) })
+        const changedStore = store.set(defaultOutpointString, ['data', 'b'], { c: BigNumber(1) })
+        expect(changedStore.get(defaultOutpointString, ['data', 'b'])).toStrictEqual({ c: BigNumber(1) })
       })
       it('set lock args', () => {
-        store.set(defaultOutpointString, BigNumber(1), ['lockArgs'])
-        expect(store.get(defaultOutpointString, ['lockArgs'])).toStrictEqual(BigNumber(1))
+        const changedStore = store.set(defaultOutpointString, ['lockArgs'], BigNumber(1))
+        expect(changedStore.get(defaultOutpointString, ['lockArgs'])).toStrictEqual(BigNumber(1))
       })
       it('set type args', () => {
-        store.set(defaultOutpointString, { a: BigNumber(1) }, ['typeArgs'])
-        expect(store.get(defaultOutpointString, ['typeArgs'])).toStrictEqual({ a: BigNumber(1) })
+        const changedStore = store.set(defaultOutpointString, ['typeArgs'], { a: BigNumber(1) })
+        expect(changedStore.get(defaultOutpointString, ['typeArgs'])).toStrictEqual({ a: BigNumber(1) })
+      })
+    })
+
+    describe('test merge cells data with handle call', () => {
+      const initValue = { data: { a: 'a1', b: BigNumber(10) } }
+      it('use latest cell', () => {
+        class UseLatestStore<R extends StorageSchema<JSONStorageOffChain>> extends JSONStore<R> {
+          protected mergeStrategy = new UseLatestStrategy<GetStorageStruct<GetStorageStructByTemplate<R>>>()
+        }
+        const useLatestStore = new UseLatestStore<{ data: { a: string; b?: BigNumber } }>({ data: true })
+        useLatestStore.handleCall(createUpdateParams({ data: useLatestStore.initOnChain(initValue).data }))
+        useLatestStore.handleCall(
+          createUpdateParams({
+            data: useLatestStore.initOnChain({ data: { a: 'a2' } }).data,
+            outPoint: { txHash: `0x01${'0'.repeat(62)}`, index: '0x0' },
+          }),
+        )
+        expect(useLatestStore.get()).toStrictEqual({ data: { a: 'a2' } })
+      })
+      it('last cell not exist', () => {
+        const store = new JSONStore<{ data: { a: string; b?: BigNumber; c?: string[] } }>({ data: true })
+        store.handleCall(createUpdateParams({ data: store.initOnChain(initValue).data }))
+        expect(store.get()).toStrictEqual(initValue)
+      })
+      it('last cell exist', () => {
+        const store = new JSONStore<{ data: { a: string; b?: BigNumber; c?: string[] } }>({ data: true })
+        store.handleCall(createUpdateParams({ data: store.initOnChain(initValue).data }))
+        store.handleCall(
+          createUpdateParams({
+            data: store.initOnChain({ data: { a: 'a2' } }).data,
+            outPoint: { txHash: `0x01${'0'.repeat(62)}`, index: '0x0' },
+          }),
+        )
+        expect(store.get()).toStrictEqual({ data: { a: 'a2', b: BigNumber(10) } })
+      })
+      it('merge array', () => {
+        const store = new JSONStore<{ data: { a: string; b?: BigNumber; c?: string[] } }>({ data: true })
+        store.handleCall(
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a1', b: BigNumber(10), c: ['1', '2'] } }).data }),
+        )
+        store.handleCall(
+          createUpdateParams({
+            data: store.initOnChain({ data: { a: 'a2', c: ['3'] } }).data,
+            outPoint: { txHash: `0x01${'0'.repeat(62)}`, index: '0x0' },
+          }),
+        )
+        expect(store.get()).toStrictEqual({ data: { a: 'a2', b: BigNumber(10), c: ['1', '2', '3'] } })
+      })
+    })
+
+    describe('test merge cells data with set', () => {
+      const outPointTmp = { txHash: `0x01${'0'.repeat(62)}`, index: '0x0' }
+      const outPointTmpString = outPointToOutPointString(outPointTmp)
+      it('set use latest strategy is true', () => {
+        class UseLatestStore<R extends StorageSchema<JSONStorageOffChain>> extends JSONStore<R> {
+          protected mergeStrategy = new UseLatestStrategy<GetStorageStruct<GetStorageStructByTemplate<R>>>()
+        }
+        const useLatestStore = new UseLatestStore<{ data: { a: string; b?: BigNumber } }>({ data: true })
+        useLatestStore.handleCall(
+          createUpdateParams({ data: useLatestStore.initOnChain({ data: { a: 'a1', b: BigNumber(1) } }).data }),
+        )
+        useLatestStore.handleCall(
+          createUpdateParams({ data: useLatestStore.initOnChain({ data: { a: 'a2' } }).data, outPoint: outPointTmp }),
+        )
+        const changedStore = useLatestStore.set(['data', 'b'], BigNumber(10))
+        expect(changedStore.get()).toStrictEqual({ data: { a: 'a2', b: BigNumber(10) } })
+        // early cell not changed
+        expect(changedStore.get(defaultOutpointString)).toStrictEqual({ data: { a: 'a1', b: BigNumber(1) } })
+        expect(changedStore.getChainData(defaultOutpointString).cell).toStrictEqual(
+          createCell({ data: useLatestStore.initOnChain({ data: { a: 'a1', b: BigNumber(1) } }).data }),
+        )
+        // changed on the latest cell
+        expect(changedStore.get(outPointTmpString)).toStrictEqual({ data: { a: 'a2', b: BigNumber(10) } })
+        expect(changedStore.getChainData(outPointTmpString).cell).toStrictEqual(
+          createCell({
+            data: useLatestStore.initOnChain({ data: { a: 'a2', b: BigNumber(10) } }).data,
+            outPoint: outPointTmp,
+          }),
+        )
+      })
+      it('set merged data with root', () => {
+        const store = new JSONStore<{ data: { a: string; b?: BigNumber; c?: string[] } }>({ data: true })
+        store.handleCall(
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a1', b: BigNumber(1), c: ['1'] } }).data }),
+        )
+        store.handleCall(
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a2', c: ['2'] } }).data, outPoint: outPointTmp }),
+        )
+        const changedStore = store.set({ data: { a: 'a3', b: BigNumber(20), c: ['c1', 'c2'] } })
+        expect(changedStore.get(outPointTmpString)).toStrictEqual({
+          data: { a: 'a3', b: BigNumber(20), c: ['c1', 'c2'] },
+        })
+        expect(changedStore.get(defaultOutpointString)).toBeUndefined()
+      })
+      it('set field with type array', () => {
+        const store = new JSONStore<{ data: { a: string; b?: BigNumber; c?: string[] } }>({ data: true })
+        store.handleCall(
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a1', b: BigNumber(1), c: ['1'] } }).data }),
+        )
+        store.handleCall(
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a2', c: ['2'] } }).data, outPoint: outPointTmp }),
+        )
+        const changedStore = store.set(['data', 'c'], ['1', '2', '3'])
+        expect(changedStore.get()).toStrictEqual({ data: { a: 'a2', b: BigNumber(1), c: ['1', '2', '3'] } })
+        expect(changedStore.get(outPointTmpString)).toStrictEqual({ data: { a: 'a2', c: ['1', '2', '3'] } })
+        expect(changedStore.get(defaultOutpointString)).toStrictEqual({ data: { b: BigNumber(1) } })
+        expect(changedStore.getChainData(outPointTmpString).cell).toStrictEqual(
+          createCell({
+            data: store.initOnChain({ data: { a: 'a2', c: ['1', '2', '3'] } }).data,
+            outPoint: outPointTmp,
+          }),
+        )
+        expect(changedStore.getChainData(defaultOutpointString).cell).toStrictEqual(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          createCell({ data: store.initOnChain({ data: { b: BigNumber(1) } as any }).data }),
+        )
+      })
+      it('set field with type not array', () => {
+        const store = new JSONStore<{ data: { a?: string; b?: BigNumber } }>({ data: true })
+        store.handleCall(createUpdateParams({ data: store.initOnChain({ data: { a: 'a1', b: BigNumber(1) } }).data }))
+        store.handleCall(
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a2' } }).data, outPoint: outPointTmp }),
+        )
+        const changedStore = store.set(['data', 'b'], BigNumber(10)).set(['data', 'a'], 'a3')
+        expect(changedStore.get()).toStrictEqual({ data: { a: 'a3', b: BigNumber(10) } })
+        expect(changedStore.get(outPointTmpString)).toStrictEqual({ data: { a: 'a3' } })
+        expect(changedStore.get(defaultOutpointString)).toStrictEqual({ data: { b: BigNumber(10) } })
+        expect(changedStore.getChainData(outPointTmpString).cell).toStrictEqual(
+          createCell({ data: store.initOnChain({ data: { a: 'a3' } }).data, outPoint: outPointTmp }),
+        )
+        expect(changedStore.getChainData(defaultOutpointString).cell).toStrictEqual(
+          createCell({ data: store.initOnChain({ data: { b: BigNumber(10) } }).data }),
+        )
+      })
+      it('set new field and remove old field', () => {
+        const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
+        store.handleCall(createUpdateParams({ data: store.initOnChain({ data: { a: BigNumber(1) } }).data }))
+        store.handleCall(
+          createUpdateParams({ data: store.initOnChain({ data: { a: BigNumber(10) } }).data, outPoint: outPointTmp }),
+        )
+        const changedStore = store.set(['data', 'a'], BigNumber(10)).set(['data', 'a'], BigNumber(20))
+        expect(changedStore.get()).toStrictEqual({ data: { a: BigNumber(20) } })
+        expect(changedStore.get(outPointTmpString)).toStrictEqual({ data: { a: BigNumber(20) } })
+        expect(changedStore.get(defaultOutpointString)).toStrictEqual({ data: { a: BigNumber(1) } })
+        expect(changedStore.getChainData(outPointTmpString).cell).toStrictEqual(
+          createCell({ data: store.initOnChain({ data: { a: BigNumber(20) } }).data, outPoint: outPointTmp }),
+        )
+        expect(changedStore.getChainData(defaultOutpointString).cell).toStrictEqual(
+          createCell({ data: store.initOnChain({ data: { a: BigNumber(1) } }).data }),
+        )
+      })
+      it('throw exception when store has no cell', () => {
+        const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
+        expect(() => store.set(['data', 'a'], BigNumber(20))).toThrow(new NoCellToUseException())
+      })
+      it('throw exception when store has no data', () => {
+        const store = new JSONStore<{ data: { a: BigNumber } }>({ data: true })
+        store.handleCall(createUpdateParams({ data: store.initOnChain({ data: { a: BigNumber(1) } }).data }))
+        expect(() => store.set(['data', 'b', 'c'], BigNumber(20))).toThrow(
+          new NonExistentException(`${['data', 'b', 'c'].join('.')}`),
+        )
+      })
+    })
+
+    describe('test getTxFromDiff', () => {
+      const outPointTmp = { txHash: `0x01${'0'.repeat(62)}`, index: '0x0' }
+      it('get tx when merge all cells', () => {
+        const store = new JSONStore<{ data: { a: string; b?: BigNumber; c?: string[] } }>({ data: true })
+        const updates = [
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a1', b: BigNumber(1), c: ['1'] } }).data }),
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a2', c: ['2'] } }).data, outPoint: outPointTmp }),
+        ]
+        store.handleCall(updates[0])
+        store.handleCall(updates[1])
+        const changedStore = store.set({ data: { a: 'a3', b: BigNumber(20), c: ['c1', 'c2'] } })
+        const tx = changedStore.getTxFromDiff(store)
+        expect(tx.inputs).toStrictEqual([
+          (updates[0].payload.value[0] as UpdateStorageValue).cell,
+          (updates[1].payload.value[0] as UpdateStorageValue).cell,
+        ])
+        const expectedOutput = (updates[1].payload.value[0] as UpdateStorageValue).cell
+        expectedOutput.cellOutput.capacity = BI.from('0x16b969d00').add('0x16b969d00').toHexString()
+        expectedOutput.data = store.initOnChain({ data: { a: 'a3', b: BigNumber(20), c: ['c1', 'c2'] } }).data
+        expect(tx.outputs).toStrictEqual([expectedOutput])
+      })
+      it('change two of three cells', () => {
+        const store = new JSONStore<{ data: { a: string; b?: BigNumber; c?: { d: string } } }>({ data: true })
+        const outPointTmp2 = { txHash: `0x02${'0'.repeat(62)}`, index: '0x0' }
+        const updates = [
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a1', c: { d: 'd1' } } }).data }),
+          createUpdateParams({
+            data: store.initOnChain({ data: { a: 'a2', b: BigNumber(1) } }).data,
+            outPoint: outPointTmp,
+          }),
+          createUpdateParams({ data: store.initOnChain({ data: { a: 'a2' } }).data, outPoint: outPointTmp2 }),
+        ]
+        store.handleCall(updates[0])
+        store.handleCall(updates[1])
+        store.handleCall(updates[2])
+        const changedStore = store.set(['data', 'b'], BigNumber(20)).set(['data', 'c', 'd'], 'd2')
+        const tx = changedStore.getTxFromDiff(store)
+        expect(tx.inputs).toStrictEqual([
+          (updates[1].payload.value[0] as UpdateStorageValue).cell,
+          (updates[0].payload.value[0] as UpdateStorageValue).cell,
+        ])
+        const expectedOutput = [
+          changedStore.getChainData(outPointToOutPointString(outPointTmp)),
+          changedStore.getChainData(defaultOutpointString),
+        ]
+        expect(tx.outputs[0].cellOutput).toStrictEqual(expectedOutput[0].cell.cellOutput)
+        expect(tx.outputs[1].cellOutput).toStrictEqual(expectedOutput[1].cell.cellOutput)
+        expect(expectedOutput[0].cell.data).toBe(changedStore.initOnChain({ data: { a: 'a2', b: BigNumber(20) } }).data)
+        expect(expectedOutput[1].cell.data).toStrictEqual(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          changedStore.initOnChain({ data: { c: { d: 'd2' } } as any }).data,
+        )
       })
     })
   })
@@ -735,8 +983,8 @@ describe('test store', () => {
         )
       })
       it('get with non existent exception', () => {
-        expect(() => store.get(defaultOutpointString, ['data', 'a111'])).toThrow(
-          new NonExistentException(`${defaultOutpointString}:${['data', 'a111'].join('.')}`),
+        expect(() => store.get(defaultOutpointString, ['data', 'a111', 'a222'])).toThrow(
+          new NonExistentException(`${defaultOutpointString}:${['data', 'a111', 'a222'].join('.')}`),
         )
       })
       it('get lock', () => {
@@ -788,13 +1036,13 @@ describe('test store', () => {
         }),
       )
       it('set success without path', () => {
-        store.set(defaultOutpointString, {
+        const changedStore = store.set(defaultOutpointString, {
           data: 20,
           witness: BI.from(20000000000),
           lockArgs: ['arg3', 'arg4'],
           typeArgs: { a: 'a2', b: 20 },
         })
-        expect(store.get(defaultOutpointString)).toStrictEqual({
+        expect(changedStore.get(defaultOutpointString)).toStrictEqual({
           data: 20,
           witness: BI.from(20000000000),
           lockArgs: ['arg3', 'arg4'],
@@ -812,20 +1060,20 @@ describe('test store', () => {
         ).toThrow(new NonExistentException('0x1234'))
       })
       it('set success with data path', () => {
-        store.set(defaultOutpointString, 30, ['data'])
-        expect(store.get(defaultOutpointString, ['data'])).toEqual(30)
+        const changedStore = store.set(defaultOutpointString, ['data'], 30)
+        expect(changedStore.get(defaultOutpointString, ['data'])).toEqual(30)
       })
       it('set lock args', () => {
-        store.set(defaultOutpointString, ['a1', 'a2'], ['lockArgs'])
-        expect(store.get(defaultOutpointString, ['lockArgs'])).toStrictEqual(['a1', 'a2'])
+        const changedStore = store.set(defaultOutpointString, ['lockArgs'], ['a1', 'a2'])
+        expect(changedStore.get(defaultOutpointString, ['lockArgs'])).toStrictEqual(['a1', 'a2'])
       })
       it('set type args', () => {
-        store.set(defaultOutpointString, { a: 'a set type', b: 40 }, ['typeArgs'])
-        expect(store.get(defaultOutpointString, ['typeArgs'])).toStrictEqual({ a: 'a set type', b: 40 })
+        const changedStore = store.set(defaultOutpointString, ['typeArgs'], { a: 'a set type', b: 40 })
+        expect(changedStore.get(defaultOutpointString, ['typeArgs'])).toStrictEqual({ a: 'a set type', b: 40 })
       })
       it('set success with type args inner path', () => {
-        store.set(defaultOutpointString, 'set inner with path', ['typeArgs', 'a'])
-        expect(store.get(defaultOutpointString, ['typeArgs', 'a'])).toEqual('set inner with path')
+        const changedStore = store.set(defaultOutpointString, ['typeArgs', 'a'], 'set inner with path')
+        expect(changedStore.get(defaultOutpointString, ['typeArgs', 'a'])).toEqual('set inner with path')
       })
     })
   })
