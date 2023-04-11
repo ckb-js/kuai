@@ -81,7 +81,6 @@ router.post<never, { address: string }, { value: StoreType['data'] }>('/set/:add
 
 router.post<never, { address: string }>('/clear/:address', async (ctx) => {
   const lock = getLock(ctx.payload.params?.address)
-  console.log(lock)
   const recordModel = appRegistry.findOrBind<RecordModel>(
     new ActorReference('record', `/${lock.codeHash}/${lock.hashType}/${lock.args}/`),
   )

@@ -78,8 +78,7 @@ export function Pattern({
 }
 
 export function DataCellPattern(data: string): ClassDecorator {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cellPattern = (obj: any) => {
+  const cellPattern = (obj: { lockScript: Script }) => {
     return (value: UpdateStorageValue) => {
       const cellLock = value.cell.cellOutput.lock
       return (
@@ -95,8 +94,7 @@ export function DataCellPattern(data: string): ClassDecorator {
 }
 
 export function DataPrefixCellPattern(prefix: string): ClassDecorator {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cellPattern = (obj: any) => {
+  const cellPattern = (obj: { lockScript: Script }) => {
     return (value: UpdateStorageValue) => {
       const cellLock = value.cell.cellOutput.lock
       return (
