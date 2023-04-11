@@ -4,7 +4,6 @@ import { HexString, helpers } from '@ckb-lumos/lumos'
 import { ActorReference } from '@ckb-js/kuai-models'
 import { BadRequest, NotFound } from 'http-errors'
 import { appRegistry, OmnilockModel, RecordModel } from './actors'
-import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
 import { Tx } from './views/tx.view'
 import { MvpResponse } from './response'
 
@@ -20,7 +19,7 @@ const getLock = (address: string) => {
 
 router.get<never, { address: string }>('/meta/:address', async (ctx) => {
   const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
-    new ActorReference('omnilock', `/${computeScriptHash(getLock(ctx.payload.params.address))}/`),
+    new ActorReference('omnilock', `/${getLock(ctx.payload.params.address).args}/`),
   )
 
   ctx.ok(MvpResponse.ok(omniLockModel?.meta))
@@ -34,7 +33,7 @@ router.post<never, { address: string }, { capacity: HexString }>('/claim/:addres
   }
 
   const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
-    new ActorReference('omnilock', `/${computeScriptHash(getLock(params?.address))}/`),
+    new ActorReference('omnilock', `/${getLock(params?.address).args}/`),
   )
   const result = omniLockModel.claim(body.capacity)
   ctx.ok(MvpResponse.ok(Tx.toJsonString(result)))
@@ -47,8 +46,9 @@ router.get<never, { path: string; address: string }>('/load/:address/:path', asy
     throw new BadRequest('invalid path')
   }
 
+  const lock = getLock(ctx.payload.params?.address)
   const recordModel = appRegistry.findOrBind<RecordModel>(
-    new ActorReference('record', `/${computeScriptHash(getLock(params?.address))}/`),
+    new ActorReference('record', `/${lock.codeHash}/${lock.hashType}/${lock.args}/`),
   )
   const value = recordModel.load(`data.${params.path}`)
   if (value) {
@@ -71,16 +71,19 @@ router.get<never, { address: string }>('/load/:address', async (ctx) => {
 })
 
 router.post<never, { address: string }, { value: StoreType['data'] }>('/set/:address', async (ctx) => {
+  const lock = getLock(ctx.payload.params?.address)
   const recordModel = appRegistry.findOrBind<RecordModel>(
-    new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
+    new ActorReference('record', `/${lock.codeHash}/${lock.hashType}/${lock.args}/`),
   )
   const result = recordModel.update(ctx.payload.body.value)
   ctx.ok(MvpResponse.ok(Tx.toJsonString(result)))
 })
 
 router.post<never, { address: string }>('/clear/:address', async (ctx) => {
+  const lock = getLock(ctx.payload.params?.address)
+  console.log(lock)
   const recordModel = appRegistry.findOrBind<RecordModel>(
-    new ActorReference('record', `/${computeScriptHash(getLock(ctx.payload.params?.address))}/`),
+    new ActorReference('record', `/${lock.codeHash}/${lock.hashType}/${lock.args}/`),
   )
   const result = recordModel.clear()
   ctx.ok(MvpResponse.ok(await Tx.toJsonString(result)))
