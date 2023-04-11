@@ -45,10 +45,12 @@ export class Registry {
     return this.#actors.has(uri)
   }
 
-  find = <T extends Actor = Actor>(ref: ActorReference): T | undefined => this.#find(ref)
+  find = <T extends Actor = Actor>(ref: ActorReference | string): T | undefined => {
+    return this.#find(typeof ref == 'string' ? ActorReference.fromURI(ref) : ref)
+  }
 
-  findOrBind = <T extends Actor = Actor>(ref: ActorReference): T => {
-    const actor = this.#find<T>(ref, true)
+  findOrBind = <T extends Actor = Actor>(ref: ActorReference | string): T => {
+    const actor = this.#find<T>(typeof ref == 'string' ? ActorReference.fromURI(ref) : ref, true)
     if (!actor) throw new Error('module bind error')
     return actor
   }

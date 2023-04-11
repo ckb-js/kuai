@@ -126,13 +126,21 @@ export function Lock(script?: Partial<Script>): ClassDecorator {
   }
 }
 
-export function Omnilock(): ClassDecorator {
+export function DefaultLock(lockName: keyof config.ScriptConfigs): ClassDecorator {
   return (target: object) => {
     Reflect.defineMetadata(
       ProviderKey.LockPattern,
       (ref?: ActorRef) =>
-        createScriptRegistry(config.getConfig().SCRIPTS).newScript('OMNILOCK', ref?.params?.args ?? '0x'),
+        createScriptRegistry(config.getConfig().SCRIPTS).newScript(lockName, ref?.params?.args ?? '0x'),
       target,
     )
   }
+}
+
+export function Omnilock(): ClassDecorator {
+  return DefaultLock('OMNILOCK')
+}
+
+export function Secp256k1Lock(): ClassDecorator {
+  return DefaultLock('SECP256K1_BLAKE160')
 }

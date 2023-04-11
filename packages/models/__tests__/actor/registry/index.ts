@@ -43,11 +43,11 @@ describe(`Test Registry`, () => {
 
   describe(`should have method Registry#find`, () => {
     it(`should return an actor instance if found`, () => {
-      expect(registry.find(ActorReference.fromURI(`local://parent/child`))).toBeInstanceOf(ActorBase)
+      expect(registry.find(`local://parent/child`)).toBeInstanceOf(ActorBase)
     })
 
     it(`should return undefined if not found`, () => {
-      expect(registry.find(ActorReference.fromURI(`local://root`))).toBeUndefined()
+      expect(registry.find(`local://root`)).toBeUndefined()
     })
   })
 
