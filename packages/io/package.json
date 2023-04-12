@@ -44,6 +44,6 @@
   "devDependencies": {
     "@types/koa-compose": "3.2.5",
     "@types/koa-router": "7.4.4",
-    "koa": "2.14.1"
+    "koa": "2.14.2"
   }
 }
