@@ -105,28 +105,20 @@ describe('Test CoR', () => {
   })
 
   it(`should call error handler`, async () => {
-    const err = new Error('this is error')
     const httpErr = new NotFound()
     const kuaiErr = new KuaiError({
       code: 'test',
       message: 'this is http error',
     })
 
-    let cor = CoR.defaultCoR()
-    cor.use(async (_ctx, _next) => {
-      throw err
-    })
-
-    await expect(cor.dispatch({})).rejects.toThrow(`UNKNOWN ERROR`)
-
-    cor = CoR.defaultCoR()
+    let cor = new CoR()
     cor.use(async (_ctx, _next) => {
       throw httpErr
     })
 
     await expect(cor.dispatch({})).rejects.toThrow(`Not Found`)
 
-    cor = CoR.defaultCoR()
+    cor = new CoR()
     cor.use(async (_ctx, _next) => {
       throw kuaiErr
     })
