@@ -8,14 +8,12 @@ export function handleException() {
       await next()
     } catch (err) {
       if (isHttpError(err)) {
-        ctx.body = { message: err.message }
-        ctx.status = err.status
+        ctx.err(err)
       } else if (err instanceof MvpError) {
-        ctx.status = 200
-        ctx.body = MvpResponse.err(err.message, err.code)
+        ctx.ok(MvpResponse.err(err.message, err.code))
       } else {
         ctx.status = 500
-        ctx.body = { message: 'Internal server error' }
+        ctx.err(new Error('Internal server error'))
       }
     }
   }
