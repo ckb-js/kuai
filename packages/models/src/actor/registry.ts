@@ -5,7 +5,7 @@ import fs from 'node:fs'
 import { resolve } from 'node:path'
 
 import { Container } from 'inversify'
-import type { ActorURI, ConstructorFunction } from './interface'
+import type { ActorURI, ConstructorFunction, MessagePayload } from './interface'
 import type { Actor } from './actor'
 import {
   ActorNotFoundException,
@@ -23,7 +23,8 @@ export class Registry {
   #container: Container = new Container({ skipBaseClassChecks: true })
   #router = new Router()
 
-  #find = <T extends Actor = Actor>(ref: ActorReference, bind = false): T | undefined => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  #find = <T extends Actor<unknown, MessagePayload<any>> = Actor>(ref: ActorReference, bind = false): T | undefined => {
     try {
       return this.#container.get<T>(ref.uri)
     } catch (e) {
@@ -45,11 +46,13 @@ export class Registry {
     return this.#actors.has(uri)
   }
 
-  find = <T extends Actor = Actor>(ref: ActorReference | string): T | undefined => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  find = <T extends Actor<unknown, MessagePayload<any>> = Actor>(ref: ActorReference | string): T | undefined => {
     return this.#find(typeof ref == 'string' ? ActorReference.fromURI(ref) : ref)
   }
 
-  findOrBind = <T extends Actor = Actor>(ref: ActorReference | string): T => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  findOrBind = <T extends Actor<unknown, MessagePayload<any>> = Actor>(ref: ActorReference | string): T => {
     const actor = this.#find<T>(typeof ref == 'string' ? ActorReference.fromURI(ref) : ref, true)
     if (!actor) throw new Error('module bind error')
     return actor
