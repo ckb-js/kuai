@@ -70,7 +70,7 @@ export class Store<
   }
 
   constructor(
-    schemaOption?: GetStorageOption<StructSchema>,
+    schemaOption: GetStorageOption<StructSchema>,
     params?: {
       states?: Record<OutPointString, GetStorageStruct<StructSchema>>
       chainData?: Record<OutPointString, UpdateStorageValue>
