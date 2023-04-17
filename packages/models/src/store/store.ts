@@ -50,7 +50,7 @@ export class Store<
 
   protected options?: Option
 
-  protected schemaOption?: GetStorageOption<StructSchema>
+  protected schemaOption: GetStorageOption<StructSchema>
 
   protected cellPattern?: CellPattern
 
