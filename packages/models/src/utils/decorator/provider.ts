@@ -69,7 +69,9 @@ export function Pattern({
 }): ClassDecorator {
   return function (target) {
     if (cellPattern) {
-      Reflect.defineMetadata(ProviderKey.CellPattern, cellPattern, target)
+      const patterns = Reflect.getMetadata(ProviderKey.CellPattern, target) ?? []
+      patterns.push(cellPattern)
+      Reflect.defineMetadata(ProviderKey.CellPattern, patterns, target)
     }
     if (schemaPattern) {
       Reflect.defineMetadata(ProviderKey.SchemaPattern, schemaPattern, target)

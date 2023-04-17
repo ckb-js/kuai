@@ -53,7 +53,7 @@ export class Store<
 
   protected schemaOption: GetStorageOption<StructSchema>
 
-  protected cellPattern?: CellPattern
+  protected cellPatterns: CellPattern[] = []
 
   protected schemaPattern?: SchemaPattern
 
@@ -74,7 +74,7 @@ export class Store<
     params?: {
       states?: Record<OutPointString, GetStorageStruct<StructSchema>>
       chainData?: Record<OutPointString, UpdateStorageValue>
-      cellPattern?: CellPattern
+      cellPatterns?: CellPattern[]
       schemaPattern?: SchemaPattern
       options?: Option
       ref?: ActorRef
@@ -90,8 +90,10 @@ export class Store<
     this.initiateLock(params?.ref)
     this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor)
 
-    const cellPatternFactory = Reflect.getMetadata(ProviderKey.CellPattern, this.constructor, this.ref?.uri)
-    this.cellPattern = cellPatternFactory ? cellPatternFactory(this) : params?.cellPattern
+    const cellPatternFactorys = Reflect.getMetadata(ProviderKey.CellPattern, this.constructor)
+    this.cellPatterns =
+      params?.cellPatterns ??
+      (cellPatternFactorys ? cellPatternFactorys.map((factory: (arg: object) => CellPattern) => factory(this)) : [])
   }
 
   private initiateLock(ref?: ActorRef) {
@@ -171,7 +173,7 @@ export class Store<
   }
 
   private addState({ cell, witness }: UpdateStorageValue) {
-    if (this.cellPattern && !this.cellPattern({ cell, witness })) {
+    if (!this.cellPatterns.every((pattern) => pattern({ cell, witness }))) {
       // ignore cells from resource binding if pattern is not matched
       return
     }
@@ -383,7 +385,7 @@ export class Store<
       states,
       options: this.options,
       chainData: this.cloneChainData(),
-      cellPattern: this.cellPattern,
+      cellPatterns: this.cellPatterns,
       schemaPattern: this.schemaPattern,
     })
   }
