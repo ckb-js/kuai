@@ -8,7 +8,8 @@ import {
   OutPointString,
   SchemaPattern,
   UpdateStorageValue,
-  DataPrefixCellPattern,
+  DataPrefixPattern,
+  LockPattern,
 } from '@ckb-js/kuai-models'
 import { Cell } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
@@ -34,7 +35,8 @@ export type StoreType = {
  * add business logic in an actor
  */
 @ActorProvider({ ref: { name: 'record', path: '/:codeHash/:hashType/:args/' } })
-@DataPrefixCellPattern(DAPP_DATA_PREFIX)
+@LockPattern()
+@DataPrefixPattern(DAPP_DATA_PREFIX)
 @Lock()
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
   constructor(

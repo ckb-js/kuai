@@ -8,7 +8,8 @@ import {
   OutPointString,
   SchemaPattern,
   UpdateStorageValue,
-  DataCellPattern,
+  DataPattern,
+  LockPattern,
 } from '@ckb-js/kuai-models'
 import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
@@ -19,7 +20,8 @@ import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
  * add business logic in an actor
  */
 @ActorProvider({ ref: { name: 'omnilock', path: `/:args/` } })
-@DataCellPattern('0x')
+@LockPattern()
+@DataPattern('0x')
 @Omnilock()
 export class OmnilockModel extends JSONStore<Record<string, never>> {
   constructor(

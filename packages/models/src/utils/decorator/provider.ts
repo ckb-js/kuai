@@ -59,15 +59,16 @@ export type SchemaPattern = MatchFunc<unknown>
 
 export type CellPattern = MatchFunc<UpdateStorageValue>
 
-export function Pattern({
-  cellPattern,
-  schemaPattern,
-}: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  cellPattern?: (...args: Array<any>) => CellPattern
-  schemaPattern?: SchemaPattern
-}): ClassDecorator {
-  return function (target) {
+export const Pattern =
+  ({
+    cellPattern,
+    schemaPattern,
+  }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cellPattern?: (...args: any[]) => CellPattern
+    schemaPattern?: SchemaPattern
+  }): ClassDecorator =>
+  (target) => {
     if (cellPattern) {
       const patterns = Reflect.getMetadata(ProviderKey.CellPattern, target) ?? []
       patterns.push(cellPattern)
@@ -77,42 +78,24 @@ export function Pattern({
       Reflect.defineMetadata(ProviderKey.SchemaPattern, schemaPattern, target)
     }
   }
-}
 
-export function DataCellPattern(data: string): ClassDecorator {
-  const cellPattern = (obj: { lockScript: Script }) => {
-    return (value: UpdateStorageValue) => {
-      const cellLock = value.cell.cellOutput.lock
-      return (
-        cellLock.args === obj.lockScript?.args &&
-        cellLock.codeHash === obj.lockScript?.codeHash &&
-        cellLock.hashType === obj.lockScript?.hashType &&
-        value.cell.data === data
-      )
-    }
-  }
+export const LockPattern = (): ClassDecorator =>
+  Pattern({
+    cellPattern: (obj: { lockScript: Script }) => (value: UpdateStorageValue) =>
+      value.cell.cellOutput.lock.args === obj.lockScript.args &&
+      value.cell.cellOutput.lock.codeHash === obj.lockScript.codeHash &&
+      value.cell.cellOutput.lock.hashType === obj.lockScript.hashType,
+  })
 
-  return Pattern({ cellPattern })
-}
+export const DataPattern = (data: string): ClassDecorator =>
+  Pattern({ cellPattern: () => (value: UpdateStorageValue) => value.cell.data == data })
 
-export function DataPrefixCellPattern(prefix: string): ClassDecorator {
-  const cellPattern = (obj: { lockScript: Script }) => {
-    return (value: UpdateStorageValue) => {
-      const cellLock = value.cell.cellOutput.lock
-      return (
-        cellLock.args === obj.lockScript?.args &&
-        cellLock.codeHash === obj.lockScript?.codeHash &&
-        cellLock.hashType === obj.lockScript?.hashType &&
-        value.cell.data.startsWith(prefix)
-      )
-    }
-  }
+export const DataPrefixPattern = (prefix: string): ClassDecorator =>
+  Pattern({ cellPattern: () => (value: UpdateStorageValue) => value.cell.data.startsWith(prefix) })
 
-  return Pattern({ cellPattern })
-}
-
-export function Lock(script?: Partial<Script>): ClassDecorator {
-  return (target: object) => {
+export const Lock =
+  (script?: Partial<Script>): ClassDecorator =>
+  (target: object) =>
     Reflect.defineMetadata(
       ProviderKey.LockPattern,
       (ref?: ActorRef) => {
@@ -123,24 +106,17 @@ export function Lock(script?: Partial<Script>): ClassDecorator {
       },
       target,
     )
-  }
-}
 
-export function DefaultLock(lockName: keyof config.ScriptConfigs): ClassDecorator {
-  return (target: object) => {
+export const DefaultLock =
+  (lockName: keyof config.ScriptConfigs): ClassDecorator =>
+  (target: object) =>
     Reflect.defineMetadata(
       ProviderKey.LockPattern,
       (ref?: ActorRef) =>
         createScriptRegistry(config.getConfig().SCRIPTS).newScript(lockName, ref?.params?.args ?? '0x'),
       target,
     )
-  }
-}
 
-export function Omnilock(): ClassDecorator {
-  return DefaultLock('OMNILOCK')
-}
+export const Omnilock = (): ClassDecorator => DefaultLock('OMNILOCK')
 
-export function Secp256k1Lock(): ClassDecorator {
-  return DefaultLock('SECP256K1_BLAKE160')
-}
+export const Secp256k1Lock = (): ClassDecorator => DefaultLock('SECP256K1_BLAKE160')

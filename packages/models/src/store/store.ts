@@ -93,7 +93,12 @@ export class Store<
     const cellPatternFactorys = Reflect.getMetadata(ProviderKey.CellPattern, this.constructor)
     this.cellPatterns =
       params?.cellPatterns ??
-      (cellPatternFactorys ? cellPatternFactorys.map((factory: (arg: object) => CellPattern) => factory(this)) : [])
+      (cellPatternFactorys
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          cellPatternFactorys.map((factory: (...args: any[]) => CellPattern) =>
+            factory({ lockScript: this.lockScript }),
+          )
+        : [])
   }
 
   private initiateLock(ref?: ActorRef) {
