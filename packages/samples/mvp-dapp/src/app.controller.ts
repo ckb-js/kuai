@@ -2,10 +2,11 @@ import type { StoreType } from './actors/record.model'
 import { KuaiRouter } from '@ckb-js/kuai-io'
 import { HexString, helpers } from '@ckb-lumos/lumos'
 import { ActorReference } from '@ckb-js/kuai-models'
-import { BadRequest, NotFound } from 'http-errors'
+import { BadRequest } from 'http-errors'
 import { appRegistry, OmnilockModel, RecordModel } from './actors'
 import { Tx } from './views/tx.view'
 import { MvpResponse } from './response'
+import { MvpError } from './exception'
 
 const router = new KuaiRouter()
 
@@ -54,7 +55,7 @@ router.get<never, { path: string; address: string }>('/load/:address/:path', asy
   if (value) {
     ctx.ok(MvpResponse.ok(MvpResponse.ok(value)))
   } else {
-    throw NotFound('field is not found')
+    throw new MvpError('store is not found', '404')
   }
 })
 
@@ -65,7 +66,7 @@ router.get<never, { address: string }>('/load/:address', async (ctx) => {
   )
   const key = recordModel.getOneOfKey()
   if (!key) {
-    throw NotFound('store is not found')
+    throw new MvpError('store is not found', '404')
   }
   ctx.ok(MvpResponse.ok(recordModel.load('data')))
 })
