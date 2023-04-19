@@ -12,13 +12,27 @@ export interface KuaiConfig {
   kuaiArguments?: KuaiArguments
   network?: HttpNetworkConfig
   jest?: JestConfig
+  contract?: ContractConfig
+}
+
+export type ContractConfig = {
+  workspace?: string
+  deployment?: {
+    type?: string
+    deployerPrivateKey: string
+    lock?: {
+      codeHash: string
+      args: string
+      hashType: string
+    }
+  }
 }
 
 export type HttpNetworkConfig = {
   url: string
 }
 
-export type RunTaskFunction = (name: string, taskArguments?: TaskArguments) => Promise<unknown>
+export type RunTaskFunction<T = unknown> = (name: string, taskArguments?: TaskArguments) => Promise<T>
 
 export type EnvironmentExtender = (env: RuntimeEnvironment) => void
 
