@@ -1,6 +1,6 @@
 import { bytes } from '@ckb-lumos/codec'
 import type { Script } from '@ckb-lumos/base'
-import type { ActorMessage, MessagePayload } from '../actor'
+import type { ActorMessage, ActorRef, MessagePayload } from '../actor'
 import type {
   OutPointString,
   StoreMessage,
@@ -31,6 +31,7 @@ import {
 import { ProviderKey, CellPattern, SchemaPattern, isStringList } from '../utils'
 import { outPointToOutPointString } from '../resource-binding'
 import { MoleculeStorage, DynamicParam, GetCodecConfig, isCodecConfig, GetMoleculeOffChain } from './molecule-storage'
+import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
 
 const ByteCharLen = 2
 
@@ -52,7 +53,7 @@ export class Store<
 
   protected schemaOption: GetStorageOption<StructSchema>
 
-  protected cellPattern?: CellPattern
+  protected cellPatterns: CellPattern[] = []
 
   protected schemaPattern?: SchemaPattern
 
@@ -73,20 +74,54 @@ export class Store<
     params?: {
       states?: Record<OutPointString, GetStorageStruct<StructSchema>>
       chainData?: Record<OutPointString, UpdateStorageValue>
-      cellPattern?: CellPattern
+      cellPatterns?: CellPattern[]
       schemaPattern?: SchemaPattern
       options?: Option
+      ref?: ActorRef
     },
   ) {
-    super()
-    this.cellPattern = Reflect.getMetadata(ProviderKey.CellPattern, this.constructor) || params?.cellPattern
+    super(params?.ref)
     this.schemaPattern = Reflect.getMetadata(ProviderKey.SchemaPattern, this.constructor) || params?.schemaPattern
     this.schemaOption = schemaOption
     this.states = params?.states || {}
     this.chainData = params?.chainData || {}
     this.options = params?.options
-    this.#lock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor)
+
+    this.initiateLock(params?.ref)
     this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor)
+
+    const cellPatternFactorys = Reflect.getMetadata(ProviderKey.CellPattern, this.constructor)
+    this.cellPatterns =
+      params?.cellPatterns ??
+      (cellPatternFactorys
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          cellPatternFactorys.map((factory: (...args: any[]) => CellPattern) =>
+            factory({ lockScript: this.lockScript }),
+          )
+        : [])
+  }
+
+  private initiateLock(ref?: ActorRef) {
+    const createLock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor)
+    if (typeof createLock == 'function') this.#lock = createLock(ref)
+  }
+
+  protected registerResourceBinding() {
+    if (!this.#lock) return
+
+    const lockHash = computeScriptHash(this.#lock)
+    this.call('local://resource', {
+      pattern: lockHash,
+      value: {
+        type: 'register',
+        register: {
+          lockScript: this.#lock,
+          typeScript: this.#type,
+          uri: this.ref.uri,
+          pattern: lockHash,
+        },
+      },
+    })
   }
 
   public load(path?: string) {
@@ -143,7 +178,7 @@ export class Store<
   }
 
   private addState({ cell, witness }: UpdateStorageValue) {
-    if (this.cellPattern && !this.cellPattern({ cell, witness })) {
+    if (!this.cellPatterns.every((pattern) => pattern({ cell, witness }))) {
       // ignore cells from resource binding if pattern is not matched
       return
     }
@@ -240,6 +275,7 @@ export class Store<
   private serializeField(type: StorageLocation, offChainValue: unknown) {
     if (!this.schemaOption || typeof this.schemaOption !== 'object') return { hexString: '0x', offset: 0, length: 0 }
     this.assertStorage(this.getStorage(type))
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const hexString = bytes.hexify(this.getStorage(type)!.serialize(offChainValue))
     if (typeof type === 'string') {
       if (!(type in this.schemaOption)) throw new NoSchemaException(type)
@@ -354,7 +390,7 @@ export class Store<
       states,
       options: this.options,
       chainData: this.cloneChainData(),
-      cellPattern: this.cellPattern,
+      cellPatterns: this.cellPatterns,
       schemaPattern: this.schemaPattern,
     })
   }

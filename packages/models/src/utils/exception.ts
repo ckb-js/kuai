@@ -17,7 +17,19 @@ export class DuplicatedActorException extends KError {
   }
 }
 
-export class SendMailException extends KError {
+export class ActorNotFoundException extends Error {
+  constructor(uri: string) {
+    super(`actor ${uri} not found`)
+  }
+}
+
+export class InvalidActorException extends Error {
+  constructor() {
+    super(`try to bind an invalid actor`)
+  }
+}
+
+export class SendMailException extends Error {
   constructor(from: string, to: string) {
     super(`failed to send mail from ${from} to ${to}`)
   }

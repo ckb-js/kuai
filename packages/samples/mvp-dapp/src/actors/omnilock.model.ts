@@ -1,4 +1,16 @@
-import { CellPattern, JSONStore, OutPointString, SchemaPattern, UpdateStorageValue } from '@ckb-js/kuai-models'
+import {
+  ActorProvider,
+  Omnilock,
+  Param,
+  ActorReference,
+  CellPattern,
+  JSONStore,
+  OutPointString,
+  SchemaPattern,
+  UpdateStorageValue,
+  DataPattern,
+  LockPattern,
+} from '@ckb-js/kuai-models'
 import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { InternalServerError } from 'http-errors'
@@ -7,8 +19,13 @@ import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
 /**
  * add business logic in an actor
  */
+@ActorProvider({ ref: { name: 'omnilock', path: `/:args/` } })
+@LockPattern()
+@DataPattern('0x')
+@Omnilock()
 export class OmnilockModel extends JSONStore<Record<string, never>> {
   constructor(
+    @Param('args') args: string,
     _schemaOption?: void,
     params?: {
       states?: Record<OutPointString, never>
@@ -17,10 +34,11 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       schemaPattern?: SchemaPattern
     },
   ) {
-    super(undefined, params)
+    super(undefined, { ...params, ref: ActorReference.newWithPattern(OmnilockModel, `/${args}/`) })
     if (!this.lockScript) {
       throw new Error('lock script is required')
     }
+    this.registerResourceBinding()
   }
 
   get meta(): Record<'capacity', string> {
@@ -51,6 +69,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       outputs: [
         {
           cellOutput: {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             lock: this.lockScript!,
             capacity,
           },
@@ -58,6 +77,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
         },
         {
           cellOutput: {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             lock: this.lockScript!,
             capacity: currentTotalCapacity.sub(needCapacity).toHexString(),
           },

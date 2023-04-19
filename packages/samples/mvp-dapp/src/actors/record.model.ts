@@ -1,8 +1,20 @@
-import { CellPattern, JSONStore, OutPointString, SchemaPattern, UpdateStorageValue } from '@ckb-js/kuai-models'
+import {
+  ActorProvider,
+  Lock,
+  Param,
+  ActorReference,
+  CellPattern,
+  JSONStore,
+  OutPointString,
+  SchemaPattern,
+  UpdateStorageValue,
+  DataPrefixPattern,
+  LockPattern,
+} from '@ckb-js/kuai-models'
 import { Cell } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
 import { BI } from '@ckb-lumos/bi'
-import { DAPP_DATA_PREFIX_LEN, TX_FEE } from '../const'
+import { DAPP_DATA_PREFIX, DAPP_DATA_PREFIX_LEN, TX_FEE } from '../const'
 
 export type ItemData = {
   key: string
@@ -22,9 +34,15 @@ export type StoreType = {
 /**
  * add business logic in an actor
  */
-
+@ActorProvider({ ref: { name: 'record', path: '/:codeHash/:hashType/:args/' } })
+@LockPattern()
+@DataPrefixPattern(DAPP_DATA_PREFIX)
+@Lock()
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
   constructor(
+    @Param('codeHash') codeHash: string,
+    @Param('hashType') hashType: string,
+    @Param('args') args: string,
     _schemaOption?: { data: { offset: number } },
     params?: {
       states?: Record<OutPointString, StoreType>
@@ -33,7 +51,15 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
       schemaPattern?: SchemaPattern
     },
   ) {
-    super({ data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } }, params)
+    super(
+      { data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } },
+      {
+        ...params,
+        ref: ActorReference.newWithPattern(RecordModel, `/${codeHash}/${hashType}/${args}/`),
+      },
+    )
+
+    this.registerResourceBinding()
   }
 
   update(newValue: StoreType['data']) {
@@ -47,10 +73,13 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
     const outputs: Cell[] = [
       {
         cellOutput: {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           ...inputs[0]!.cell.cellOutput,
           capacity: outputCapacity.toHexString(),
         },
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         data: `${inputs[0]!.cell.data.slice(0, 2 + this.schemaOption!.data.offset * 2)}${data.slice(
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           2 + this.schemaOption!.data.offset * 2,
         )}`,
       },

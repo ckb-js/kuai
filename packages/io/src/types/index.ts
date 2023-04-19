@@ -86,8 +86,8 @@ export interface Route<
   Body extends object = object,
 > {
   path: Path
-  method: Method
-  middleware: Middleware<RouterContext<Query, Params, Body>>
+  method?: Method
+  middleware?: Middleware<RouterContext<Query, Params, Body>>
   paramKeys: Key[]
   regexp: RegExp
 }

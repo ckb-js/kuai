@@ -57,7 +57,7 @@ describe(`Test Registry`, () => {
     })
 
     it(`should return true if the specific actor is not bound`, () => {
-      expect(registry.find(`local://root`)).toBeFalsy()
+      expect(registry.isLive(`local://root`)).toBeFalsy()
     })
   })
 

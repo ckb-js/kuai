@@ -1,5 +1,5 @@
 import { ActorProvider } from '../../../'
 import { CustomActorBase } from './base'
 
-@ActorProvider({ name: 'parent' })
+@ActorProvider({ ref: { name: 'parent' }, autoBind: true })
 export class ParentActor extends CustomActorBase {}

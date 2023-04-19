@@ -8,6 +8,7 @@ import { injectable, Container, inject, optional } from 'inversify'
 import Redis from 'ioredis'
 import { ActorReference } from './actor-reference'
 import { Status, Behavior, ProviderKey, SendMailException, PayloadMissingInMessageException } from '../utils'
+import { ActorRefEmptyException } from '../exceptions/actor'
 
 export const REDIS_PORT_SYMBOL = Symbol('mq_redis_port')
 export const REDIS_HOST_SYMBOL = Symbol('mq_redis_host')
@@ -44,11 +45,12 @@ export abstract class Actor<_State = unknown, Message extends MessagePayload = M
     return this.#ref
   }
 
-  constructor() {
+  constructor(ref?: ActorRef) {
     const metadata: { ref: ActorRef | undefined } = Reflect.getMetadata(ProviderKey.Actor, this.constructor)
     // TODO: add explicit error message
-    if (!metadata?.ref?.uri) throw new Error()
-    this.#ref = metadata?.ref
+    ref = ref ?? metadata?.ref
+    if (!ref) throw new ActorRefEmptyException()
+    this.#ref = ref
     this.receiveMail()
   }
 

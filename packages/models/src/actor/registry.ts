@@ -5,25 +5,57 @@ import fs from 'node:fs'
 import { resolve } from 'node:path'
 
 import { Container } from 'inversify'
-import type { ActorRef, ActorURI } from './interface'
+import type { ActorURI, ConstructorFunction, MessagePayload } from './interface'
 import type { Actor } from './actor'
-import { DuplicatedActorException, InvalidActorURIException, ProviderKey } from '../utils'
+import {
+  ActorNotFoundException,
+  DuplicatedActorException,
+  ProviderKey,
+  ActorParamType,
+  InvalidActorURIException,
+  InvalidActorException,
+} from '../utils'
+import { Router } from './router'
+import { ActorReference } from './actor-reference'
 
 export class Registry {
   #actors: Set<ActorURI> = new Set()
   #container: Container = new Container({ skipBaseClassChecks: true })
+  #router = new Router()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  #find = <T extends Actor<unknown, MessagePayload<any>> = Actor>(ref: ActorReference, bind = false): T | undefined => {
+    try {
+      return this.#container.get<T>(ref.uri)
+    } catch (e) {
+      console.log('Registry `find` catch error', e)
+      if (bind) {
+        const { module, parsedRef } = this.#router.matchFirst(ref)
+        if (!module) {
+          throw new ActorNotFoundException(ref.uri)
+        }
+        this.#bind(parsedRef, module)
+        const actor = this.#container.get<T>(parsedRef.uri)
+        return actor
+      }
+      return undefined
+    }
+  }
 
   isLive = (uri: ActorURI): boolean => {
     return this.#actors.has(uri)
   }
 
-  find = <T = Actor>(uri: ActorURI): T | undefined => {
-    try {
-      return this.#container.get<T>(uri)
-    } catch (e) {
-      console.log('Registry `find` catch error', e)
-      return undefined
-    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  find = <T extends Actor<unknown, MessagePayload<any>> = Actor>(ref: ActorReference | string): T | undefined => {
+    return this.#find(typeof ref == 'string' ? ActorReference.fromURI(ref) : ref)
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  findOrBind = <T extends Actor<unknown, MessagePayload<any>> = Actor>(ref: ActorReference | string): T => {
+    const actor = this.#find<T>(typeof ref == 'string' ? ActorReference.fromURI(ref) : ref, true)
+    if (!actor) throw new Error('module bind error')
+    return actor
   }
 
   list = (): IterableIterator<ActorURI> => {
@@ -47,25 +79,52 @@ export class Registry {
     for (const m in exports) {
       const module = exports[m]
       if (typeof module !== 'function') continue
-      this.#bind(module)
+      const metadata = Reflect.getMetadata(ProviderKey.Actor, module)
+      if (metadata?.ref) {
+        this.#router.addPath(metadata.ref, module)
+      }
+      if (metadata?.autoBind) {
+        this.#bind(metadata.ref, module)
+      }
     }
   }
 
   /**
    * this method is defined as public for testing
    */
-  bind = (module: new (...args: Array<unknown>) => unknown): void => this.#bind(module)
+  bind = (module: ConstructorFunction): void => {
+    this.#bind(Reflect.getMetadata(ProviderKey.Actor, module)?.ref, module)
+  }
 
-  #bind = (module: new (...args: Array<unknown>) => unknown): void => {
-    const metadata: Record<'ref', ActorRef> | undefined = Reflect.getMetadata(ProviderKey.Actor, module)
-    if (!metadata) return
-    if (!metadata.ref.uri) {
-      throw new InvalidActorURIException(metadata.ref.uri)
+  #bind = (ref: ActorReference, module: ConstructorFunction): void => {
+    if (!module) {
+      throw new InvalidActorException()
     }
-    if (this.isLive(metadata.ref.uri)) {
-      throw new DuplicatedActorException(metadata.ref.uri)
+
+    if (!(ref instanceof ActorReference)) {
+      throw new InvalidActorURIException(ref)
     }
-    this.#container.bind(metadata.ref.uri).to(module).inSingletonScope()
-    this.#actors.add(metadata.ref.uri)
+
+    if (this.isLive(ref.uri)) {
+      throw new DuplicatedActorException(ref.uri)
+    }
+
+    const params = Reflect.getMetadata(ProviderKey.ActorParam, module)
+    if (!params) {
+      this.#container.bind(ref.uri).to(module).inSingletonScope()
+    } else {
+      this.#container
+        .bind(ref.uri)
+        .toDynamicValue(() =>
+          module
+            ? new module(
+                ...(params as ActorParamType[]).map((param) => param.routerParam).map((param) => ref.params[param]),
+              )
+            : undefined,
+        )
+        .inSingletonScope()
+    }
+
+    this.#actors.add(ref.uri)
   }
 }

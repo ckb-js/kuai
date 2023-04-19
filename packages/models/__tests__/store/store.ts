@@ -17,6 +17,7 @@ import {
   UTF8String,
   StoreMessage,
   outPointToOutPointString,
+  ActorReference,
 } from '../../src'
 
 const mockXAdd = jest.fn()
@@ -440,15 +441,22 @@ describe('test store', () => {
 
   describe('should be bound with scripts', () => {
     class StoreBoundScripts<R extends StorageSchema<CustomType>> extends Store<StorageCustom<CustomType>, R> {}
-    Reflect.defineMetadata(ProviderKey.LockPattern, { codeHash: 'lock' }, StoreBoundScripts)
+    const ref = ActorReference.fromURI('local://test')
+    Reflect.defineMetadata(
+      ProviderKey.LockPattern,
+      () => {
+        return { codeHash: 'lock' }
+      },
+      StoreBoundScripts,
+    )
     Reflect.defineMetadata(ProviderKey.TypePattern, { codeHash: 'type' }, StoreBoundScripts)
     it('should bind lock script', () => {
-      const store = new StoreBoundScripts({})
+      const store = new StoreBoundScripts({}, { ref })
       expect(store.lockScript?.codeHash).toBe('lock')
     })
 
     it('should bind type script', () => {
-      const store = new StoreBoundScripts({})
+      const store = new StoreBoundScripts({}, { ref })
       expect(store.typeScript?.codeHash).toBe('type')
     })
   })
