@@ -1,7 +1,10 @@
 import Docker, { ContainerCreateOptions } from 'dockerode'
-import { DockerNodeStartOptions } from './types'
+import { DockerNodeStartOptions, InfraScript } from './types'
 import { join } from 'node:path'
 import fs from 'node:fs'
+import path from 'node:path'
+import { Address, Indexer, RPC, commons, helpers, hd } from '@ckb-lumos/lumos'
+import { sign } from '@ckb-js/kuai-core'
 
 const CKB_NODE_IMAGE = 'kuai/ckb-dev'
 const DOCKER_SOCKET_PATH = process.env.DOCKER_SOCKET || '/var/run/docker.sock'
@@ -61,6 +64,89 @@ lock.hash_type = "type"\n`
     })
 
     return container.start()
+  }
+
+  private async deployInfraScripts(
+    indexer: Indexer,
+    rpc: RPC,
+    from: Address,
+    privateKey: string,
+  ): Promise<InfraScript[]> {
+    const dirPath = path.resolve(__dirname, '../built-in/scripts')
+    return await Promise.all(
+      fs.readdirSync(dirPath).map(async (script) => {
+        const scriptBinary = fs.readFileSync(path.join(dirPath, script, 'bin'))
+        const txHash = await rpc.sendTransaction(
+          sign(
+            (
+              await commons.deploy.generateDeployWithDataTx({
+                cellProvider: indexer,
+                scriptBinary,
+                fromInfo: from,
+              })
+            ).txSkeleton,
+            privateKey,
+          ),
+        )
+        return {
+          name: script,
+          path: path.join(dirPath, script),
+          cellDep: {
+            depType: 'code',
+            outPoint: {
+              txHash,
+              index: '0x0',
+            },
+          },
+        }
+      }),
+    )
+  }
+  private async deployCustomScripts(
+    filePath: string,
+    indexer: Indexer,
+    rpc: RPC,
+    from: Address,
+    privateKey: string,
+  ): Promise<InfraScript[]> {
+    return await Promise.all(
+      (JSON.parse(fs.readFileSync(filePath).toString()) as InfraScript[]).map(async (script) => {
+        const scriptBinary = fs.readFileSync(script.path)
+        const txHash = await rpc.sendTransaction(
+          sign(
+            (
+              await commons.deploy.generateDeployWithDataTx({
+                cellProvider: indexer,
+                scriptBinary,
+                fromInfo: from,
+              })
+            ).txSkeleton,
+            privateKey,
+          ),
+        )
+        return {
+          name: script.name,
+          path: script.path,
+          cellDep: {
+            depType: 'code',
+            outPoint: {
+              txHash,
+              index: '0x0',
+            },
+          },
+        }
+      }),
+    )
+  }
+
+  public async deployScripts(filePath: string, indexer: Indexer, rpc: RPC, privateKey: string): Promise<void> {
+    const from = helpers.encodeToConfigAddress(hd.key.privateKeyToBlake160(privateKey), 'SECP256K1_BLAKE160')
+    await indexer.waitForSync()
+    const config = (await this.deployInfraScripts(indexer, rpc, from, privateKey)).concat(
+      await this.deployCustomScripts(filePath, indexer, rpc, from, privateKey),
+    )
+
+    fs.writeFileSync(filePath, Buffer.from(JSON.stringify(config)))
   }
 
   public async stop(): Promise<void> {
