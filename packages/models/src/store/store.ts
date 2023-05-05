@@ -29,7 +29,7 @@ import {
   NonExistentException,
   NonStorageInstanceException,
   NoSchemaException,
-  SectionStoreCantCloneException,
+  SectionStoreCannotCloneException,
   ShouldCalledByDerivedException,
   UnmatchLengthException,
 } from '../exceptions'
@@ -58,7 +58,7 @@ export class Store<
 
   protected outPointStrings: OutPointString[] = []
 
-  protected usedOutPointStrings: Set<OutPointString> = new Set<OutPointString>()
+  protected usedOutPointStrings = new Set<OutPointString>()
 
   protected options?: Option
 
@@ -430,7 +430,7 @@ export class Store<
   }
 
   clone(): Store<StorageT, StructSchema, Option> {
-    if (this.isSection) throw new SectionStoreCantCloneException()
+    if (this.isSection) throw new SectionStoreCannotCloneException()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clone: Store<StorageT, StructSchema, Option> = new (<any>this.constructor)(this.schemaOption, {
       options: this.options,

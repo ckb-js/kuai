@@ -64,7 +64,7 @@ export class UnionShouldOnlyOneKeyException extends Error {
   }
 }
 
-export class SectionStoreCantCloneException extends Error {
+export class SectionStoreCannotCloneException extends Error {
   constructor() {
     super(`A section store can not clone a full store`)
   }
@@ -72,7 +72,7 @@ export class SectionStoreCantCloneException extends Error {
 
 export class NoCellToUseException extends Error {
   constructor() {
-    super(`There is non-exist cell to use`)
+    super(`There are no live cells to use`)
   }
 }
 

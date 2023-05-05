@@ -1,7 +1,7 @@
 import { get, mergeWith, set } from 'lodash/fp'
 import { NoCellToUseException, NonExistentException } from '../exceptions'
 import { deepForIn } from '../utils'
-import { OutPointString } from './interface'
+import type { OutPointString } from './interface'
 
 export abstract class MergeStrategy<S, T = S> {
   abstract merge(object: T, source?: S): T
@@ -21,6 +21,12 @@ export abstract class MergeStrategy<S, T = S> {
   }
 }
 
+/*
+It used to merge states by using the latest strategy.
+For example: cell 1 include data: { a: 1 }, it's block number is 1
+cell 2 include data: { a: 3 }, it's block number is 2
+After merge, it will directly use the block 2 data, so the merged states will be: { a: 3 }
+*/
 export class UseLatestStrategy<S> extends MergeStrategy<S, S> {
   merge(object: S, _source?: S): S {
     return object
@@ -50,14 +56,14 @@ export class UseLatestStrategy<S> extends MergeStrategy<S, S> {
         ],
       }
     }
-    const updateValueInstates = get([lastOutPoint, ...updateInfo.paths.slice(0, updateInfo.paths.length - 1)])(
+    const updateValueInStates = get([lastOutPoint, ...updateInfo.paths.slice(0, updateInfo.paths.length - 1)])(
       updateInfo.states,
     )
-    if (updateValueInstates === undefined) {
-      throw new NonExistentException(`${lastOutPoint}${updateInfo.paths.join('.')}`)
+    if (updateValueInStates === undefined) {
+      throw new NonExistentException(`${lastOutPoint}:${updateInfo.paths.join('.')}`)
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    updateValueInstates[updateInfo.paths.at(-1)!] = updateInfo.value
+    updateValueInStates[updateInfo.paths.at(-1)!] = updateInfo.value
     return {
       update: [
         {
@@ -95,24 +101,19 @@ export class DefaultMergeStrategy<S> extends MergeStrategy<S, S> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = state
     for (let idx = 0; idx < paths.length; idx++) {
-      if (paths[idx] in current) {
-        current = current[paths[idx]]
-        if (Array.isArray(current)) {
-          if (idx === paths.length - 1) {
-            // need to remove others array, or otherwise they will merge into new mergedState
-            return {
-              removePath: paths,
-              state: set(paths, value)(state),
-            }
-          } else {
-            // replace current state
-            return {
-              state: set(paths, value)(state),
-            }
-          }
+      if (!(paths[idx] in current)) return {}
+      current = current[paths[idx]]
+      if (!Array.isArray(current)) continue
+      if (idx === paths.length - 1) {
+        // need to remove others array, or otherwise they will merge into new mergedState
+        return {
+          removePath: paths,
+          state: set(paths, value)(state),
         }
-      } else {
-        return {}
+      }
+      // replace current state
+      return {
+        state: set(paths, value)(state),
       }
     }
     return {
