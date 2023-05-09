@@ -11,3 +11,7 @@ node_modules/
 
 .idea
 yarn.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
