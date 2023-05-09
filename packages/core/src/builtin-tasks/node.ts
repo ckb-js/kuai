@@ -5,6 +5,7 @@ import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import '../type/runtime'
 import { Indexer, RPC } from '@ckb-lumos/lumos'
+import { configPath } from '../helper'
 
 interface Args {
   port: number
@@ -39,7 +40,7 @@ subtask('node:start', 'start a ckb node')
 
     await new Promise(() => setTimeout(() => console.log(1), 100000))
     await ckbDockerNetwork.deployScripts(
-      filePath,
+      filePath ?? configPath('scripts'),
       new Indexer(`${url}/indexer`),
       new RPC(`${url}/rpc`),
       '0xfd686a48908e8caf97723578bf85f746e1e1d8956cb132f6a2e92e7234a2a245',
