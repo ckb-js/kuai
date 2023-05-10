@@ -70,7 +70,7 @@ describe('kuai task system', () => {
   )
 
   const environment = new KuaiRuntimeEnvironment(
-    {},
+    { ckbChain: { prefix: '', rpcUrl: '' } },
     makeTaskMap([buildWheelTask, buildEngineTask, buildCarTask, buildSkidProofWheelTask]),
     [],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,7 +97,7 @@ describe('kuai task system', () => {
       })
 
     const environment = new KuaiRuntimeEnvironment(
-      {},
+      { ckbChain: { prefix: '', rpcUrl: '' } },
       makeTaskMap([buildWheelTask]),
       [],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

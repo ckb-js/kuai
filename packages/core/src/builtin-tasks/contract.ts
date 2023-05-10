@@ -1,18 +1,92 @@
 import { execSync } from 'node:child_process'
+import read from 'read'
+import { existsSync } from 'node:fs'
 import path from 'node:path'
-import fs from 'node:fs'
-import TOML from '@iarna/toml'
-import { key } from '@ckb-lumos/hd'
-import { generateAddress } from '@ckb-lumos/helpers'
-import { predefined } from '@ckb-lumos/config-manager'
-import { Script } from '@ckb-lumos/base'
+import { KuaiError } from '@ckb-js/kuai-common'
+import { ERRORS } from '../errors-list'
+import { parseFromInfo } from '@ckb-lumos/common-scripts'
+import { encodeToAddress } from '@ckb-lumos/helpers'
+import { Config } from '@ckb-lumos/config-manager'
+import { ContractDeployer } from '../contract'
+import type { MessageSigner } from '../contract'
+import { signMessageByCkbCli } from '../ckbcli'
 import { task, subtask } from '../config/config-env'
 import { paramTypes } from '../params'
 import { getUserConfigPath } from '../project-structure'
+import { getGenesisScriptsConfig } from '../util/chain'
 
 task('contract').setAction(async () => {
   execSync('kuai contract --help', { stdio: 'inherit' })
 })
+
+subtask('contract:deploy')
+  .addParam('name', 'name of the contract to be deployed', '', paramTypes.string, false)
+  .addParam('address', 'address of the contract deployer', '', paramTypes.string, false)
+  .addParam(
+    'feeRate',
+    "Per transaction's fee, deployment may involve more than one transaction. default: [1000] shannon/Byte",
+    1000,
+    paramTypes.number,
+    true,
+  )
+  .setAction(async ({ name, address, feeRate }, { config, run }) => {
+    const { ckbChain } = config
+    const workspace = (await run('contract:get-workspace')) as string
+
+    if (!name) {
+      throw new Error('Please specify the name of the contract, not support deploying all contracts for now.')
+    }
+
+    if (!address) {
+      throw new Error('please specify address of deployer')
+    }
+
+    const conrtactBinPath = path.join(workspace, `build/release/${name}`)
+
+    if (!existsSync(conrtactBinPath)) {
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_SIGNER, {
+        var: name,
+      })
+    }
+
+    const lumosConfig: Config = {
+      PREFIX: ckbChain.prefix,
+      SCRIPTS: ckbChain.scripts || {
+        ...(await getGenesisScriptsConfig(ckbChain.rpcUrl)),
+      },
+    }
+
+    const signer: MessageSigner = (message, fromInfo) =>
+      run('contract:sign-message', {
+        message,
+        address: encodeToAddress(parseFromInfo(fromInfo, { config: lumosConfig }).fromScript, { config: lumosConfig }),
+      }) as Promise<string>
+
+    const deployer = new ContractDeployer(signer, {
+      rpcUrl: config.ckbChain.rpcUrl,
+      config: lumosConfig,
+    })
+
+    const result = await deployer.deploy(conrtactBinPath, address, { feeRate })
+    console.info('deploy success, txHash: ', result.txHash)
+    console.info('done')
+  })
+
+subtask('contract:sign-message')
+  .addParam('message', 'message to be signed', '', paramTypes.string, false)
+  .addParam('address', 'the address of message signer', '', paramTypes.string, false)
+  .addParam('signer', 'the sign method of signer, default: ckb-cli', 'ckb-cli', paramTypes.string, true)
+  .setAction(async ({ message, address, signer }): Promise<string> => {
+    if (signer === 'ckb-cli') {
+      const password = await read({ prompt: `Input ${address}'s password for sign messge by ckb-cli:`, silent: true })
+      console.info('')
+      return signMessageByCkbCli(message, address, password)
+    }
+
+    throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_SIGNER, {
+      var: signer,
+    })
+  })
 
 subtask('contract:get-workspace').setAction(async (_, { config }) => {
   if (config.contract?.workspace) {
@@ -30,30 +104,6 @@ subtask('contract:get-workspace').setAction(async (_, { config }) => {
 subtask('contract:set-environment').setAction(async () => {
   // todo: download ckb-cli & capsule etc...
 })
-
-interface ImportArgs {
-  privateKey: string
-}
-
-subtask('contract:import-private-key')
-  .addParam('privateKey', '', '', paramTypes.string, false)
-  .setAction(async ({ privateKey }: ImportArgs) => {
-    const lockArg = key.privateKeyToBlake160(privateKey)
-
-    const res = execSync('ckb-cli account list --output-format json').toString()
-    const accountList: Array<{ lock_arg: string }> = JSON.parse(res)
-
-    if (accountList.some((account) => account.lock_arg === lockArg)) {
-      return
-    }
-
-    fs.writeFileSync('./.tmp_pk', privateKey)
-
-    console.log('add the user to ckb-cli, enter a password for the signature please')
-    execSync('ckb-cli account import --privkey-path ./.tmp_pk', { stdio: 'inherit' })
-
-    fs.rmSync('./.tmp_pk')
-  })
 
 interface BuildArgs {
   name?: string
@@ -86,124 +136,5 @@ subtask('contract:new')
   )
   .setAction(async ({ name, template }: NewArgs, { run }) => {
     const workspace = await run('contract:get-workspace')
-    console.log('workspace', workspace)
     execSync(`cd ${workspace} && capsule new-contract ${name} --template ${template}`, { stdio: 'inherit' })
-  })
-
-interface DeployArgs {
-  name?: string
-  chain?: string
-  isMainnet?: boolean
-  fee: number
-  env: string
-  migrate: string
-}
-
-subtask('contract:deploy')
-  .addParam('name', 'name of the contract to be deployed', '', paramTypes.string, true)
-  .addParam(
-    'chain',
-    'ckb rpc url or name [default: dev]  [possible values: dev, test, mainnet, http://localhost:8114 etc...]',
-    'dev',
-    paramTypes.string,
-    true,
-  )
-  .addParam('isMainnet', '', false, paramTypes.boolean, true)
-  .addParam(
-    'fee',
-    "Per transaction's fee, deployment may involve more than one transaction. default: [1]",
-    1,
-    paramTypes.number,
-    true,
-  )
-  .addParam(
-    'env',
-    'Deployment environment. [default: dev]  [possible values: dev, production]',
-    'dev',
-    paramTypes.string,
-    true,
-  )
-  .addParam(
-    'migrate',
-    'Use previously deployed cells as inputs. [default: on]  [possible values: on, off]',
-    'on',
-    paramTypes.string,
-    true,
-  )
-  .setAction(async ({ name, chain, fee, env, migrate, ...args }: DeployArgs, { config, run }) => {
-    const isMainnet = chain === 'mainnet' ? true : args.isMainnet
-
-    const workspace = (await run('contract:get-workspace')) as string
-    const { type = 'ckb-cli', deployerPrivateKey } = config.contract?.deployment || {}
-
-    if (type !== 'ckb-cli') {
-      throw new Error('Other deployment options are not supported temporary')
-    }
-
-    if (!deployerPrivateKey) {
-      throw new Error('please set deployerPrivateKey in kuai.config.js')
-    }
-
-    await run('contract:import-private-key', { privateKey: deployerPrivateKey })
-
-    const deployerLock: Script = {
-      codeHash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
-      args: key.privateKeyToBlake160(deployerPrivateKey),
-      hashType: 'type',
-    }
-    const { lock = deployerLock } = config.contract?.deployment || {}
-
-    // setting capsule config
-    const capsuleConfigFile = fs.readFileSync(path.join(workspace, 'capsule.toml'), 'utf-8')
-    const deploymentConfigFile = fs.readFileSync(path.join(workspace, 'deployment.toml'), 'utf-8')
-
-    const capsuleConfig = TOML.parse(capsuleConfigFile)
-    const deploymentConfig = TOML.parse(deploymentConfigFile)
-
-    const contractNames = (capsuleConfig['contracts'] as Array<{ name: string }>).map((contract) => contract.name)
-    const deployedContractName = name || contractNames[0]
-
-    const generateContractDeployConfig = (name: string, enableTypeId = true) => {
-      return {
-        name,
-        enable_type_id: enableTypeId,
-        location: { file: `build/release/${name}` },
-      }
-    }
-
-    deploymentConfig['cells'] = [generateContractDeployConfig(deployedContractName)]
-    deploymentConfig['lock'] = {
-      code_hash: lock.codeHash,
-      args: lock.args,
-      hash_type: lock.hashType,
-    }
-
-    fs.writeFileSync(path.join(workspace, 'deployment.toml'), TOML.stringify(deploymentConfig))
-
-    const ckbRpcUrl = (() => {
-      if (chain === 'dev') {
-        return 'http://localhost:8114'
-      }
-
-      if (chain === 'test') {
-        return 'https://testnet.ckb.dev/rpc'
-      }
-
-      if (chain === 'mainnet') {
-        return 'https://mainnet.ckb.dev/rpc'
-      }
-
-      return chain
-    })()
-
-    const deployerAddress = generateAddress(deployerLock, { config: isMainnet ? predefined.LINA : predefined.AGGRON4 })
-
-    console.log('deployed', deployedContractName, 'to', ckbRpcUrl, ', deployer', deployerAddress)
-
-    execSync(
-      `cd ${workspace} && capsule deploy --address ${deployerAddress} --api ${ckbRpcUrl} --fee ${fee} --env ${env} --migrate ${migrate}`,
-      {
-        stdio: 'inherit',
-      },
-    )
   })

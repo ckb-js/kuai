@@ -42,11 +42,23 @@ Please run: npm install --save-dev ts-node`,
 
 Please run: npm install --save-dev typescript`,
     },
+    NETWORK_NOT_FOUND: {
+      code: 'NETWORK_NOT_FOUND',
+      message: `The specified network is not defined, please configure it first`,
+    },
   },
   BUILTIN_TASKS: {
     UNSUPPORTED_NETWORK: {
       code: 'UNSUPPORTED_NETWORK',
       message: 'Unsupported network %var%.',
+    },
+    UNSUPPORTED_SIGNER: {
+      code: 'UNSUPPORTED_SIGNER',
+      message: 'Unsupported signer %var%.',
+    },
+    CONTRACT_RELEASE_FILE_NOT_FOUND: {
+      code: 'CONTRACT_RELEASE_FILE_NOT_FOUND',
+      message: '%var% contract release file not found, please check conrtact is exists or build it first',
     },
   },
 }

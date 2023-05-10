@@ -30,10 +30,6 @@ subtask('node:start', 'start a ckb node')
       detached,
       genesisAccountArgs: genesisArgs,
     })
-
-    env.config.network = {
-      url: 'http://localhost:' + port,
-    }
   })
 
 subtask('node:stop', 'stop ckb node').setAction(async (_, env) => {

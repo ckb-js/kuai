@@ -101,7 +101,7 @@ describe('kuai cli', () => {
   test('Unsupported network', async () => {
     expect(() => {
       execSync('npx kuai node --network test')
-    }).toThrow(/Unsupported network test./)
+    }).toThrow(/The specified network is not defined, please configure it first/)
   })
 
   describe('--config', () => {

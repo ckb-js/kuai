@@ -1,6 +1,6 @@
 import Koa from 'koa'
 import { koaBody } from 'koa-body'
-import { initialKuai } from '@ckb-js/kuai-core'
+import { initialKuai, getGenesisScriptsConfig } from '@ckb-js/kuai-core'
 import { config } from '@ckb-lumos/lumos'
 import { KoaRouterAdapter, CoR, TipHeaderListener } from '@ckb-js/kuai-io'
 import cors from '@koa/cors'
@@ -28,30 +28,22 @@ async function bootstrap() {
     mqContainer.bind(REDIS_HOST_SYMBOL).toConstantValue(kuaiEnv.config.redisHost)
   }
 
-  const lumosConfig: config.Config = (() => {
-    if (kuaiEnv.config.lumosConfig === 'aggron4') {
-      return config.predefined.AGGRON4
-    }
+  config.initializeConfig(
+    config.createConfig({
+      PREFIX: kuaiEnv.config.ckbChain.prefix,
+      SCRIPTS: kuaiEnv.config.ckbChain.scripts || {
+        ...(await getGenesisScriptsConfig(kuaiEnv.config.ckbChain.rpcUrl)),
+      },
+    }),
+  )
 
-    if (kuaiEnv.config.lumosConfig === 'lina') {
-      return config.predefined.LINA
-    }
-
-    if (kuaiEnv.config.lumosConfig) {
-      return kuaiEnv.config.lumosConfig
-    }
-
-    return { PREFIX: 'ckt', SCRIPTS: {} }
-  })()
-
-  config.initializeConfig(lumosConfig)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const port = kuaiEnv.config.port || 3000
   const host = kuaiEnv.config.host || '127.0.0.1'
 
   Reflect.defineMetadata(ProviderKey.Actor, { ref: new ActorReference('resource', '/').json }, Manager)
 
-  const dataSource = new NervosChainSource(kuaiEnv.config.rpcUrl)
+  const dataSource = new NervosChainSource(kuaiEnv.config.ckbChain.rpcUrl)
   const listener = new TipHeaderListener(dataSource)
   const manager = new Manager(listener, dataSource)
   manager.listen()
