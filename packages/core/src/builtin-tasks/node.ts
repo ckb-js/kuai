@@ -38,7 +38,7 @@ subtask('node:start', 'start a ckb node')
 
     env.config.network = { url: ckbDockerNetwork.url }
 
-    await new Promise((resolve) => setTimeout(resolve, 10000))
+    await new Promise((resolve) => setTimeout(resolve, 30000))
     await ckbDockerNetwork.generateLumosConfig()
 
     config.initializeConfig(ckbDockerNetwork.lumosConfig)
