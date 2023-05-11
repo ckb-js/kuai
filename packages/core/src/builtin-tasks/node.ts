@@ -4,8 +4,9 @@ import { CkbDockerNetwork } from '@ckb-js/kuai-docker-node'
 import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import '../type/runtime'
-import { Indexer, RPC } from '@ckb-lumos/lumos'
-import { configPath } from '../helper'
+import { Indexer, RPC, config } from '@ckb-lumos/lumos'
+import { cachePath, configPath } from '../helper'
+import path from 'node:path'
 
 interface Args {
   port: number
@@ -21,7 +22,7 @@ subtask('node:start', 'start a ckb node')
   .addParam('detached', 'Run the node in detached mode', false, paramTypes.boolean)
   .addParam('filePath', 'The script config file path', undefined, paramTypes.string, true, true)
   .addParam('genesisArgs', 'The genesis args', undefined, paramTypes.string, true, true)
-  .setAction(async ({ port, detached, filePath = '', genesisArgs = [] }: Args, env) => {
+  .setAction(async ({ port, detached, filePath, genesisArgs = [] }: Args, env) => {
     if (env.config.kuaiArguments?.network !== 'docker-node') {
       throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_NETWORK, {
         var: env.config.kuaiArguments?.network,
@@ -35,16 +36,20 @@ subtask('node:start', 'start a ckb node')
       genesisAccountArgs: genesisArgs,
     })
 
-    const url = 'http://localhost:' + port
-    env.config.network = { url }
+    env.config.network = { url: ckbDockerNetwork.url }
 
-    await new Promise(() => setTimeout(() => console.log(1), 100000))
-    await ckbDockerNetwork.deployScripts(
-      filePath ?? configPath('scripts'),
-      new Indexer(`${url}/indexer`),
-      new RPC(`${url}/rpc`),
-      '0xfd686a48908e8caf97723578bf85f746e1e1d8956cb132f6a2e92e7234a2a245',
-    )
+    await new Promise((resolve) => setTimeout(resolve, 10000))
+    await ckbDockerNetwork.generateLumosConfig()
+
+    config.initializeConfig(ckbDockerNetwork.lumosConfig)
+
+    await ckbDockerNetwork.deployScripts({
+      configFilePath: filePath ?? path.resolve(configPath(), 'scripts.json'),
+      builtInDirPath: cachePath('built-in'),
+      indexer: new Indexer(`${ckbDockerNetwork.url}/indexer`),
+      rpc: new RPC(`${ckbDockerNetwork.url}/rpc`),
+      privateKey: '0xfd686a48908e8caf97723578bf85f746e1e1d8956cb132f6a2e92e7234a2a245',
+    })
   })
 
 subtask('node:stop', 'stop ckb node').setAction(async (_, env) => {

@@ -5,6 +5,7 @@ import { loadConfigAndTasks } from './config'
 import { KuaiArguments } from './type'
 import path from 'node:path'
 import { PATH } from './constants'
+import fs from 'node:fs'
 
 export async function initialKuai(args: KuaiArguments = {}): Promise<KuaiContext> {
   loadTsNode()
@@ -19,10 +20,18 @@ export async function initialKuai(args: KuaiArguments = {}): Promise<KuaiContext
   return ctx
 }
 
-export const cachePath = (...paths: string[]) => path.resolve(PATH.cache, ...paths)
+export const cachePath = (...paths: string[]) => {
+  const cachePath = path.resolve(PATH.cache, ...paths)
+  if (!fs.existsSync(cachePath)) {
+    fs.mkdirSync(cachePath, { recursive: true })
+  }
+  return cachePath
+}
 
-export const configPath = (...paths: string[]) => path.resolve(PATH.config, ...paths)
-
-export const dataPath = (...paths: string[]) => path.resolve(PATH.data, ...paths)
-
-export const logPath = (...paths: string[]) => path.resolve(PATH.log, ...paths)
+export const configPath = (...paths: string[]) => {
+  const configPath = path.resolve(PATH.config, ...paths)
+  if (!fs.existsSync(configPath)) {
+    fs.mkdirSync(configPath, { recursive: true })
+  }
+  return configPath
+}
