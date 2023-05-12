@@ -7,6 +7,8 @@ import '../type/runtime'
 import { Indexer, RPC, config } from '@ckb-lumos/lumos'
 import { cachePath, configPath } from '../helper'
 import path from 'node:path'
+import fs from 'fs'
+import download from 'download'
 
 interface Args {
   port: number
@@ -16,6 +18,7 @@ interface Args {
 }
 
 const TERMINATION_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGQUIT']
+const BUILTIN_SCRIPTS = ['anyone_can_pay', 'omni_lock', 'simple_udt']
 
 subtask('node:start', 'start a ckb node')
   .addParam('port', 'The port of the node', 8114, paramTypes.number)
@@ -38,14 +41,25 @@ subtask('node:start', 'start a ckb node')
 
     env.config.network = { url: ckbDockerNetwork.url }
 
-    await new Promise((resolve) => setTimeout(resolve, 30000))
+    const builtInDirPath = cachePath('built-in')
+    for (const script of BUILTIN_SCRIPTS) {
+      const filePath = path.join(builtInDirPath, script)
+      if (!fs.existsSync(filePath)) {
+        download(
+          `https://github.com/Daryl-L/ckb-production-scripts/releases/download/scripts/${script}`,
+          builtInDirPath,
+          { filename: script },
+        )
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20000))
     await ckbDockerNetwork.generateLumosConfig()
-
     config.initializeConfig(ckbDockerNetwork.lumosConfig)
 
     await ckbDockerNetwork.deployScripts({
+      builtInScriptName: BUILTIN_SCRIPTS,
       configFilePath: filePath ?? path.resolve(configPath(), 'scripts.json'),
-      builtInDirPath: cachePath('built-in'),
+      builtInDirPath,
       indexer: new Indexer(`${ckbDockerNetwork.url}/indexer`),
       rpc: new RPC(`${ckbDockerNetwork.url}/rpc`),
       privateKey: '0xfd686a48908e8caf97723578bf85f746e1e1d8956cb132f6a2e92e7234a2a245',

@@ -7,7 +7,6 @@ import { Address, Indexer, RPC, commons, helpers, hd, Transaction, config } from
 
 const CKB_NODE_IMAGE = 'kuai/ckb-dev'
 const DOCKER_SOCKET_PATH = process.env.DOCKER_SOCKET || '/var/run/docker.sock'
-const BUILTIN_SCRIPTS = ['anyone_can_pay', 'omni_lock', 'simple_udt']
 
 export class CkbDockerNetwork {
   private _docker: Docker
@@ -106,6 +105,7 @@ lock.hash_type = "type"\n`
   }
 
   private async deployBuiltInScripts(
+    scriptName: string[],
     builtInDirPath: string,
     indexer: Indexer,
     rpc: RPC,
@@ -113,8 +113,9 @@ lock.hash_type = "type"\n`
     privateKey: string,
   ): Promise<InfraScript[]> {
     const scripts: InfraScript[] = []
-    for (const script of BUILTIN_SCRIPTS) {
-      scripts.push(await this.doDeploy(rpc, indexer, from, privateKey, script, path.join(builtInDirPath, script)))
+    for (const script of scriptName) {
+      const filePath = path.join(builtInDirPath, script)
+      scripts.push(await this.doDeploy(rpc, indexer, from, privateKey, script, filePath))
     }
 
     return scripts
@@ -147,12 +148,14 @@ lock.hash_type = "type"\n`
   }
 
   public async deployScripts({
+    builtInScriptName,
     configFilePath,
     builtInDirPath,
     indexer,
     rpc,
     privateKey,
   }: {
+    builtInScriptName: string[]
     configFilePath: string
     builtInDirPath: string
     indexer: Indexer
@@ -162,7 +165,7 @@ lock.hash_type = "type"\n`
     const from = helpers.encodeToConfigAddress(hd.key.privateKeyToBlake160(privateKey), 'SECP256K1_BLAKE160')
     await indexer.waitForSync()
     const config = {
-      builtIn: await this.deployBuiltInScripts(builtInDirPath, indexer, rpc, from, privateKey),
+      builtIn: await this.deployBuiltInScripts(builtInScriptName, builtInDirPath, indexer, rpc, from, privateKey),
       custom: await this.deployCustomScripts(configFilePath, indexer, rpc, from, privateKey),
     }
 
