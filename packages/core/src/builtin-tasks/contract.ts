@@ -9,7 +9,7 @@ import { encodeToAddress } from '@ckb-lumos/helpers'
 import { Config } from '@ckb-lumos/config-manager'
 import { ContractDeployer } from '../contract'
 import type { MessageSigner } from '../contract'
-import { signMessageByCkbCli } from '../ckbcli'
+import { signMessageByCkbCli } from '../ckb-cli'
 import { task, subtask } from '../config/config-env'
 import { paramTypes } from '../params'
 import { getUserConfigPath } from '../project-structure'
@@ -24,7 +24,7 @@ subtask('contract:deploy')
   .addParam('address', 'address of the contract deployer', '', paramTypes.string, false)
   .addParam(
     'feeRate',
-    "Per transaction's fee, deployment may involve more than one transaction. default: [1000] shannon/Byte",
+    "per transaction's fee, deployment may involve more than one transaction. default: [1000] shannons/Byte",
     1000,
     paramTypes.number,
     true,
@@ -34,17 +34,17 @@ subtask('contract:deploy')
     const workspace = (await run('contract:get-workspace')) as string
 
     if (!name) {
-      throw new Error('Please specify the name of the contract, not support deploying all contracts for now.')
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.NOT_SPECIFY_CONTRACT)
     }
 
     if (!address) {
-      throw new Error('please specify address of deployer')
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.NOT_SPECIFY_DEPLOYER_ADDRESS)
     }
 
     const conrtactBinPath = path.join(workspace, `build/release/${name}`)
 
     if (!existsSync(conrtactBinPath)) {
-      throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_SIGNER, {
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.CONTRACT_RELEASE_FILE_NOT_FOUND, {
         var: name,
       })
     }
@@ -69,13 +69,13 @@ subtask('contract:deploy')
 
     const result = await deployer.deploy(conrtactBinPath, address, { feeRate })
     console.info('deploy success, txHash: ', result.txHash)
-    console.info('done')
+    return result.txHash
   })
 
 subtask('contract:sign-message')
   .addParam('message', 'message to be signed', '', paramTypes.string, false)
   .addParam('address', 'the address of message signer', '', paramTypes.string, false)
-  .addParam('signer', 'the sign method of signer, default: ckb-cli', 'ckb-cli', paramTypes.string, true)
+  .addParam('signer', 'signer provider, default: ckb-cli', 'ckb-cli', paramTypes.string, true)
   .setAction(async ({ message, address, signer }): Promise<string> => {
     if (signer === 'ckb-cli') {
       const password = await read({ prompt: `Input ${address}'s password for sign messge by ckb-cli:`, silent: true })
@@ -112,7 +112,7 @@ interface BuildArgs {
 
 subtask('contract:build')
   .addParam('name', 'contract name', '', paramTypes.string, true)
-  .addParam('release', 'Build contracts in release mode', false, paramTypes.boolean, true)
+  .addParam('release', 'build contracts in release mode', false, paramTypes.boolean, true)
   .setAction(async ({ name, release }: BuildArgs, { run }) => {
     const workspace = await run('contract:get-workspace')
     execSync(`cd ${workspace} && capsule build${name ? ` --name ${name}` : ''}${release ? ' --release' : ''}`, {

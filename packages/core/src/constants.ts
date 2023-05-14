@@ -19,11 +19,11 @@ export const DEFAULT_NETWORKDS: {
     scripts: config.predefined.AGGRON4.SCRIPTS,
   },
   devnet: {
-    rpcUrl: 'http://localhost:8114',
+    rpcUrl: 'http://127.0.0.1:8114',
     prefix: 'ckt',
   },
   'docker-node': {
-    rpcUrl: 'http://localhost:8114',
+    rpcUrl: 'http://127.0.0.1:8114',
     prefix: 'ckt',
   },
 }

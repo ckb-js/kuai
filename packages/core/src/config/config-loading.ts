@@ -37,7 +37,7 @@ export async function loadConfigAndTasks(args: KuaiArguments = {}): Promise<Kuai
   }
 
   const config: KuaiConfig = {
-    ...{ networks: DEFAULT_NETWORKDS },
+    networks: DEFAULT_NETWORKDS,
     ...userConfig,
     kuaiArguments: {
       ...DEFAULT_KUAI_ARGUMENTS,

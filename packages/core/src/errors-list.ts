@@ -58,7 +58,15 @@ Please run: npm install --save-dev typescript`,
     },
     CONTRACT_RELEASE_FILE_NOT_FOUND: {
       code: 'CONTRACT_RELEASE_FILE_NOT_FOUND',
-      message: '%var% contract release file not found, please check conrtact is exists or build it first',
+      message: '%var% contract release file not found, please check if conrtact exists or build it first',
+    },
+    NOT_SPECIFY_CONTRACT: {
+      code: 'NOT_SPECIFY_CONTRACT',
+      message: 'Please specify the name of the contract',
+    },
+    NOT_SPECIFY_DEPLOYER_ADDRESS: {
+      code: 'NOT_SPECIFY_DEPLOYER_ADDRESS',
+      message: 'Please specify address of deploye',
     },
   },
 }

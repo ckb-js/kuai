@@ -11,18 +11,23 @@ export type MessageSigner = (message: string, fromInfo: FromInfo) => Promise<Sig
 export class ContractDeployer {
   #rpc: RPC
   #index: Indexer
-  #config: config.Config
+  #signer: MessageSigner
+  #network: {
+    rpcUrl: string
+    config: config.Config
+  }
 
   constructor(
-    private readonly signer: MessageSigner,
-    private readonly network: {
+    signer: MessageSigner,
+    network: {
       rpcUrl: string
       config: config.Config
     },
   ) {
+    this.#signer = signer
     this.#rpc = new RPC(network.rpcUrl)
     this.#index = new Indexer(network.rpcUrl)
-    this.#config = network.config
+    this.#network = network
   }
 
   async deploy(
@@ -45,15 +50,19 @@ export class ContractDeployer {
       cellProvider: this.#index,
       fromInfo,
       scriptBinary: contractBin,
-      config: this.#config,
+      config: this.#network.config,
     })
 
     let { txSkeleton } = result
     const { scriptConfig, typeId } = result
 
-    txSkeleton = await commons.common.payFee(txSkeleton, [fromInfo], feeRate, undefined, { config: this.#config })
+    txSkeleton = await commons.common.payFee(txSkeleton, [fromInfo], feeRate, undefined, {
+      config: this.#network.config,
+    })
     txSkeleton = commons.common.prepareSigningEntries(txSkeleton)
-    const signatures = await Promise.all(txSkeleton.signingEntries.map(({ message }) => this.signer(message, fromInfo)))
+    const signatures = await Promise.all(
+      txSkeleton.signingEntries.map(({ message }) => this.#signer(message, fromInfo)),
+    )
     const signedTx = sealTransaction(txSkeleton, signatures)
     const txHash = await this.#rpc.sendTransaction(signedTx)
 
