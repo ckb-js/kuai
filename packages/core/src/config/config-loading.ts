@@ -1,7 +1,9 @@
 import path from 'node:path'
+import { KuaiError } from '@ckb-js/kuai-common'
 import { KuaiConfig, KuaiArguments } from '../type'
 import { getUserConfigPath } from '../project-structure'
-import { DEFAULT_KUAI_ARGUMENTS } from '../constants'
+import { ERRORS } from '../errors-list'
+import { DEFAULT_KUAI_ARGUMENTS, DEFAULT_NETWORKDS } from '../constants'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function importCsjOrEsModule(filePath: string): any {
@@ -34,12 +36,26 @@ export async function loadConfigAndTasks(args: KuaiArguments = {}): Promise<Kuai
     userConfig = importCsjOrEsModule(configPath)
   }
 
-  return {
+  const config: KuaiConfig = {
+    networks: DEFAULT_NETWORKDS,
     ...userConfig,
     kuaiArguments: {
       ...DEFAULT_KUAI_ARGUMENTS,
       ...args,
       configPath,
     },
+  }
+
+  const specificNetwork = config.kuaiArguments?.network || config.network || DEFAULT_KUAI_ARGUMENTS.network
+
+  const ckbChain = config.networks?.[specificNetwork]
+
+  if (!ckbChain) {
+    throw new KuaiError(ERRORS.GENERAL.NETWORK_NOT_FOUND)
+  }
+
+  return {
+    ...config,
+    ckbChain,
   }
 }

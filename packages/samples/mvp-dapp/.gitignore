@@ -236,3 +236,8 @@ $RECYCLE.BIN/
 
 # Kuai
 _cache
+
+# capsule
+target
+build
+migrations

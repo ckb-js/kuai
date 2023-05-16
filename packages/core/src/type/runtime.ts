@@ -1,4 +1,5 @@
 import type { Config as JestConfig } from 'jest'
+import type { ScriptConfig } from '@ckb-lumos/config-manager'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TaskArguments = any
@@ -10,15 +11,28 @@ export interface KuaiArguments {
 
 export interface KuaiConfig {
   kuaiArguments?: KuaiArguments
-  network?: HttpNetworkConfig
+  network?: string
+  ckbChain: NetworkConfig
   jest?: JestConfig
+  contract?: ContractConfig
+  networks?: {
+    [name: string]: NetworkConfig
+  }
+}
+export type ContractConfig = {
+  workspace?: string
 }
 
 export type HttpNetworkConfig = {
-  url: string
+  rpcUrl: string
 }
 
-export type RunTaskFunction = (name: string, taskArguments?: TaskArguments) => Promise<unknown>
+export type NetworkConfig = HttpNetworkConfig & {
+  prefix: string
+  scripts?: Record<string, ScriptConfig>
+}
+
+export type RunTaskFunction<T = unknown> = (name: string, taskArguments?: TaskArguments) => Promise<T>
 
 export type EnvironmentExtender = (env: RuntimeEnvironment) => void
 
