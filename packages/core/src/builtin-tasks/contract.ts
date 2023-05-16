@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
+import type { FromInfo } from '@ckb-lumos/common-scripts'
 import { parseFromInfo } from '@ckb-lumos/common-scripts'
 import { encodeToAddress } from '@ckb-lumos/helpers'
 import { Config } from '@ckb-lumos/config-manager'
@@ -19,9 +20,61 @@ task('contract').setAction(async () => {
   execSync('kuai contract --help', { stdio: 'inherit' })
 })
 
+interface ContractDeployArgs {
+  name: string
+  from: string[]
+  signer: 'ckb-cli' | 'ckb-cli-multisig'
+  feeRate: number
+}
+
+function parseFromInfoByCli(info: string[]): FromInfo[] {
+  if (info[0] === 'multisig') {
+    if (!info[1] || !Number.isInteger(parseInt(info[1]))) {
+      throw new KuaiError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
+        name: 'r',
+        value: info[1],
+        type: 'number',
+      })
+    }
+
+    if (!info[2] || !Number.isInteger(parseInt(info[2]))) {
+      throw new KuaiError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
+        name: 'm',
+        value: info[2],
+        type: 'number',
+      })
+    }
+
+    const hashes = info.slice(3)
+
+    if (hashes.length === 0) {
+      throw new KuaiError(ERRORS.ARGUMENTS.MISSING_TASK_ARGUMENT, {
+        param: 'multisig hashes',
+      })
+    }
+
+    return [
+      {
+        R: parseInt(info[1]),
+        M: parseInt(info[2]),
+        publicKeyHashes: hashes,
+      },
+    ]
+  }
+
+  return info
+}
+
 subtask('contract:deploy')
   .addParam('name', 'name of the contract to be deployed', '', paramTypes.string, false)
-  .addParam('address', 'address of the contract deployer', '', paramTypes.string, false)
+  .addParam('from', 'address or multisig config of the contract deployer', '', paramTypes.string, false, true)
+  .addParam(
+    'signer',
+    'signer provider [default: ckb-cli] [possible values: ckb-cli, ckb-cli-multisig]',
+    'ckb-cli',
+    paramTypes.string,
+    true,
+  )
   .addParam(
     'feeRate',
     "per transaction's fee, deployment may involve more than one transaction. default: [1000] shannons/Byte",
@@ -29,16 +82,15 @@ subtask('contract:deploy')
     paramTypes.number,
     true,
   )
-  .setAction(async ({ name, address, feeRate }, { config, run }) => {
+  .setAction(async (args: ContractDeployArgs, { config, run }) => {
+    const { name, from, feeRate, signer } = args
     const { ckbChain } = config
+
+    const fromInfos = parseFromInfoByCli(from)
     const workspace = (await run('contract:get-workspace')) as string
 
     if (!name) {
       throw new KuaiError(ERRORS.BUILTIN_TASKS.NOT_SPECIFY_CONTRACT)
-    }
-
-    if (!address) {
-      throw new KuaiError(ERRORS.BUILTIN_TASKS.NOT_SPECIFY_DEPLOYER_ADDRESS)
     }
 
     const conrtactBinPath = path.join(workspace, `build/release/${name}`)
@@ -56,18 +108,22 @@ subtask('contract:deploy')
       },
     }
 
-    const signer: MessageSigner = (message, fromInfo) =>
-      run('contract:sign-message', {
+    const messageSigner: MessageSigner = (message, fromInfo) => {
+      const { multisigScript } = parseFromInfo(fromInfo, { config: lumosConfig })
+      return run('contract:sign-message', {
         message,
         address: encodeToAddress(parseFromInfo(fromInfo, { config: lumosConfig }).fromScript, { config: lumosConfig }),
+        signer,
+        prefix: multisigScript,
       }) as Promise<string>
+    }
 
-    const deployer = new ContractDeployer(signer, {
+    const deployer = new ContractDeployer(messageSigner, {
       rpcUrl: config.ckbChain.rpcUrl,
       config: lumosConfig,
     })
 
-    const result = await deployer.deploy(conrtactBinPath, address, { feeRate })
+    const result = await deployer.deploy(conrtactBinPath, fromInfos[0], { feeRate })
     console.info('deploy success, txHash: ', result.txHash)
     return result.txHash
   })
@@ -75,12 +131,38 @@ subtask('contract:deploy')
 subtask('contract:sign-message')
   .addParam('message', 'message to be signed', '', paramTypes.string, false)
   .addParam('address', 'the address of message signer', '', paramTypes.string, false)
-  .addParam('signer', 'signer provider, default: ckb-cli', 'ckb-cli', paramTypes.string, true)
-  .setAction(async ({ message, address, signer }): Promise<string> => {
+  .addParam('prefix', 'the prefix of signature', '', paramTypes.string, true)
+  .addParam(
+    'signer',
+    'signer provider [default: ckb-cli] [possible values: ckb-cli, ckb-cli-multisig]',
+    'ckb-cli',
+    paramTypes.string,
+    true,
+  )
+  .setAction(async ({ message, address, prefix = '', signer }): Promise<string> => {
     if (signer === 'ckb-cli') {
       const password = await read({ prompt: `Input ${address}'s password for sign messge by ckb-cli:`, silent: true })
       console.info('')
       return signMessageByCkbCli(message, address, password)
+    }
+
+    if (signer === 'ckb-cli-multisig') {
+      const preSigningAddresses = (
+        await read({ prompt: `Input the signing addresses or args for sign multisig, separated by spaces: ` })
+      ).split(' ')
+      if (!Array.isArray(preSigningAddresses) || preSigningAddresses.length === 0) {
+        throw new KuaiError(ERRORS.BUILTIN_TASKS.NOT_SPECIFY_SIGNING_ADDRESS)
+      }
+
+      const multisigs = await Promise.all(
+        preSigningAddresses.map(async (addr) => {
+          const password = await read({ prompt: `Input ${addr}'s password for sign messge by ckb-cli:`, silent: true })
+          console.info('')
+          return signMessageByCkbCli(message, addr, password).slice(2)
+        }),
+      )
+
+      return `${prefix}${multisigs.join('')}`
     }
 
     throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_SIGNER, {

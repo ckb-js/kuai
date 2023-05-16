@@ -64,6 +64,10 @@ Please run: npm install --save-dev typescript`,
       code: 'NOT_SPECIFY_CONTRACT',
       message: 'Please specify the name of the contract',
     },
+    NOT_SPECIFY_SIGNING_ADDRESS: {
+      code: 'NOT_SPECIFY_SIGNING_ADDRESS',
+      message: 'Please specify address of signing',
+    },
     NOT_SPECIFY_DEPLOYER_ADDRESS: {
       code: 'NOT_SPECIFY_DEPLOYER_ADDRESS',
       message: 'Please specify address of deploye',
