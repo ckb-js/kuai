@@ -154,13 +154,13 @@ subtask('contract:sign-message')
         throw new KuaiError(ERRORS.BUILTIN_TASKS.NOT_SPECIFY_SIGNING_ADDRESS)
       }
 
-      const multisigs = await Promise.all(
-        preSigningAddresses.map(async (addr) => {
-          const password = await read({ prompt: `Input ${addr}'s password for sign messge by ckb-cli:`, silent: true })
-          console.info('')
-          return signMessageByCkbCli(message, addr, password).slice(2)
-        }),
-      )
+      let multisigs: string[] = []
+      for (const addr of preSigningAddresses) {
+        const password = await read({ prompt: `Input ${addr}'s password for sign messge by ckb-cli:`, silent: true })
+        console.info('')
+        const sig = signMessageByCkbCli(message, addr, password).slice(2)
+        multisigs = [...multisigs, sig]
+      }
 
       return `${prefix}${multisigs.join('')}`
     }
