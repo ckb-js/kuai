@@ -176,7 +176,6 @@ lock.hash_type = "type"\n`
       custom: await this.deployCustomScripts(configFilePath, indexer, rpc, from, privateKey),
     }
 
-    console.log(configFilePath)
     fs.writeFileSync(configFilePath, Buffer.from(JSON.stringify(config)), { flag: 'w' })
   }
 
