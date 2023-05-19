@@ -9,6 +9,7 @@ import { cachePath, configPath } from '../helper'
 import path from 'node:path'
 import fs from 'fs'
 import download from 'download'
+import { scheduler } from 'node:timers/promises'
 
 interface Args {
   port: number
@@ -39,7 +40,7 @@ subtask('node:start', 'start a ckb node')
       genesisAccountArgs: genesisArgs,
     })
 
-    env.config.network = { url: ckbDockerNetwork.url }
+    env.config.network = ckbDockerNetwork.url
 
     const builtInDirPath = cachePath('built-in')
     for (const script of BUILTIN_SCRIPTS) {
@@ -52,7 +53,7 @@ subtask('node:start', 'start a ckb node')
         )
       }
     }
-    await new Promise((resolve) => setTimeout(resolve, 20000))
+    await scheduler.wait(20000)
     await ckbDockerNetwork.generateLumosConfig()
     config.initializeConfig(ckbDockerNetwork.lumosConfig)
 
