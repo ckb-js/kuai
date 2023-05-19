@@ -65,8 +65,8 @@ subtask('node:start', 'start a ckb node')
       builtInScriptName: BUILTIN_SCRIPTS,
       configFilePath: filePath ?? path.resolve(configPath(), 'scripts.json'),
       builtInDirPath,
-      indexer: new Indexer(`${ckbDockerNetwork.url}/indexer`),
-      rpc: new RPC(`${ckbDockerNetwork.url}/rpc`),
+      indexer: new Indexer(ckbDockerNetwork.url),
+      rpc: new RPC(ckbDockerNetwork.url),
       privateKey: '0xfd686a48908e8caf97723578bf85f746e1e1d8956cb132f6a2e92e7234a2a245',
     })
   })
