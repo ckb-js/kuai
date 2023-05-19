@@ -1,5 +1,8 @@
 import { bytes } from '@ckb-lumos/codec'
+import { BI } from '@ckb-lumos/bi'
+import BigNumber from 'bignumber.js'
 import type { Script } from '@ckb-lumos/base'
+import { get, cloneDeep } from 'lodash'
 import type { ActorMessage, ActorRef, MessagePayload } from '../actor'
 import type {
   OutPointString,
@@ -17,21 +20,24 @@ import type {
 } from './interface'
 import type { JSONStorageOffChain } from './json-storage'
 import type { GetState } from './chain-storage'
-import { mergeWith, get } from 'lodash'
 import { ChainStorage } from './chain-storage'
 import { Actor } from '../actor'
 import { JSONStorage } from './json-storage'
 import {
+  NoCellToUseException,
   NonExistentCellException,
   NonExistentException,
   NonStorageInstanceException,
   NoSchemaException,
+  SectionStoreCannotCloneException,
+  ShouldCalledByDerivedException,
   UnmatchLengthException,
 } from '../exceptions'
 import { ProviderKey, CellPattern, SchemaPattern, isStringList } from '../utils'
 import { outPointToOutPointString } from '../resource-binding'
 import { MoleculeStorage, DynamicParam, GetCodecConfig, isCodecConfig, GetMoleculeOffChain } from './molecule-storage'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
+import { DefaultMergeStrategy, MergeStrategy } from './merge-strategy'
 
 const ByteCharLen = 2
 
@@ -46,8 +52,13 @@ export class Store<
   StructSchema extends StorageSchema<GetState<StorageT>>,
   Option = never,
 > extends Actor<GetStorageStruct<StructSchema>, MessagePayload<StoreMessage>> {
-  protected states: Record<OutPointString, GetStorageStruct<StructSchema>>
-  protected chainData: Record<OutPointString, UpdateStorageValue>
+  protected states: Record<OutPointString, GetStorageStruct<StructSchema>> = {}
+
+  protected chainData: Record<OutPointString, UpdateStorageValue> = {}
+
+  protected outPointStrings: OutPointString[] = []
+
+  protected usedOutPointStrings = new Set<OutPointString>()
 
   protected options?: Option
 
@@ -56,6 +67,16 @@ export class Store<
   protected cellPatterns: CellPattern[] = []
 
   protected schemaPattern?: SchemaPattern
+
+  protected mergedState?: GetStorageStruct<StructSchema>
+
+  protected mergedStatesFieldOutPoint: Record<string, OutPointString> = {}
+
+  protected isSection = false
+
+  protected mergeStrategy: MergeStrategy<GetStorageStruct<StructSchema>> = new DefaultMergeStrategy<
+    GetStorageStruct<StructSchema>
+  >()
 
   #lock?: Script
 
@@ -72,8 +93,6 @@ export class Store<
   constructor(
     schemaOption: GetStorageOption<StructSchema>,
     params?: {
-      states?: Record<OutPointString, GetStorageStruct<StructSchema>>
-      chainData?: Record<OutPointString, UpdateStorageValue>
       cellPatterns?: CellPattern[]
       schemaPattern?: SchemaPattern
       options?: Option
@@ -83,8 +102,6 @@ export class Store<
     super(params?.ref)
     this.schemaPattern = Reflect.getMetadata(ProviderKey.SchemaPattern, this.constructor) || params?.schemaPattern
     this.schemaOption = schemaOption
-    this.states = params?.states || {}
-    this.chainData = params?.chainData || {}
     this.options = params?.options
 
     this.initiateLock(params?.ref)
@@ -125,21 +142,12 @@ export class Store<
   }
 
   public load(path?: string) {
-    let local = {}
-    const customizer = (objValue: StructSchema, srcValue: StructSchema) => {
-      if (Array.isArray(objValue)) {
-        return objValue.concat(srcValue)
-      }
-    }
-    Object.values(this.states).forEach((state) => {
-      local = mergeWith(local, state, customizer)
-    })
-
+    if (this.mergedState === undefined) return undefined
     if (path) {
-      return get(local, path, null)
+      return get(this.mergedState, path, null)
     }
 
-    return local
+    return this.mergedState
   }
 
   private getOffsetAndLength(option: unknown): [ByteLength, ByteLength] {
@@ -190,6 +198,8 @@ export class Store<
       }
       this.states[outPoint] = value
       this.chainData[outPoint] = { cell, witness }
+      this.mergedState = this.mergeStrategy.merge(value, this.mergedState)
+      this.outPointStrings.push(outPoint)
     }
   }
 
@@ -198,19 +208,12 @@ export class Store<
       delete this.states[key]
       delete this.chainData[key]
     })
-  }
-
-  private getAndValidTargetKey(key: OutPointString, paths: StorePath, ignoreLast?: boolean) {
-    if (ignoreLast && paths.length === 1) return this.states[key]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let result: any = (this.states[key] as any)?.[paths[0]]
-    for (let i = 1; i < (ignoreLast ? paths.length - 1 : paths.length); i++) {
-      result = result?.[paths[i]]
-    }
-    if (result === undefined || result === null) {
-      throw new NonExistentException(`${key}:${paths.join('.')}`)
-    }
-    return result
+    this.outPointStrings = this.outPointStrings.filter((outPoint) => !keys.includes(outPoint))
+    this.mergedState = this.outPointStrings.reduce(
+      (pre: undefined | GetStorageStruct<StructSchema>, outPoint) =>
+        this.mergeStrategy.merge(this.states[outPoint], pre),
+      undefined,
+    )
   }
 
   private updateChainData(key: OutPointString, paths?: StorePath) {
@@ -315,6 +318,68 @@ export class Store<
     return clone
   }
 
+  private cloneStates() {
+    const states: Record<OutPointString, GetFullStorageStruct<StructSchema>> = {}
+    Object.keys(this.states).forEach((key) => {
+      const currentStateInKey = this.states[key]
+      states[key] = (states[key] || {}) as GetFullStorageStruct<StructSchema>
+      if ('data' in currentStateInKey && currentStateInKey.data !== undefined) {
+        this.assertStorage(this.getStorage('data'))
+        states[key].data = this.getStorage('data')?.clone(currentStateInKey.data)
+      }
+      if ('witness' in currentStateInKey && currentStateInKey.witness !== undefined) {
+        this.assertStorage(this.getStorage('witness'))
+        states[key].witness = this.getStorage('witness')?.clone(currentStateInKey.witness)
+      }
+      if ('lockArgs' in currentStateInKey && (currentStateInKey.lockArgs ?? false) !== false) {
+        this.assertStorage(this.getStorage('lockArgs'))
+        states[key].lockArgs = this.getStorage('lockArgs')?.clone(currentStateInKey.lockArgs)
+      }
+      if ('typeArgs' in currentStateInKey && (currentStateInKey.typeArgs ?? false) !== false) {
+        this.assertStorage(this.getStorage('typeArgs'))
+        states[key].typeArgs = this.getStorage('typeArgs')?.clone(currentStateInKey.typeArgs)
+      }
+    })
+    return states as unknown as Record<OutPointString, GetStorageStruct<StructSchema>>
+  }
+
+  private updateMergedData(value: unknown, paths?: StorePath) {
+    if (!this.outPointStrings.length) throw new NoCellToUseException()
+    const { update, remove } = this.mergeStrategy.findAndUpdate({
+      paths: paths,
+      value,
+      outPointStrings: this.outPointStrings,
+      states: this.states,
+      isValueEqual: this.isValueEqual,
+      isSimpleType: this.isSimpleType,
+    })
+    const changedOutPoints = new Set([...(remove ?? []), ...(update ?? []).map((v) => v.outPointString)])
+    this.outPointStrings = this.outPointStrings.filter((outPoint) => !changedOutPoints.has(outPoint))
+    let removeCapacity = BI.from(0)
+    remove?.forEach((v) => {
+      this.usedOutPointStrings.add(v)
+      delete this.states[v]
+      removeCapacity = removeCapacity.add(this.chainData[v].cell.cellOutput.capacity)
+      delete this.chainData[v]
+    })
+    update?.forEach((v, idx) => {
+      this.usedOutPointStrings.add(v.outPointString)
+      this.outPointStrings.push(v.outPointString)
+      this.states[v.outPointString] = v.state
+      if (idx === 0) {
+        this.chainData[v.outPointString].cell.cellOutput.capacity = removeCapacity
+          .add(this.chainData[v.outPointString].cell.cellOutput.capacity)
+          .toHexString()
+      }
+      this.updateChainData(v.outPointString)
+    })
+    this.mergedState = this.outPointStrings.reduce(
+      (pre: undefined | GetStorageStruct<StructSchema>, outPoint) =>
+        this.mergeStrategy.merge(this.states[outPoint], pre),
+      undefined,
+    )
+  }
+
   initOnChain(value: GetStorageStruct<StructSchema>): GetOnChainStorage<StructSchema> {
     const res: StorageSchema<string> = {}
     if ('data' in value) {
@@ -337,6 +402,7 @@ export class Store<
   }
 
   handleCall = (msg: ActorMessage<MessagePayload<StoreMessage>>): void => {
+    if (this.isSection) return
     switch (msg.payload?.pattern) {
       case 'update_cells':
         msg.payload.value?.forEach((cellInfo) => {
@@ -363,36 +429,34 @@ export class Store<
     if (!storage) throw new NonStorageInstanceException()
   }
 
-  clone(): Store<StorageT, StructSchema> {
-    const states: Record<OutPointString, GetFullStorageStruct<StructSchema>> = {}
-    Object.keys(this.states).forEach((key) => {
-      const currentStateInKey = this.states[key]
-      states[key] = (states[key] || {}) as GetFullStorageStruct<StructSchema>
-      if ('data' in currentStateInKey && currentStateInKey.data !== undefined) {
-        this.assertStorage(this.getStorage('data'))
-        states[key].data = this.getStorage('data')?.clone(currentStateInKey.data)
-      }
-      if ('witness' in currentStateInKey && currentStateInKey.witness !== undefined) {
-        this.assertStorage(this.getStorage('witness'))
-        states[key].witness = this.getStorage('witness')?.clone(currentStateInKey.witness)
-      }
-      if ('lockArgs' in currentStateInKey && (currentStateInKey.lockArgs ?? false) !== false) {
-        this.assertStorage(this.getStorage('lockArgs'))
-        states[key].lockArgs = this.getStorage('lockArgs')?.clone(currentStateInKey.lockArgs)
-      }
-      if ('typeArgs' in currentStateInKey && (currentStateInKey.typeArgs ?? false) !== false) {
-        this.assertStorage(this.getStorage('typeArgs'))
-        states[key].typeArgs = this.getStorage('typeArgs')?.clone(currentStateInKey.typeArgs)
-      }
-    })
+  clone(): Store<StorageT, StructSchema, Option> {
+    if (this.isSection) throw new SectionStoreCannotCloneException()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new (<any>this.constructor)(this.schemaOption, {
-      states,
+    const clone: Store<StorageT, StructSchema, Option> = new (<any>this.constructor)(this.schemaOption, {
       options: this.options,
-      chainData: this.cloneChainData(),
       cellPatterns: this.cellPatterns,
       schemaPattern: this.schemaPattern,
     })
+    clone.states = this.cloneStates()
+    clone.chainData = this.cloneChainData()
+    clone.outPointStrings = [...this.outPointStrings]
+    clone.mergedState = cloneDeep(this.mergedState)
+    clone.usedOutPointStrings = new Set(this.usedOutPointStrings)
+    return clone
+  }
+
+  cloneSection(): Store<StorageT, StructSchema, Option> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clone: Store<StorageT, StructSchema, Option> = new (<any>this.constructor)(this.schemaOption, {
+      options: this.options,
+    })
+    clone.states = this.cloneStates()
+    clone.chainData = this.cloneChainData()
+    clone.outPointStrings = [...this.outPointStrings]
+    clone.mergedState = cloneDeep(this.mergedState)
+    clone.isSection = true
+    clone.usedOutPointStrings = new Set([...this.usedOutPointStrings])
+    return clone
   }
 
   get(key: OutPointString): GetFullStorageStruct<StructSchema>
@@ -401,41 +465,127 @@ export class Store<
   get(key: OutPointString, paths: ['lockArgs']): GetFullStorageStruct<StructSchema>['lockArgs']
   get(key: OutPointString, paths: ['typeArgs']): GetFullStorageStruct<StructSchema>['typeArgs']
   get(key: OutPointString, paths: [StorageLocation, ...string[]]): unknown
-  get(key: OutPointString, paths?: StorePath) {
-    if (paths) {
-      return this.getAndValidTargetKey(key, paths)
+  get(): GetFullStorageStruct<StructSchema>
+  get(paths: ['data']): GetFullStorageStruct<StructSchema>['data']
+  get(paths: ['witness']): GetFullStorageStruct<StructSchema>['witness']
+  get(paths: ['lockArgs']): GetFullStorageStruct<StructSchema>['lockArgs']
+  get(paths: ['typeArgs']): GetFullStorageStruct<StructSchema>['typeArgs']
+  get(paths: [StorageLocation, ...string[]]): unknown
+  get(keyOrPaths?: OutPointString | StorePath, paths?: StorePath) {
+    if (keyOrPaths === undefined) return this.mergedState
+    if (Array.isArray(keyOrPaths)) {
+      if (keyOrPaths.length === 1) return get(this.mergedState, keyOrPaths)
+      const upLevelData = get(this.mergedState, keyOrPaths.slice(0, keyOrPaths.length - 1))
+      if (upLevelData === undefined) throw new NonExistentException(keyOrPaths.join('.'))
+      return upLevelData(keyOrPaths.at(-1))
     }
-    return this.states[key]
+    if (!paths?.length) {
+      return this.states[keyOrPaths]
+    }
+    const upLevelData = get(this.states, [keyOrPaths, ...paths.slice(0, paths.length - 1)])
+    if (upLevelData === undefined) throw new NonExistentException(`${keyOrPaths}:${paths.join('.')}`)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return upLevelData[paths.at(-1)!]
   }
 
-  set(key: OutPointString, value: GetStorageStruct<StructSchema>): void
-  set(key: OutPointString, value: GetFullStorageStruct<StructSchema>['data'], paths: ['data']): void
-  set(key: OutPointString, value: GetFullStorageStruct<StructSchema>['witness'], paths: ['witness']): void
-  set(key: OutPointString, value: GetFullStorageStruct<StructSchema>['lockArgs'], paths: ['lockArgs']): void
-  set(key: OutPointString, value: GetFullStorageStruct<StructSchema>['typeArgs'], paths: ['typeArgs']): void
-  set(key: OutPointString, value: GetState<StorageT>, paths: [StorageLocation, string, ...string[]]): void
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  set(key: OutPointString, value: any, paths?: StorePath) {
-    if (paths) {
-      const target = this.getAndValidTargetKey(key, paths, true)
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const lastKey = paths.at(-1)!
-      target[lastKey] = value
-    } else {
-      if (!this.states[key]) throw new NonExistentException(key)
-      this.states[key] = value
+  set(key: OutPointString, value: GetStorageStruct<StructSchema>): Store<StorageT, StructSchema, Option>
+  set(
+    key: OutPointString,
+    paths: ['data'],
+    value: GetFullStorageStruct<StructSchema>['data'],
+  ): Store<StorageT, StructSchema, Option>
+  set(
+    key: OutPointString,
+    paths: ['witness'],
+    value: GetFullStorageStruct<StructSchema>['witness'],
+  ): Store<StorageT, StructSchema, Option>
+  set(
+    key: OutPointString,
+    paths: ['lockArgs'],
+    value: GetFullStorageStruct<StructSchema>['lockArgs'],
+  ): Store<StorageT, StructSchema, Option>
+  set(
+    key: OutPointString,
+    paths: ['typeArgs'],
+    value: GetFullStorageStruct<StructSchema>['typeArgs'],
+  ): Store<StorageT, StructSchema, Option>
+  set<T = unknown>(
+    key: OutPointString,
+    paths: [StorageLocation, string, ...string[]],
+    value: T,
+  ): Store<StorageT, StructSchema, Option>
+  set(value: GetStorageStruct<StructSchema>): Store<StorageT, StructSchema, Option>
+  set(paths: ['data'], value: GetFullStorageStruct<StructSchema>['data']): Store<StorageT, StructSchema, Option>
+  set(paths: ['witness'], value: GetFullStorageStruct<StructSchema>['witness']): Store<StorageT, StructSchema, Option>
+  set(paths: ['lockArgs'], value: GetFullStorageStruct<StructSchema>['lockArgs']): Store<StorageT, StructSchema, Option>
+  set(paths: ['typeArgs'], value: GetFullStorageStruct<StructSchema>['typeArgs']): Store<StorageT, StructSchema, Option>
+  set<T = unknown>(paths: [StorageLocation, string, ...string[]], value: T): Store<StorageT, StructSchema, Option>
+  set<T = unknown>(
+    key: OutPointString | StorePath | GetStorageStruct<StructSchema>,
+    paths?: StorePath | GetStorageStruct<StructSchema> | T,
+    value?: T,
+  ) {
+    const sectionStore = this.cloneSection()
+    // one parameter
+    if (value === undefined && paths === undefined) {
+      // update merged data root
+      sectionStore.updateMergedData(key as GetStorageStruct<StructSchema>)
+      return sectionStore
     }
-    this.updateChainData(key, paths)
+    // two parameter
+    if (value === undefined) {
+      if (typeof key === 'string') {
+        // update outPoint root
+        if (!(key in sectionStore.states)) throw new NonExistentException(key)
+        sectionStore.states[key] = paths as GetStorageStruct<StructSchema>
+        sectionStore.updateChainData(key as OutPointString)
+        return sectionStore
+      } else {
+        // update merged data not root
+        sectionStore.updateMergedData(paths, key as StorePath)
+        return sectionStore
+      }
+    }
+    // three parameters
+    const valuePath = paths as StorePath
+    const updateValue = get(sectionStore.states, [key as OutPointString, ...valuePath.slice(0, valuePath.length - 1)])
+    if (updateValue === undefined) throw new NonExistentException(`${key}:${valuePath.join('.')}`)
+    const lastKey = valuePath.at(-1)
+    if (lastKey !== undefined) {
+      updateValue[lastKey] = value
+    } else {
+      sectionStore.states[key as OutPointString] = value as GetStorageStruct<StructSchema>
+    }
+    sectionStore.updateChainData(key as OutPointString, valuePath)
+    return sectionStore
   }
 
   getChainData(key: OutPointString) {
     return this.chainData[key]
   }
+
+  getTxFromDiff(fromStore: Store<StorageT, StructSchema, Option>) {
+    const inputs = [...this.usedOutPointStrings].map((v) => fromStore.chainData[v]).filter((v) => !!v)
+    const outputs = [...this.usedOutPointStrings].map((v) => this.chainData[v]).filter((v) => !!v)
+    return {
+      inputs: inputs.map((v) => v.cell),
+      outputs: outputs.map((v) => v.cell),
+      witness: outputs.map((v) => v.witness),
+    }
+  }
+
+  protected isSimpleType(value: unknown): boolean {
+    const vType = typeof value
+    return vType === 'string' || vType === 'boolean' || vType === 'number' || vType === 'undefined' || vType === null
+  }
+  protected isValueEqual(_value: unknown, __compare: unknown): boolean {
+    throw new ShouldCalledByDerivedException()
+  }
 }
 
 type IsUnknownOrNever<T> = T extends never ? true : unknown extends T ? (0 extends 1 & T ? false : true) : false
 
-type GetStorageStructByTemplate<T extends StorageSchema> = OmitByValue<{
+export type GetStorageStructByTemplate<T extends StorageSchema> = OmitByValue<{
   data: IsUnknownOrNever<T['data']> extends true ? never : T['data']
   witness: IsUnknownOrNever<T['witness']> extends true ? never : T['witness']
   lockArgs: IsUnknownOrNever<T['lockArgs']> extends true ? never : T['lockArgs']
@@ -448,6 +598,16 @@ export class JSONStore<R extends StorageSchema<JSONStorageOffChain>> extends Sto
 > {
   getStorage(_storeKey: StorageLocation): JSONStorage<JSONStorageOffChain> {
     return new JSONStorage()
+  }
+
+  isValueEqual(value: unknown, compare: unknown): boolean {
+    if (super.isSimpleType(value) && super.isSimpleType(compare)) {
+      return value === compare
+    }
+    if (value instanceof BigNumber && compare instanceof BigNumber) {
+      return value.eq(compare)
+    }
+    return false
   }
 }
 
@@ -532,5 +692,15 @@ export class MoleculeStore<R extends StorageSchema<DynamicParam>> extends Store<
         break
     }
     return this.#moleculeStorageCache[storeKey]
+  }
+
+  isValueEqual(value: unknown, compare: unknown): boolean {
+    if (super.isSimpleType(value) && super.isSimpleType(compare)) {
+      return value === compare
+    }
+    if (value instanceof BI && compare instanceof BI) {
+      return value.eq(compare)
+    }
+    return false
   }
 }

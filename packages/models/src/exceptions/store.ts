@@ -63,3 +63,21 @@ export class UnionShouldOnlyOneKeyException extends Error {
     super(`Molecule union type should only have one key for pack`)
   }
 }
+
+export class SectionStoreCannotCloneException extends Error {
+  constructor() {
+    super(`A section store can not clone a full store`)
+  }
+}
+
+export class NoCellToUseException extends Error {
+  constructor() {
+    super(`There are no live cells to use`)
+  }
+}
+
+export class ShouldCalledByDerivedException extends Error {
+  constructor() {
+    super(`It's should implement by derived class`)
+  }
+}
