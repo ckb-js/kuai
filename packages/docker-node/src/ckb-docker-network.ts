@@ -4,19 +4,19 @@ import { join } from 'node:path'
 import fs from 'node:fs'
 import path from 'node:path'
 import { Address, Indexer, RPC, commons, helpers, hd, Transaction, config } from '@ckb-lumos/lumos'
-import { waitUntilCommitted } from '@ckb-js/kuai-core/lib/util/transaction'
+import { waitUntilCommitted } from '@ckb-js/kuai-common'
 
 const CKB_NODE_IMAGE = 'kuai/ckb-dev'
 const DOCKER_SOCKET_PATH = process.env.DOCKER_SOCKET || '/var/run/docker.sock'
 
 export class CkbDockerNetwork {
-  private _docker: Docker
-  private _lumosConfig: config.Config = config.getConfig()
-  private _port = '8114'
-  private _host = 'localhost'
+  #docker: Docker
+  #lumosConfig: config.Config = config.getConfig()
+  #port = '8114'
+  #host = 'localhost'
 
   constructor() {
-    this._docker = new Docker({ socketPath: DOCKER_SOCKET_PATH })
+    this.#docker = new Docker({ socketPath: DOCKER_SOCKET_PATH })
   }
 
   private generateDevConfig(genesisAccountArgs: string[] = []): string {
@@ -33,18 +33,18 @@ lock.hash_type = "type"\n`
   }
 
   public async start({ port, detached = false, genesisAccountArgs = [] }: DockerNodeStartOptions): Promise<void> {
-    this._port = port
+    this.#port = port
     const devConfig = this.generateDevConfig(genesisAccountArgs)
     fs.writeFileSync(join(__dirname, '../ckb', 'dev.toml'), devConfig)
 
     const config: ContainerCreateOptions = {
       HostConfig: {
         AutoRemove: true,
-        PortBindings: { '8114/tcp': [{ HostPort: this._port }] },
+        PortBindings: { '8114/tcp': [{ HostPort: this.#port }] },
       },
     }
 
-    const buildStream = await this._docker.buildImage(
+    const buildStream = await this.#docker.buildImage(
       {
         context: join(__dirname, '../ckb'),
         src: ['Dockerfile', 'dev.toml', 'ckb-miner.toml', 'entrypoint.sh'],
@@ -54,14 +54,14 @@ lock.hash_type = "type"\n`
 
     await new Promise((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this._docker.modem.followProgress(buildStream, (err: any, res: any) => (err ? reject(err) : resolve(res)))
+      this.#docker.modem.followProgress(buildStream, (err: any, res: any) => (err ? reject(err) : resolve(res)))
     })
 
     if (!detached) {
-      return this._docker.run(CKB_NODE_IMAGE, [], process.stdout, config)
+      return this.#docker.run(CKB_NODE_IMAGE, [], process.stdout, config)
     }
 
-    const container = await this._docker.createContainer({
+    const container = await this.#docker.createContainer({
       Image: CKB_NODE_IMAGE,
       Tty: false,
       ...config,
@@ -181,18 +181,18 @@ lock.hash_type = "type"\n`
   }
 
   public async stop(): Promise<void> {
-    const containers = await this._docker.listContainers()
+    const containers = await this.#docker.listContainers()
     await Promise.all(
       containers
         .filter((container) => container.Image === CKB_NODE_IMAGE)
-        .map((container) => this._docker.getContainer(container.Id).stop()),
+        .map((container) => this.#docker.getContainer(container.Id).stop()),
     )
   }
 
   public async generateLumosConfig(): Promise<void> {
     const rpc = new RPC(this.url)
     const block = await rpc.getBlockByNumber('0x0')
-    this._lumosConfig = {
+    this.#lumosConfig = {
       PREFIX: 'ckt',
       SCRIPTS: {
         SECP256K1_BLAKE160: {
@@ -216,10 +216,10 @@ lock.hash_type = "type"\n`
   }
 
   get lumosConfig(): config.Config {
-    return this._lumosConfig
+    return this.#lumosConfig
   }
 
   get url(): string {
-    return `http://${this._host}:${this._port}`
+    return `http://${this.#host}:${this.#port}`
   }
 }
