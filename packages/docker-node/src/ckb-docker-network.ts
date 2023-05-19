@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import fs from 'node:fs'
 import path from 'node:path'
 import { Address, Indexer, RPC, commons, helpers, hd, Transaction, config } from '@ckb-lumos/lumos'
+import { waitUntilCommitted } from '@ckb-js/kuai-core/lib/util/transaction'
 
 const CKB_NODE_IMAGE = 'kuai/ckb-dev'
 const DOCKER_SOCKET_PATH = process.env.DOCKER_SOCKET || '/var/run/docker.sock'
@@ -90,6 +91,12 @@ lock.hash_type = "type"\n`
         privateKey,
       ),
     )
+
+    try {
+      await waitUntilCommitted(rpc, txHash)
+    } catch (e) {
+      console.error(e)
+    }
 
     return {
       name: script,

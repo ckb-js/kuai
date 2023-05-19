@@ -8,8 +8,8 @@ import { Indexer, RPC, config } from '@ckb-lumos/lumos'
 import { cachePath, configPath } from '../helper'
 import path from 'node:path'
 import fs from 'fs'
-import download from 'download'
 import { scheduler } from 'node:timers/promises'
+import undici from 'undici'
 
 interface Args {
   port: number
@@ -46,10 +46,14 @@ subtask('node:start', 'start a ckb node')
     for (const script of BUILTIN_SCRIPTS) {
       const filePath = path.join(builtInDirPath, script)
       if (!fs.existsSync(filePath)) {
-        download(
+        const out = fs.createWriteStream(path.resolve(builtInDirPath, script))
+        await undici.stream(
           `https://github.com/Daryl-L/ckb-production-scripts/releases/download/scripts/${script}`,
-          builtInDirPath,
-          { filename: script },
+          {
+            opaque: out,
+            method: 'GET',
+          },
+          ({ opaque }) => opaque as fs.WriteStream,
         )
       }
     }
