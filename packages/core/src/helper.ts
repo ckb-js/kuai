@@ -20,18 +20,13 @@ export async function initialKuai(args: KuaiArguments = {}): Promise<KuaiContext
   return ctx
 }
 
-export const cachePath = (...paths: string[]) => {
-  const cachePath = path.resolve(PATH.cache, ...paths)
-  if (!fs.existsSync(cachePath)) {
-    fs.mkdirSync(cachePath, { recursive: true })
+export const createPath = (path: string) => {
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path, { recursive: true })
   }
-  return cachePath
+  return path
 }
 
-export const configPath = (...paths: string[]) => {
-  const configPath = path.resolve(PATH.config, ...paths)
-  if (!fs.existsSync(configPath)) {
-    fs.mkdirSync(configPath, { recursive: true })
-  }
-  return configPath
-}
+export const cachePath = (...paths: string[]) => createPath(path.resolve(PATH.cache, ...paths))
+
+export const configPath = (...paths: string[]) => createPath(path.resolve(PATH.config, ...paths))
