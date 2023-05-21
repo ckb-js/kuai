@@ -76,8 +76,8 @@ export class NoCellToUseException extends Error {
   }
 }
 
-export class ShouldCalledByDerivedException extends Error {
+export class CantSetValueInSimpleType extends Error {
   constructor() {
-    super(`It's should implement by derived class`)
+    super(`Can not set value in a simple type`)
   }
 }

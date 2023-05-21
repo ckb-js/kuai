@@ -1,11 +1,4 @@
-import { jest, describe, expect, it, beforeEach } from '@jest/globals'
-
-jest.mock('ioredis', () => {
-  return class Redis {
-    xread = jest.fn()
-    xadd = jest.fn()
-  }
-})
+import { describe, expect, it, beforeEach } from '@jest/globals'
 
 import {
   Registry,
@@ -15,6 +8,7 @@ import {
   DuplicatedActorException,
   InvalidActorURIException,
 } from '../../../src'
+import '../../comm-mock'
 
 class ChildActor extends ActorBase {}
 class ParentActor extends ActorBase {}
