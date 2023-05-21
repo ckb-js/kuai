@@ -1,7 +1,15 @@
-import { describe, it, expect } from '@jest/globals'
+import { describe, it, expect, jest } from '@jest/globals'
 import { DefaultMergeStrategy, UseLatestStrategy } from '../../src'
 import { CantSetValueInSimpleType, NoCellToUseException, NonExistentException } from '../../src/exceptions'
-import '../comm-mock'
+
+const mockXAdd = jest.fn()
+const mockXRead = jest.fn<() => void>()
+jest.mock('ioredis', () => {
+  return class Redis {
+    xread = mockXRead
+    xadd = mockXAdd
+  }
+})
 
 describe('test use the latest strategy', () => {
   const strategy = new UseLatestStrategy()

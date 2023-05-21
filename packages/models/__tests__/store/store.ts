@@ -26,7 +26,15 @@ import {
   outPointToOutPointString,
   ActorReference,
 } from '../../src'
-import '../comm-mock'
+
+const mockXAdd = jest.fn()
+const mockXRead = jest.fn<() => void>()
+jest.mock('ioredis', () => {
+  return class Redis {
+    xread = mockXRead
+    xadd = mockXAdd
+  }
+})
 
 const ref = {
   name: '',
