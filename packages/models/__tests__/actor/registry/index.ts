@@ -6,6 +6,7 @@ jest.mock('ioredis', () => {
     xadd = jest.fn()
   }
 })
+
 import {
   Registry,
   ActorBase,
