@@ -1,6 +1,5 @@
 import { bytes } from '@ckb-lumos/codec'
 import { BI } from '@ckb-lumos/bi'
-import BigNumber from 'bignumber.js'
 import type { Script } from '@ckb-lumos/base'
 import { get, cloneDeep } from 'lodash'
 import type { ActorMessage, ActorRef, MessagePayload } from '../actor'
@@ -30,7 +29,6 @@ import {
   NonStorageInstanceException,
   NoSchemaException,
   SectionStoreCannotCloneException,
-  ShouldCalledByDerivedException,
   UnmatchLengthException,
 } from '../exceptions'
 import { ProviderKey, CellPattern, SchemaPattern, isStringList } from '../utils'
@@ -574,13 +572,8 @@ export class Store<
     }
   }
 
-  protected isSimpleType(value: unknown): boolean {
-    const vType = typeof value
-    return vType === 'string' || vType === 'boolean' || vType === 'number' || vType === 'undefined' || vType === null
-  }
-  protected isValueEqual(_value: unknown, __compare: unknown): boolean {
-    throw new ShouldCalledByDerivedException()
-  }
+  protected isSimpleType?: (value: unknown) => boolean
+  protected isValueEqual?: (_value: unknown, __compare: unknown) => boolean
 }
 
 type IsUnknownOrNever<T> = T extends never ? true : unknown extends T ? (0 extends 1 & T ? false : true) : false
@@ -598,16 +591,6 @@ export class JSONStore<R extends StorageSchema<JSONStorageOffChain>> extends Sto
 > {
   getStorage(_storeKey: StorageLocation): JSONStorage<JSONStorageOffChain> {
     return new JSONStorage()
-  }
-
-  isValueEqual(value: unknown, compare: unknown): boolean {
-    if (super.isSimpleType(value) && super.isSimpleType(compare)) {
-      return value === compare
-    }
-    if (value instanceof BigNumber && compare instanceof BigNumber) {
-      return value.eq(compare)
-    }
-    return false
   }
 }
 
@@ -692,15 +675,5 @@ export class MoleculeStore<R extends StorageSchema<DynamicParam>> extends Store<
         break
     }
     return this.#moleculeStorageCache[storeKey]
-  }
-
-  isValueEqual(value: unknown, compare: unknown): boolean {
-    if (super.isSimpleType(value) && super.isSimpleType(compare)) {
-      return value === compare
-    }
-    if (value instanceof BI && compare instanceof BI) {
-      return value.eq(compare)
-    }
-    return false
   }
 }

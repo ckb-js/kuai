@@ -498,7 +498,7 @@ describe('test store', () => {
             outPoint: { txHash: `0x01${'0'.repeat(62)}`, index: '0x0' },
           }),
         )
-        expect(store.get()).toStrictEqual({ data: { a: 'a2', b: BigNumber(10), c: ['1', '2', '3'] } })
+        expect(store.get()).toStrictEqual({ data: { a: 'a2', b: BigNumber(10), c: ['3', '1', '2'] } })
       })
     })
 

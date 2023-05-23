@@ -1,5 +1,7 @@
 import { get, mergeWith, set } from 'lodash/fp'
-import { NoCellToUseException, NonExistentException } from '../exceptions'
+import { BI } from '@ckb-lumos/bi'
+import BigNumber from 'bignumber.js'
+import { CantSetValueInSimpleType, NoCellToUseException, NonExistentException } from '../exceptions'
 import { deepForIn } from '../utils'
 import type { OutPointString } from './interface'
 
@@ -10,14 +12,39 @@ export abstract class MergeStrategy<S, T = S> {
     value: unknown
     outPointStrings: OutPointString[]
     states: Record<OutPointString, S>
-    isValueEqual(value: unknown, compare: unknown): boolean
-    isSimpleType(value: unknown): boolean
+    isValueEqual?(value: unknown, compare: unknown): boolean
+    isSimpleType?(value: unknown): boolean
   }): {
     update?: {
       outPointString: OutPointString
       state: S
     }[]
     remove?: OutPointString[]
+  }
+  isSimpleType(value: unknown): boolean {
+    const vType = typeof value
+    return (
+      vType === 'string' ||
+      vType === 'boolean' ||
+      vType === 'number' ||
+      vType === 'undefined' ||
+      vType === null ||
+      value instanceof BI ||
+      value instanceof BigNumber
+    )
+  }
+
+  isValueEqual(value: unknown, compare: unknown): boolean {
+    if (this.isSimpleType(value) && this.isSimpleType(compare)) {
+      if (value instanceof BI && compare instanceof BI) {
+        return value.eq(compare)
+      }
+      if (value instanceof BigNumber && compare instanceof BigNumber) {
+        return value.eq(compare)
+      }
+      return value === compare
+    }
+    return false
   }
 }
 
@@ -37,6 +64,7 @@ export class UseLatestStrategy<S> extends MergeStrategy<S, S> {
     value: unknown
     outPointStrings: OutPointString[]
     states: Record<OutPointString, S>
+    isSimpleType?(value: unknown): boolean
   }): {
     update?: {
       outPointString: OutPointString
@@ -45,7 +73,7 @@ export class UseLatestStrategy<S> extends MergeStrategy<S, S> {
     remove?: OutPointString[]
   } {
     const lastOutPoint = updateInfo.outPointStrings.at(-1)
-    if (!lastOutPoint) throw new NoCellToUseException()
+    if (!lastOutPoint || !updateInfo.states[lastOutPoint]) throw new NoCellToUseException()
     if (!updateInfo.paths?.length) {
       return {
         update: [
@@ -62,6 +90,7 @@ export class UseLatestStrategy<S> extends MergeStrategy<S, S> {
     if (updateValueInStates === undefined) {
       throw new NonExistentException(`${lastOutPoint}:${updateInfo.paths.join('.')}`)
     }
+    if ((updateInfo?.isSimpleType ?? this.isSimpleType)(updateValueInStates)) throw new CantSetValueInSimpleType()
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     updateValueInStates[updateInfo.paths.at(-1)!] = updateInfo.value
     return {
@@ -77,15 +106,19 @@ export class UseLatestStrategy<S> extends MergeStrategy<S, S> {
 
 export class DefaultMergeStrategy<S> extends MergeStrategy<S, S> {
   private defaultMergeWith = mergeWith((objValue, srcValue) => {
-    if (Array.isArray(objValue)) {
-      return objValue.concat(srcValue)
+    if (Array.isArray(objValue) && Array.isArray(srcValue)) {
+      if (Array.isArray(srcValue)) return srcValue.concat(objValue)
+      return objValue
     }
   })
 
-  merge(object: S, source?: S): S {
-    if (source === undefined || source === null) return object
-    if (Array.isArray(object)) return object.concat(source) as S
-    return this.defaultMergeWith(source, object)
+  merge(newValue: S, oldValue?: S): S {
+    if (oldValue === undefined || oldValue === null || this.isSimpleType(newValue)) return newValue
+    if (Array.isArray(newValue)) {
+      if (Array.isArray(oldValue)) return newValue.concat(oldValue) as S
+      return newValue
+    }
+    return this.defaultMergeWith(oldValue, newValue)
   }
 
   private findAndUpdateInState(
@@ -101,7 +134,7 @@ export class DefaultMergeStrategy<S> extends MergeStrategy<S, S> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = state
     for (let idx = 0; idx < paths.length; idx++) {
-      if (!(paths[idx] in current)) return {}
+      if (this.isSimpleType(current) || !(paths[idx] in current)) return {}
       current = current[paths[idx]]
       if (!Array.isArray(current)) continue
       if (idx === paths.length - 1) {
@@ -130,18 +163,19 @@ export class DefaultMergeStrategy<S> extends MergeStrategy<S, S> {
   }: {
     state: S
     changedPaths: string[]
-    isValueEqual(value: unknown, compare: unknown): boolean
-    isSimpleType(value: unknown): boolean
+    isValueEqual?(value: unknown, compare: unknown): boolean
+    isSimpleType?(value: unknown): boolean
     mergedState?: S
   }) {
     deepForIn(state, (pathValue, currentPaths) => {
+      if (!currentPaths.length) return true
       const valueInMerged = get(currentPaths)(mergedState)
-      const isChangedPaths =
-        currentPaths.length === changedPaths.length && currentPaths.every((path, idx) => changedPaths[idx] === path)
-      if (isValueEqual(pathValue, valueInMerged) || isChangedPaths) {
+      const currentPathInChangedPath = currentPaths.every((path, idx) => changedPaths[idx] === path)
+      const isChangedPaths = currentPaths.length === changedPaths.length && currentPathInChangedPath
+      if ((isValueEqual ?? this.isValueEqual.bind(this))(pathValue, valueInMerged) || isChangedPaths) {
         return false
       }
-      if (isSimpleType(pathValue)) {
+      if ((isSimpleType ?? this.isSimpleType.bind(this))(pathValue)) {
         // is simple type and is not in mergedState or changed by current, remove it
         if (currentPaths.length === 1) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,6 +188,10 @@ export class DefaultMergeStrategy<S> extends MergeStrategy<S, S> {
         } else {
           // ignore if root is simple type, no need to handle
         }
+        return false
+      }
+      if (Array.isArray(valueInMerged) && !currentPathInChangedPath) {
+        // if current value is array and current path is not same as changed path, it should not be changed or deleted.
         return false
       }
       return true
@@ -173,8 +211,8 @@ export class DefaultMergeStrategy<S> extends MergeStrategy<S, S> {
     value: unknown
     outPointStrings: OutPointString[]
     states: Record<OutPointString, S>
-    isValueEqual(value: unknown, compare: unknown): boolean
-    isSimpleType(value: unknown): boolean
+    isValueEqual?(value: unknown, compare: unknown): boolean
+    isSimpleType?(value: unknown): boolean
   }): {
     update?: {
       outPointString: OutPointString
@@ -183,7 +221,7 @@ export class DefaultMergeStrategy<S> extends MergeStrategy<S, S> {
     remove?: OutPointString[]
   } {
     const lastOutPoint = outPointStrings.at(-1)
-    if (!lastOutPoint) throw new NoCellToUseException()
+    if (!lastOutPoint || !states[lastOutPoint]) throw new NoCellToUseException()
     if (!paths || !paths.length) {
       return {
         update: [
@@ -209,7 +247,7 @@ export class DefaultMergeStrategy<S> extends MergeStrategy<S, S> {
               {
                 outPointString,
                 state: this.removeNotMergedState({
-                  state: state,
+                  state,
                   changedPaths: paths,
                   mergedState,
                   isSimpleType,
