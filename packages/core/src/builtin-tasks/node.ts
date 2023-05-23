@@ -24,9 +24,8 @@ const BUILTIN_SCRIPTS = ['anyone_can_pay', 'omni_lock', 'simple_udt']
 subtask('node:start', 'start a ckb node')
   .addParam('port', 'The port of the node', 8114, paramTypes.number)
   .addParam('detached', 'Run the node in detached mode', false, paramTypes.boolean)
-  .addParam('filePath', 'The script config file path', undefined, paramTypes.string, true, true)
   .addParam('genesisArgs', 'The genesis args', undefined, paramTypes.string, true, true)
-  .setAction(async ({ port, detached, filePath, genesisArgs = [] }: Args, env) => {
+  .setAction(async ({ port, detached, genesisArgs = [] }: Args, env) => {
     if (env.config.kuaiArguments?.network !== 'docker-node') {
       throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_NETWORK, {
         var: env.config.kuaiArguments?.network,
@@ -63,7 +62,7 @@ subtask('node:start', 'start a ckb node')
 
     await ckbDockerNetwork.deployScripts({
       builtInScriptName: BUILTIN_SCRIPTS,
-      configFilePath: filePath ?? path.resolve(configPath(), 'scripts.json'),
+      configFilePath: env.config.builtInContractConfigPath ?? path.resolve(configPath(), 'scripts.json'),
       builtInDirPath,
       indexer: new Indexer(ckbDockerNetwork.url),
       rpc: new RPC(ckbDockerNetwork.url),

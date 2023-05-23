@@ -10,6 +10,7 @@ export interface KuaiArguments {
 }
 
 export interface KuaiConfig {
+  builtInContractConfigPath?: string
   kuaiArguments?: KuaiArguments
   network?: string
   ckbChain: NetworkConfig
