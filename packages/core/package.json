@@ -17,7 +17,7 @@
     "@iarna/toml": "2.2.5",
     "chalk": "4.1.2",
     "enquirer": "2.3.6",
-    "find-up": "5.0.0",
+    "find-up": "6.3.0",
     "lodash": "4.17.21",
     "read": "2.1.0"
   },
