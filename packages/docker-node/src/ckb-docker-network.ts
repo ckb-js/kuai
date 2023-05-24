@@ -1,5 +1,5 @@
 import Docker, { ContainerCreateOptions } from 'dockerode'
-import { DockerNodeStartOptions, InfraScript } from './types'
+import type { DockerNodeStartOptions, InfraScript } from './types'
 import { join } from 'node:path'
 import fs from 'node:fs'
 import path from 'node:path'
