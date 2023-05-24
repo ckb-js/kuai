@@ -1,6 +1,5 @@
 import { NetworkConfig } from './type'
 import { config } from '@ckb-lumos/lumos'
-import { KuaiArguments } from './type'
 import envPaths from 'env-paths'
 
 export const DEFAULT_KUAI_ARGUMENTS = {
