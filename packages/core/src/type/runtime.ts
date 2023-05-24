@@ -10,7 +10,7 @@ export interface KuaiArguments {
 }
 
 export interface KuaiConfig {
-  builtInContractConfigPath?: string
+  devNode?: DevNodeConfig
   kuaiArguments?: KuaiArguments
   network?: string
   ckbChain: NetworkConfig
@@ -20,6 +20,12 @@ export interface KuaiConfig {
     [name: string]: NetworkConfig
   }
 }
+
+export interface DevNodeConfig {
+  builtInContractConfigPath?: string
+  builtInContractDownloadBaseUrl?: string
+}
+
 export type ContractConfig = {
   workspace?: string
 }
