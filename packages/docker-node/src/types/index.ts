@@ -1,4 +1,4 @@
-import { CellDep } from '@ckb-lumos/lumos'
+import type { CellDep } from '@ckb-lumos/lumos'
 
 export interface DockerNodeStartOptions {
   port: string
