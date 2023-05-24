@@ -1,5 +1,5 @@
-import { TransactionWithStatus } from '@ckb-lumos/base'
-import { RPC } from '@ckb-lumos/lumos'
+import type { TransactionWithStatus } from '@ckb-lumos/base'
+import type { RPC } from '@ckb-lumos/lumos'
 import { scheduler } from 'node:timers/promises'
 
 export const waitUntilCommitted = async (rpc: RPC, txHash: string, timeout = 120): Promise<TransactionWithStatus> => {
