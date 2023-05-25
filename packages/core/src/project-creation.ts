@@ -26,6 +26,7 @@ const DEPENDENCIES: Dependencies = {
 const DEV_DEPENDENCIES: Dependencies = {
   'ts-node': '10.9.1',
   typescript: '4.9.4',
+  typedoc: '0.24.7',
 }
 
 const KUAI_DEPENDENCIES: Dependencies = {
@@ -54,8 +55,6 @@ async function printWelcomeMessage() {
 
 async function copySampleProject(projectRoot: string) {
   const packageRoot = getPackageRoot()
-
-  fs.existsSync(projectRoot)
 
   const sampleProjectPath = path.join(packageRoot, 'sample-projects')
 
@@ -90,16 +89,16 @@ async function addGitIgnore(projectRoot: string) {
   fs.writeFileSync(gitIgnorePath, content)
 }
 
-async function canInstallRecommendedDeps() {
+async function canInstallRecommendedDeps(packageJsonPath: string) {
   return (
-    fs.existsSync('package.json') &&
+    fs.existsSync(packageJsonPath) &&
     // TODO: Figure out why this doesn't work on Win
     // cf. https://github.com/nomiclabs/hardhat/issues/1698
     os.type() !== 'Windows_NT'
   )
 }
 
-async function installRecommendedDependencies(dependencies: Dependencies, dev = false) {
+async function installRecommendedDependencies(projectRoot: string, dependencies: Dependencies, dev = false) {
   console.log('')
 
   const deps = Object.entries(dependencies).map(([name, version]) => `${name}@${version}`)
@@ -107,7 +106,7 @@ async function installRecommendedDependencies(dependencies: Dependencies, dev = 
   // The reason we don't quote the dependencies here is because they are going
   // to be used in child_process.sapwn, which doesn't require escaping string,
   // and can actually fail if you do.
-  return installDependencies('npm', ['install', dev ? '--save-dev' : '--save', ...deps])
+  return runCommand('npm', ['install', dev ? '--save-dev' : '--save', '-E', ...deps], projectRoot)
 }
 
 async function getNpmLinksText(): Promise<string> {
@@ -163,10 +162,10 @@ async function getNpmLinks(): Promise<Array<NpmLink>> {
 async function checkLocalKuaiLink() {
   const links = await getNpmLinks()
 
-  return !Object.keys(KUAI_DEPENDENCIES).some((kuaiDep) => links.findIndex((link) => link.name === kuaiDep) === -1)
+  return Object.keys(KUAI_DEPENDENCIES).every((kuaiDep) => links.findIndex((link) => link.name === kuaiDep) !== -1)
 }
 
-async function installKuaiDependencies() {
+async function installKuaiDependencies(projectRoot: string) {
   if (await checkLocalKuaiLink()) {
     const { shouldUseLocalKuaiPackages } = await prompt<{ shouldUseLocalKuaiPackages: boolean }>({
       name: 'shouldUseLocalKuaiPackages',
@@ -176,18 +175,19 @@ async function installKuaiDependencies() {
     })
 
     if (shouldUseLocalKuaiPackages) {
-      return installDependencies('npm', ['link', ...Object.keys(KUAI_DEPENDENCIES)]).then(() => {
-        console.info(`✨ Link local kuai package successed ✨\n`)
-      })
+      await runCommand('npm', ['link', ...Object.keys(KUAI_DEPENDENCIES)], projectRoot)
+      console.info(`✨ Link local kuai package successed ✨\n`)
     }
   }
 
-  return installRecommendedDependencies(KUAI_DEPENDENCIES, false)
+  console.info('add kuai depende into package')
+  return installRecommendedDependencies(projectRoot, KUAI_DEPENDENCIES, false)
 }
 
-async function installDependencies(command: string, args: string[]): Promise<boolean> {
+async function runCommand(command: string, args: string[], projectRoot?: string): Promise<boolean> {
   const childProcess = spawn(command, args, {
     stdio: 'inherit',
+    cwd: projectRoot,
   })
 
   return new Promise((resolve, reject) => {
@@ -209,11 +209,11 @@ async function installDependencies(command: string, args: string[]): Promise<boo
   })
 }
 
-async function createPackageJson(mergedPackageJson?: unknown) {
+async function createPackageJson(packageJsonPath: string, mergedPackageJson?: unknown) {
   const recommendProjectJson = await getRecommendedPackageJson()
   const mergedPackage = merge(recommendProjectJson, mergedPackageJson)
 
-  fs.writeFileSync('package.json', JSON.stringify(mergedPackage, null, 2) + os.EOL)
+  fs.writeFileSync(packageJsonPath, JSON.stringify(mergedPackage, null, 2) + os.EOL)
 }
 
 export async function createProject(): Promise<void> {
@@ -235,8 +235,21 @@ export async function createProject(): Promise<void> {
     message: 'Do you want to add a .gitignore?',
   })
 
+  const { shouldBuildDoc } = await prompt<{ shouldBuildDoc: boolean }>({
+    name: 'shouldBuildDoc',
+    type: 'confirm',
+    initial: true,
+    message: 'Do you want to build doc after create project?',
+  })
+
+  if (!fs.existsSync(projectRoot)) {
+    fs.mkdirSync(projectRoot, { recursive: true })
+  }
+
+  const packageJsonPath = path.join(projectRoot, 'package.json')
+
   const existedPackageJson = await (async () => {
-    if (!fs.existsSync('package.json')) {
+    if (!fs.existsSync(packageJsonPath)) {
       return
     }
 
@@ -250,7 +263,7 @@ export async function createProject(): Promise<void> {
 
     if (shouldMergePackageJson) {
       try {
-        return JSON.parse(fs.readFileSync('package.json', 'utf-8'))
+        return JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
       } catch (e) {
         console.error(`We couldn't initialize the sample project because package.json is not a valid JSON file.`)
         throw e
@@ -258,7 +271,7 @@ export async function createProject(): Promise<void> {
     }
   })()
 
-  await createPackageJson(existedPackageJson)
+  await createPackageJson(packageJsonPath, existedPackageJson)
 
   if (shouldAddGitIgnore) {
     await addGitIgnore(projectRoot)
@@ -266,10 +279,15 @@ export async function createProject(): Promise<void> {
 
   await copySampleProject(projectRoot)
 
-  if (await canInstallRecommendedDeps()) {
-    await installRecommendedDependencies(DEPENDENCIES, false)
-    await installRecommendedDependencies(DEV_DEPENDENCIES, true)
-    await installKuaiDependencies()
+  if (await canInstallRecommendedDeps(packageJsonPath)) {
+    await installKuaiDependencies(projectRoot)
+    await installRecommendedDependencies(projectRoot, DEPENDENCIES, false)
+    await installRecommendedDependencies(projectRoot, DEV_DEPENDENCIES, true)
+  }
+
+  if (shouldBuildDoc) {
+    await runCommand('npm', ['run', 'doc'], projectRoot)
+    console.info(`✨ doc build success, you can see it at ./docs ✨\n`)
   }
 
   console.info(`✨ Project created ✨\n`)

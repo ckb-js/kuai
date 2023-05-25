@@ -31,3 +31,66 @@ Outputs will be built in the `lib` directory in their own workspaces
 ## Demos
 
 [MVP DApp](./packages/samples/mvp-dapp)
+
+## Quick start
+
+#### Environment
+
+    node >= 18
+
+#### Kuai Installation
+
+First, install `kuai` globally by `npm link`:
+
+```bash
+$ git clone git@github.com:ckb-js/kuai.git
+
+$ cd kuai
+
+$ yarn bootstrap
+
+$ yarn build
+
+$ cd packages/cli
+
+$ npm link
+```
+
+#### Create a template project using the command.
+
+```bash
+kuai init
+```
+
+#### Running
+
+`kuai` has `dev` and `prod` modes
+
+dev
+
+```bash
+npm run dev
+```
+
+prod
+
+```bash
+npm run build
+npm run start:prod
+```
+
+#### Others commands
+
+run test
+
+```bash
+npm run test
+```
+
+build docs
+
+The docs is build by [typedoc](https://typedoc.org/), `typedoc.json` is the build configuration.
+
+```bash
+npm run doc
+```

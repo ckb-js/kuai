@@ -5,6 +5,7 @@
     "build": "tsc",
     "build:watch": "tsc -w",
     "start:prod": "node ./dist/main.js",
-    "test": "jest"
+    "test": "jest",
+    "doc": "typedoc"
   }
 }

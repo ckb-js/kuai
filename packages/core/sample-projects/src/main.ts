@@ -2,7 +2,7 @@ import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import { initialKuai } from '@ckb-js/kuai-core';
 import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io';
-import { router } from './app.controller';
+import AppController from './app.controller';
 import './type-extends';
 
 async function bootstrap() {
@@ -15,7 +15,8 @@ async function bootstrap() {
 
   // init kuai io
   const cor = new CoR();
-  cor.use(router.middleware());
+  const appController = new AppController();
+  cor.use(appController.middleware());
 
   const koaRouterAdapter = new KoaRouterAdapter(cor);
 
