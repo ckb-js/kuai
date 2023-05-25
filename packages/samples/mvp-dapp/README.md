@@ -123,6 +123,11 @@ Follow the [Guide](../../../README.md) to build libraries developed in other wor
 $ npm run build
 ```
 
+### Start CKB Node
+
+- locally: https://docs.nervos.org/docs/basics/guides/testnet/
+- remotely: https://testnet.ckb.dev/rpc
+
 ### Start the mvp dapp locally
 
 ### Run Redis
