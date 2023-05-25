@@ -7,6 +7,7 @@ export type TaskArguments = any
 export interface KuaiArguments {
   configPath?: string
   network?: string
+  privateKey?: string
 }
 
 export interface KuaiConfig {
