@@ -1,3 +1,9 @@
+/**
+ * @module src/actors/record.model
+ * @description
+ * This is the actor model for record, which is used to store data in a json format.
+ */
+
 import {
   ActorProvider,
   Lock,

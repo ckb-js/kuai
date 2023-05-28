@@ -1,3 +1,10 @@
+/**
+ * @module src/main
+ * @description
+ * This module is the entry of the application.
+ * It initializes the kuai context and starts the application.
+ */
+
 import Koa from 'koa'
 import { koaBody } from 'koa-body'
 import { initialKuai, getGenesisScriptsConfig } from '@ckb-js/kuai-core'

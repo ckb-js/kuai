@@ -1,3 +1,10 @@
+/**
+ * @module src/app.controller
+ * @description
+ * This is the controller for the application.
+ * It defines the routes to specific models.
+ */
+
 import type { StoreType } from './actors/record.model'
 import { KuaiRouter } from '@ckb-js/kuai-io'
 import { HexString, helpers } from '@ckb-lumos/lumos'

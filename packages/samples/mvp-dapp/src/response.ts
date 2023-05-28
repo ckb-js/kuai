@@ -1,3 +1,10 @@
+/**
+ * @module src/response
+ * @description
+ * This module defines the response format of the application.
+ * It is used to wrap the response data and return to the client.
+ */
+
 export class MvpResponse<T> {
   code: string
   data: T

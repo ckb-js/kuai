@@ -1,3 +1,9 @@
+/**
+ * @module src/actors/omnilock.model
+ * @description
+ * This is the actor model for omnilock, which is used to gather omnilock cells to generate record models.
+ */
+
 import {
   ActorProvider,
   Omnilock,
