@@ -1,3 +1,10 @@
+/**
+ * @module src/exception
+ * @description
+ * This module defines the exception handler for the application.
+ * It catches all exceptions and returns the error message to the client.
+ */
+
 import { Context, Next } from 'koa'
 import { MvpResponse } from './response'
 import { isHttpError } from 'http-errors'

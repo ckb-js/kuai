@@ -1,3 +1,9 @@
+/**
+ * @module kuai.config
+ * @description
+ * Kuai configuration file
+ */
+
 require('dotenv').config()
 
 module.exports = {

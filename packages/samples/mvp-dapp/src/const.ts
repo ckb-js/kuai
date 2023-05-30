@@ -1,3 +1,9 @@
+/**
+ * @module src/const
+ * @description
+ * This module defines the constants used in the application.
+ */
+
 import { bytes } from '@ckb-lumos/codec'
 
 export const DAPP_DATA_PREFIX = bytes.hexify(Buffer.from('mvp-dapp'))
