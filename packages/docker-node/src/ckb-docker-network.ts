@@ -101,12 +101,10 @@ lock.hash_type = "type"\n`
     return {
       name: script,
       path: filePath,
-      cellDep: {
-        depType: 'code',
-        outPoint: {
-          txHash,
-          index: '0x0',
-        },
+      depType: 'code',
+      outPoint: {
+        txHash,
+        index: '0x0',
       },
     }
   }

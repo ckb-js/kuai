@@ -6,8 +6,8 @@ export interface DockerNodeStartOptions {
   genesisAccountArgs?: string[]
 }
 
-export interface InfraScript {
+export type InfraScript = {
   name: string
   path: string
-  cellDep: { cellDeps?: CellDep[] } & CellDep
-}
+  cellDeps?: CellDep[]
+} & CellDep
