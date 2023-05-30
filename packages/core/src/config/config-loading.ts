@@ -40,7 +40,6 @@ export async function loadConfigAndTasks(args: KuaiArguments = {}): Promise<Kuai
     networks: DEFAULT_NETWORKDS,
     ...userConfig,
     kuaiArguments: {
-      ...DEFAULT_KUAI_ARGUMENTS,
       ...args,
       configPath,
     },
