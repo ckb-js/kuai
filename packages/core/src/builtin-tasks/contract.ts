@@ -1,13 +1,14 @@
 import { execSync } from 'node:child_process'
 import read from 'read'
-import { existsSync } from 'node:fs'
+import { existsSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
-import type { FromInfo } from '@ckb-lumos/common-scripts'
+import type { FromInfo, MultisigScript } from '@ckb-lumos/common-scripts'
 import { parseFromInfo } from '@ckb-lumos/common-scripts'
-import { encodeToAddress } from '@ckb-lumos/helpers'
+import { encodeToAddress, scriptToAddress } from '@ckb-lumos/helpers'
 import { Config } from '@ckb-lumos/config-manager'
+import { ParamsFormatter } from '@ckb-lumos/rpc'
 import { ContractDeployer } from '../contract'
 import type { MessageSigner } from '../contract'
 import { signMessageByCkbCli } from '../ckb-cli'
@@ -21,10 +22,19 @@ task('contract').setAction(async () => {
 })
 
 interface ContractDeployArgs {
-  name: string
+  name?: string
+  binPath?: string
   from: string[]
-  signer: 'ckb-cli' | 'ckb-cli-multisig'
-  feeRate: number
+  signer?: 'ckb-cli' | 'ckb-cli-multisig'
+  feeRate?: number
+  export?: string
+  noTypeId: boolean
+  send: boolean
+}
+
+function isMultisigFromInfo(fromInfo: FromInfo): fromInfo is MultisigScript {
+  if (typeof fromInfo !== 'object') return false
+  return 'M' in fromInfo && 'R' in fromInfo && Array.isArray(fromInfo.publicKeyHashes)
 }
 
 function parseFromInfoByCli(info: string[]): FromInfo[] {
@@ -66,34 +76,50 @@ function parseFromInfoByCli(info: string[]): FromInfo[] {
 }
 
 subtask('contract:deploy')
-  .addParam('name', 'name of the contract to be deployed', '', paramTypes.string, false)
+  .addParam('name', 'name of the contract to be deployed', '', paramTypes.string, true)
+  .addParam('bin-path', 'path of contract bin file', '', paramTypes.path, true)
   .addParam('from', 'address or multisig config of the contract deployer', '', paramTypes.string, false, true)
   .addParam(
     'signer',
     'signer provider [default: ckb-cli] [possible values: ckb-cli, ckb-cli-multisig]',
-    'ckb-cli',
+    '',
     paramTypes.string,
     true,
   )
   .addParam(
-    'feeRate',
+    'fee-rate',
     "per transaction's fee, deployment may involve more than one transaction. default: [1000] shannons/Byte",
     1000,
     paramTypes.number,
     true,
   )
+  .addParam('export', 'export transaction to file', '', paramTypes.path, true)
+  .addParam('send', 'send transaction directly', false, paramTypes.boolean, true)
+  .addParam('no-type-id', 'not use type id deploy', false, paramTypes.boolean, true)
   .setAction(async (args: ContractDeployArgs, { config, run }) => {
-    const { name, from, feeRate, signer } = args
+    const { name, from, feeRate, signer, binPath, noTypeId = false, send = false } = args
     const { ckbChain } = config
 
     const fromInfos = parseFromInfoByCli(from)
-    const workspace = (await run('contract:get-workspace')) as string
 
-    if (!name) {
+    if (!name && !binPath) {
       throw new KuaiError(ERRORS.BUILTIN_TASKS.NOT_SPECIFY_CONTRACT)
     }
 
-    const conrtactBinPath = path.join(workspace, `build/release/${name}`)
+    const conrtactBinPath = await (async () => {
+      // check bin path is absolute path
+      if (binPath && path.isAbsolute(binPath)) {
+        return binPath
+      }
+
+      if (binPath) {
+        return path.join(process.cwd(), binPath)
+      }
+
+      const workspace = (await run('contract:get-workspace')) as string
+
+      return path.join(workspace, `build/release/${name}`)
+    })()
 
     if (!existsSync(conrtactBinPath)) {
       throw new KuaiError(ERRORS.BUILTIN_TASKS.CONTRACT_RELEASE_FILE_NOT_FOUND, {
@@ -118,14 +144,58 @@ subtask('contract:deploy')
       }) as Promise<string>
     }
 
-    const deployer = new ContractDeployer(messageSigner, {
-      rpcUrl: config.ckbChain.rpcUrl,
-      config: lumosConfig,
-    })
+    const deployer = new ContractDeployer(
+      {
+        rpcUrl: config.ckbChain.rpcUrl,
+        config: lumosConfig,
+      },
+      signer ? messageSigner : undefined,
+    )
 
-    const result = await deployer.deploy(conrtactBinPath, fromInfos[0], { feeRate })
-    console.info('deploy success, txHash: ', result.txHash)
-    return result.txHash
+    const deployTx = await deployer.deploy(conrtactBinPath, fromInfos[0], { feeRate, enableTypeId: !noTypeId })
+    const { tx } = deployTx
+
+    if (args.export) {
+      const exportPath = path.isAbsolute(args.export) ? args.export : path.join(process.cwd(), args.export)
+
+      const exportData = {
+        transaction: ParamsFormatter.toRawTransaction(tx),
+        multisig_configs: {},
+        signatures: {},
+      }
+
+      fromInfos.forEach((fromInfo) => {
+        if (isMultisigFromInfo(fromInfo)) {
+          const { fromScript } = parseFromInfo(fromInfo, { config: lumosConfig })
+          const template = lumosConfig.SCRIPTS['SECP256K1_BLAKE160']!
+          Object.assign(exportData.multisig_configs, {
+            [fromScript.args]: {
+              sighash_addresses: fromInfo.publicKeyHashes.map((args) =>
+                scriptToAddress(
+                  {
+                    codeHash: template.CODE_HASH,
+                    hashType: template.HASH_TYPE,
+                    args: args,
+                  },
+                  { config: lumosConfig },
+                ),
+              ),
+              require_first_n: fromInfo.R,
+              threshold: fromInfo.M,
+            },
+          })
+        }
+      })
+
+      writeFileSync(exportPath, JSON.stringify(exportData, null, 2))
+    }
+
+    if (send) {
+      const txHash = await deployTx.send()
+      console.info('deploy success, txHash: ', txHash)
+    }
+
+    return tx
   })
 
 subtask('contract:sign-message')
