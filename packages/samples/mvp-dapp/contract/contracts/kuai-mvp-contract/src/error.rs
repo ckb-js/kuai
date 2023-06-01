@@ -9,6 +9,7 @@ pub enum Error {
     Encoding,
     // Add customized errors here...
     MyError,
+    DataParseError,
 }
 
 impl From<SysError> for Error {

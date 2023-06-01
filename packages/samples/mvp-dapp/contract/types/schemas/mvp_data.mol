@@ -1,0 +1,12 @@
+import basic;
+
+table Obj {
+	key: MString,
+	value: MString,
+}
+
+vector Objs <Obj>;
+
+table KuaiMvpData {
+	addresses: Objs,
+}
