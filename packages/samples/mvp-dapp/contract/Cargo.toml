@@ -1,5 +1,5 @@
 [workspace]
-members = ["contracts/sample-dapp"]
+members = ["tests", "contracts/kuai-mvp-contract", "types"]
 
 [profile.release]
 overflow-checks = true

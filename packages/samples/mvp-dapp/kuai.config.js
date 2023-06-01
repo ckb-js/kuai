@@ -9,9 +9,15 @@ require('dotenv').config()
 module.exports = {
   host: process.env.HOST,
   port: process.env.PORT,
-  network: process.env.NETWORK || 'devnet',
+  network: 'testnet',
   redisPort: process.env.REDIS_PORT,
   redisHost: process.env.REDIS_HOST,
+  networks: {
+    testnet: {
+      rpcUrl: 'https://testnet.ckb.dev',
+      prefix: 'ckt',
+    },
+  },
   jest: {
     preset: 'ts-jest',
     testEnvironment: 'node',
