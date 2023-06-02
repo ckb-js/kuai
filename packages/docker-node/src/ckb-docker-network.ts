@@ -3,7 +3,7 @@ import type { DockerNodeStartOptions, InfraScript } from './types'
 import { join } from 'node:path'
 import fs from 'node:fs'
 import path from 'node:path'
-import { Address, Indexer, RPC, commons, helpers, hd, Transaction, config } from '@ckb-lumos/lumos'
+import { Address, Indexer, RPC, commons, helpers, hd, Transaction, config, CellDep } from '@ckb-lumos/lumos'
 import { waitUntilCommitted } from '@ckb-js/kuai-common'
 
 const CKB_NODE_IMAGE = 'kuai/ckb-dev'
@@ -77,20 +77,20 @@ lock.hash_type = "type"\n`
     privateKey: string,
     script: string,
     filePath: string,
+    cellDeps?: { name: string; cellDep: CellDep }[],
   ): Promise<InfraScript> {
     const scriptBinary = fs.readFileSync(filePath)
-    const txHash = await rpc.sendTransaction(
-      this.sign(
-        (
-          await commons.deploy.generateDeployWithDataTx({
-            cellProvider: indexer,
-            scriptBinary,
-            fromInfo: from,
-          })
-        ).txSkeleton,
-        privateKey,
-      ),
-    )
+    let txSkeleton = (
+      await commons.deploy.generateDeployWithDataTx({
+        cellProvider: indexer,
+        scriptBinary,
+        fromInfo: from,
+      })
+    ).txSkeleton
+    cellDeps?.forEach((dep) => {
+      txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => cellDeps.push(dep.cellDep))
+    })
+    const txHash = await rpc.sendTransaction(this.sign(txSkeleton, privateKey))
 
     try {
       await waitUntilCommitted(rpc, txHash)
@@ -102,6 +102,7 @@ lock.hash_type = "type"\n`
       name: script,
       path: filePath,
       depType: 'code',
+      cellDeps,
       outPoint: {
         txHash,
         index: '0x0',
@@ -141,10 +142,25 @@ lock.hash_type = "type"\n`
   ): Promise<InfraScript[]> {
     const scripts: InfraScript[] = []
     if (fs.existsSync(filePath)) {
-      const configs = JSON.parse(fs.readFileSync(filePath).toString())
+      const configs = JSON.parse(fs.readFileSync(filePath).toString()) as { custom: InfraScript[] }
       if (configs.custom && Array.isArray(configs.custom)) {
         for (const script of configs.custom) {
-          scripts.push(await this.doDeploy(rpc, indexer, from, privateKey, script, script.path))
+          const deployedScript = await this.doDeploy(
+            rpc,
+            indexer,
+            from,
+            privateKey,
+            script.name,
+            script.path,
+            script.cellDeps
+              ? scripts
+                  .filter((v) => script.cellDeps?.map((v) => v.name).includes(v.name))
+                  .map((v) => {
+                    return { name: v.name, cellDep: { depType: v.depType, outPoint: v.outPoint } }
+                  })
+              : undefined,
+          )
+          scripts.push(deployedScript)
         }
       }
     }

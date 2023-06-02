@@ -9,5 +9,5 @@ export interface DockerNodeStartOptions {
 export type InfraScript = {
   name: string
   path: string
-  cellDeps?: CellDep[]
+  cellDeps?: { name: string; cellDep: CellDep }[]
 } & CellDep
