@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command, createOption, Option } from 'commander'
 import { TaskParam, TaskArguments, initialKuai, paramTypes, KuaiArguments } from '@ckb-js/kuai-core'
+import { DEFAULT_KUAI_ARGUMENTS } from '@ckb-js/kuai-core'
 
 const KUAI_GLOBAL_PARAMS: Array<TaskParam> = [
   {
@@ -57,7 +58,7 @@ const main = async () => {
     return result
   })()
 
-  const ctx = await initialKuai(args)
+  const ctx = await initialKuai({ ...DEFAULT_KUAI_ARGUMENTS, ...args })
   const env = ctx.getRuntimeEnvironment()
   Object.values(env.tasks)
     .filter((task) => !task.isSubtask)
