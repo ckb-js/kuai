@@ -34,7 +34,7 @@
     "pg": "8.11.0",
     "reflect-metadata": "0.1.13",
     "rxjs": "7.8.1",
-    "tslib": "2.5.2",
+    "tslib": "2.5.3",
     "typeorm": "0.3.16"
   },
   "devDependencies": {
