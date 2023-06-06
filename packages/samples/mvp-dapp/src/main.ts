@@ -12,14 +12,7 @@ import { config } from '@ckb-lumos/lumos'
 import { KoaRouterAdapter, CoR, TipHeaderListener } from '@ckb-js/kuai-io'
 import cors from '@koa/cors'
 import { router } from './app.controller'
-import {
-  ActorReference,
-  Manager,
-  ProviderKey,
-  mqContainer,
-  REDIS_PORT_SYMBOL,
-  REDIS_HOST_SYMBOL,
-} from '@ckb-js/kuai-models'
+import { mqContainer, REDIS_PORT_SYMBOL, REDIS_HOST_SYMBOL, initiateResourceBindingManager } from '@ckb-js/kuai-models'
 import { NervosChainSource } from './chain-source'
 import { handleException } from './exception'
 
@@ -48,12 +41,8 @@ async function bootstrap() {
   const port = kuaiEnv.config.port || 3000
   const host = kuaiEnv.config.host || '127.0.0.1'
 
-  Reflect.defineMetadata(ProviderKey.Actor, { ref: new ActorReference('resource', '/').json }, Manager)
-
   const dataSource = new NervosChainSource(kuaiEnv.config.ckbChain.rpcUrl)
-  const listener = new TipHeaderListener(dataSource)
-  const manager = new Manager(listener, dataSource)
-  manager.listen()
+  initiateResourceBindingManager(dataSource, new TipHeaderListener(dataSource))
 
   const app = new Koa()
   app.use(koaBody())
