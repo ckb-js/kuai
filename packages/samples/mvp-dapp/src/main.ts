@@ -13,7 +13,7 @@ import { KoaRouterAdapter, CoR, TipHeaderListener } from '@ckb-js/kuai-io'
 import cors from '@koa/cors'
 import { router } from './app.controller'
 import { mqContainer, REDIS_PORT_SYMBOL, REDIS_HOST_SYMBOL, initiateResourceBindingManager } from '@ckb-js/kuai-models'
-import { NervosChainSource } from './chain-source'
+import { NervosChainSource } from '@ckb-js/kuai-io'
 import { handleException } from './exception'
 
 async function bootstrap() {
