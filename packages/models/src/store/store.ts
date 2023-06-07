@@ -103,7 +103,7 @@ export class Store<
     this.options = params?.options
 
     this.initiateLock(params?.ref)
-    this.#type = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor)
+    this.initiateType(params?.ref)
 
     const cellPatternFactorys = Reflect.getMetadata(ProviderKey.CellPattern, this.constructor)
     this.cellPatterns =
@@ -111,7 +111,7 @@ export class Store<
       (cellPatternFactorys
         ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
           cellPatternFactorys.map((factory: (...args: any[]) => CellPattern) =>
-            factory({ lockScript: this.lockScript }),
+            factory({ lockScript: this.lockScript, typeScript: this.typeScript }),
           )
         : [])
   }
@@ -119,6 +119,15 @@ export class Store<
   private initiateLock(ref?: ActorRef) {
     const createLock = Reflect.getMetadata(ProviderKey.LockPattern, this.constructor)
     if (typeof createLock == 'function') this.#lock = createLock(ref)
+  }
+
+  private initiateType(ref?: ActorRef) {
+    const typePattern = Reflect.getMetadata(ProviderKey.TypePattern, this.constructor)
+    if (typeof typePattern == 'function') {
+      this.#type = typePattern(ref)
+    } else {
+      this.#type = typePattern
+    }
   }
 
   protected registerResourceBinding() {

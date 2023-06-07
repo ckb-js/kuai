@@ -87,6 +87,14 @@ export const LockPattern = (): ClassDecorator =>
       value.cell.cellOutput.lock.hashType === obj.lockScript.hashType,
   })
 
+export const TypePattern = (): ClassDecorator =>
+  Pattern({
+    cellPattern: (obj: { typeScript: Script }) => (value: UpdateStorageValue) =>
+      value.cell.cellOutput.type?.args === obj.typeScript.args &&
+      value.cell.cellOutput.type?.codeHash === obj.typeScript.codeHash &&
+      value.cell.cellOutput.type?.hashType === obj.typeScript.hashType,
+  })
+
 export const DataPattern = (data: string): ClassDecorator =>
   Pattern({ cellPattern: () => (value: UpdateStorageValue) => value.cell.data == data })
 
@@ -98,6 +106,20 @@ export const Lock =
   (target: object) =>
     Reflect.defineMetadata(
       ProviderKey.LockPattern,
+      (ref?: ActorRef) => {
+        const codeHash = script?.codeHash ?? ref?.params?.codeHash
+        const hashType = script?.hashType ?? ref?.params?.hashType
+        const args = script?.args ?? ref?.params?.args ?? '0x'
+        return codeHash && hashType ? { codeHash, hashType, args } : undefined
+      },
+      target,
+    )
+
+export const Type =
+  (script?: Partial<Script>): ClassDecorator =>
+  (target: object) =>
+    Reflect.defineMetadata(
+      ProviderKey.TypePattern,
       (ref?: ActorRef) => {
         const codeHash = script?.codeHash ?? ref?.params?.codeHash
         const hashType = script?.hashType ?? ref?.params?.hashType

@@ -16,11 +16,19 @@ import {
   UpdateStorageValue,
   DataPrefixPattern,
   LockPattern,
+  TypePattern,
+  Type,
 } from '@ckb-js/kuai-models'
-import { Cell } from '@ckb-lumos/base'
+import type { Cell, CellDep } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
 import { BI } from '@ckb-lumos/bi'
-import { DAPP_DATA_PREFIX, DAPP_DATA_PREFIX_LEN, TX_FEE } from '../const'
+import {
+  DAPP_DATA_PREFIX,
+  DAPP_DATA_PREFIX_LEN,
+  MVP_CONTRACT_CELL_DEP,
+  MVP_CONTRACT_TYPE_SCRIPT,
+  TX_FEE,
+} from '../const'
 
 export type ItemData = {
   key: string
@@ -42,8 +50,10 @@ export type StoreType = {
  */
 @ActorProvider({ ref: { name: 'record', path: '/:codeHash/:hashType/:args/' } })
 @LockPattern()
+@TypePattern()
 @DataPrefixPattern(DAPP_DATA_PREFIX)
 @Lock()
+@Type(MVP_CONTRACT_TYPE_SCRIPT)
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
   constructor(
     @Param('codeHash') codeHash: string,
@@ -93,6 +103,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
     return {
       inputs: inputs.map((v) => v.cell),
       outputs: outputs,
+      cellDeps: [MVP_CONTRACT_CELL_DEP],
     }
   }
 
@@ -100,6 +111,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
     inputs: Cell[]
     outputs: Cell[]
     witnesses: string[]
+    cellDeps?: CellDep[]
   } {
     const inputs = Object.values(this.chainData)
     if (!inputs.length) throw new InternalServerError('No mvp cell to set value')
@@ -112,17 +124,21 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
           cellOutput: {
             ...v.cell.cellOutput,
             capacity: BI.from(v.cell.cellOutput.capacity).sub(TX_FEE).toHexString(),
+            type: undefined,
           },
-          data: '0x',
         }
       }
       return {
         ...v.cell,
-        data: '0x',
+        cellOutput: {
+          ...v.cell.cellOutput,
+          type: undefined,
+        },
       }
     })
     return {
       inputs: inputs.map((v) => v.cell),
+      cellDeps: [MVP_CONTRACT_CELL_DEP],
       outputs: outputs,
       witnesses: [],
     }

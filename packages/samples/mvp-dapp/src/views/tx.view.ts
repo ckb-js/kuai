@@ -4,6 +4,7 @@
  * This module works as the view layer and is used to generate transaction skeleton.
  */
 
+import type { CellDep } from '@ckb-lumos/base'
 import { Cell, helpers, config } from '@ckb-lumos/lumos'
 import { SECP_SIGNATURE_PLACEHOLDER, OMNILOCK_SIGNATURE_PLACEHOLDER } from '@ckb-lumos/common-scripts/lib/helper'
 import { blockchain } from '@ckb-lumos/base'
@@ -13,17 +14,20 @@ export class Tx {
   static async toJsonString({
     inputs,
     outputs,
+    cellDeps,
     witnesses,
   }: {
     inputs: Cell[]
     outputs: Cell[]
+    cellDeps?: CellDep[]
     witnesses?: string[]
   }): Promise<helpers.TransactionSkeletonObject> {
     let txSkeleton = helpers.TransactionSkeleton({})
     txSkeleton = txSkeleton.update('outputs', (v) => v.push(...outputs))
     const CONFIG = config.getConfig()
-    txSkeleton = txSkeleton.update('cellDeps', (cellDeps) =>
-      cellDeps.push(
+    txSkeleton = txSkeleton.update('cellDeps', (v) =>
+      v.push(
+        ...(cellDeps ?? []),
         {
           outPoint: {
             txHash: CONFIG.SCRIPTS.OMNILOCK!.TX_HASH,

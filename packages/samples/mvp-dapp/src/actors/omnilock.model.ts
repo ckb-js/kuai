@@ -17,10 +17,16 @@ import {
   DataPattern,
   LockPattern,
 } from '@ckb-js/kuai-models'
-import { Cell, HexString } from '@ckb-lumos/base'
+import type { Cell, CellDep, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
 import { InternalServerError } from 'http-errors'
-import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
+import {
+  DAPP_DATA_PREFIX,
+  INITIAL_RECORD_STATE,
+  MVP_CONTRACT_CELL_DEP,
+  MVP_CONTRACT_TYPE_SCRIPT,
+  TX_FEE,
+} from '../const'
 
 /**
  * add business logic in an actor
@@ -58,6 +64,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
   claim(capacity: HexString): {
     inputs: Cell[]
     outputs: Cell[]
+    cellDeps?: CellDep[]
     witnesses: string[]
   } {
     const cells = Object.values(this.chainData)
@@ -77,6 +84,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
           cellOutput: {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             lock: this.lockScript!,
+            type: MVP_CONTRACT_TYPE_SCRIPT,
             capacity,
           },
           data: `${DAPP_DATA_PREFIX}${INITIAL_RECORD_STATE}`,
@@ -90,6 +98,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
           data: '0x',
         },
       ],
+      cellDeps: [MVP_CONTRACT_CELL_DEP],
       witnesses: [],
     }
   }

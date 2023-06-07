@@ -18,7 +18,7 @@ const TYPE_MARK_MAP = {
   [BIG_NUMBER_TYPE]: '2',
 }
 
-function reviver(key: string, value: JSONStorageOffChain | JSONStorageType) {
+export function reviver(key: string, value: JSONStorageOffChain | JSONStorageType) {
   if (value === null) throw new UnexpectedTypeException('null')
   if (typeof value === 'object') {
     return value
@@ -68,13 +68,13 @@ export function addMarkForStorage(data?: JSONStorageOffChain): AddMarkStorage {
 
 export class JSONStorage<T extends JSONStorageOffChain> extends ChainStorage<T> {
   serialize(data: T): Uint8Array {
-    return Buffer.from(JSON.stringify(addMarkForStorage(data)))
+    return Buffer.from(JSON.stringify(data))
   }
 
   deserialize(data: Uint8Array): T {
     if (data === null || data === undefined) throw new UnexpectedParamsException(`${data}`)
     const json = Buffer.from(data).toString()
     if (json === '') throw new UnexpectedParamsException(`${data}`)
-    return JSON.parse(Buffer.from(data).toString(), reviver)
+    return JSON.parse(Buffer.from(data).toString())
   }
 }
