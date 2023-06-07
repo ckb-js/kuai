@@ -9,11 +9,10 @@ import Koa from 'koa'
 import { koaBody } from 'koa-body'
 import { initialKuai, getGenesisScriptsConfig } from '@ckb-js/kuai-core'
 import { config } from '@ckb-lumos/lumos'
-import { KoaRouterAdapter, CoR, TipHeaderListener } from '@ckb-js/kuai-io'
+import { KoaRouterAdapter, CoR, TipHeaderListener, NervosChainSource } from '@ckb-js/kuai-io'
 import cors from '@koa/cors'
 import { router } from './app.controller'
 import { mqContainer, REDIS_PORT_SYMBOL, REDIS_HOST_SYMBOL, initiateResourceBindingManager } from '@ckb-js/kuai-models'
-import { NervosChainSource } from '@ckb-js/kuai-io'
 import { handleException } from './exception'
 
 async function bootstrap() {
