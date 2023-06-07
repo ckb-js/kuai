@@ -74,13 +74,15 @@ impl KuaiMvpView {
         view
     }
 
-    pub fn verify(&self) {
-        if self.addresses.len() == 0 {
-            panic!("address cannot be empty");
+    pub fn verify(&self) -> bool {
+        if self.addresses.is_empty() {
+            return false
         }
 
         if self.addresses.get(0).unwrap().key != "ckb" {
-            panic!("the first of the addresses must be ckb");
+            return false
         }
+
+        return true
     }
 }
