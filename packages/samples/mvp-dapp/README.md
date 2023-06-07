@@ -123,10 +123,18 @@ Follow the [Guide](../../../README.md) to build libraries developed in other wor
 $ npm run build
 ```
 
-### Start CKB Node
+### Get CKB Node Ready
 
-- locally: https://docs.nervos.org/docs/basics/guides/testnet/
-- remotely: https://testnet.ckb.dev/rpc
+#### How to run CKB node locally
+
+- Mainnet: https://docs.nervos.org/docs/basics/guides/mainnet
+- Testnet: https://docs.nervos.org/docs/basics/guides/testnet
+- Devnet: https://docs.nervos.org/docs/basics/guides/devchain
+
+#### Available CKB nodes of community
+
+- Mainnet RPC endpoint: https://mainnet.ckb.dev/rpc
+- Testnet RPC endpoint: https://testnet.ckb.dev/rpc
 
 ### Start the mvp dapp locally
 
