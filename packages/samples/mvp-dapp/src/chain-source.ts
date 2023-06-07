@@ -1,3 +1,10 @@
+/**
+ * @module src/chain-source
+ * @description
+ * This module defines the chain source for the application.
+ * A chain source could be a CKB indexer.
+ */
+
 import type { ChainSource } from '@ckb-js/kuai-io/lib/types'
 import { Script, RPC, BI } from '@ckb-lumos/lumos'
 import type { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'

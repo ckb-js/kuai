@@ -11,6 +11,7 @@ import {
 import { OverrideTask } from './task'
 import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from './errors-list'
+import { camelCase } from 'lodash'
 
 export class KuaiRuntimeEnvironment implements RuntimeEnvironment {
   constructor(
@@ -57,10 +58,10 @@ export class KuaiRuntimeEnvironment implements RuntimeEnvironment {
     const resolvedArgs = paramList.reduce(({ errors, args }, param) => {
       try {
         const paramName = param.name
-        const argValue = taskArgs[paramName]
+        const argValue = taskArgs[camelCase(paramName)]
         const resolvedArgValue = this._resolveArgument(param, argValue)
         if (resolvedArgValue != undefined) {
-          args[paramName] = resolvedArgValue
+          args[camelCase(paramName)] = resolvedArgValue
         }
       } catch (error) {
         if (KuaiError.isKuaiError(error)) {

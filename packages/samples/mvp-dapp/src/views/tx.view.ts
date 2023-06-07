@@ -1,3 +1,9 @@
+/**
+ * @module src/views/tx.view
+ * @description
+ * This module works as the view layer and is used to generate transaction skeleton.
+ */
+
 import { Cell, helpers, config } from '@ckb-lumos/lumos'
 import { SECP_SIGNATURE_PLACEHOLDER, OMNILOCK_SIGNATURE_PLACEHOLDER } from '@ckb-lumos/common-scripts/lib/helper'
 import { blockchain } from '@ckb-lumos/base'

@@ -7,9 +7,11 @@ export type TaskArguments = any
 export interface KuaiArguments {
   configPath?: string
   network?: string
+  privateKey?: string
 }
 
 export interface KuaiConfig {
+  devNode?: DevNodeConfig
   kuaiArguments?: KuaiArguments
   network?: string
   ckbChain: NetworkConfig
@@ -19,6 +21,12 @@ export interface KuaiConfig {
     [name: string]: NetworkConfig
   }
 }
+
+export interface DevNodeConfig {
+  builtInContractConfigPath?: string
+  builtInContractDownloadBaseUrl?: string
+}
+
 export type ContractConfig = {
   workspace?: string
 }

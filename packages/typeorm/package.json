@@ -34,12 +34,12 @@
     "pg": "8.11.0",
     "reflect-metadata": "0.1.13",
     "rxjs": "7.8.1",
-    "tslib": "2.5.2",
+    "tslib": "2.5.3",
     "typeorm": "0.3.16"
   },
   "devDependencies": {
     "@jest/globals": "29.5.0",
     "ts-node": "10.9.1",
-    "typescript": "5.0.4"
+    "typescript": "5.1.3"
   }
 }

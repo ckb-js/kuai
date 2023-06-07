@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { Hash, blockchain } from '@ckb-lumos/base'
+import { Hash, Transaction, blockchain } from '@ckb-lumos/base'
 import { generateDeployWithTypeIdTx } from '@ckb-lumos/common-scripts/lib/deploy'
-import { sealTransaction } from '@ckb-lumos/helpers'
+import { sealTransaction, createTransactionFromSkeleton } from '@ckb-lumos/helpers'
 import { Indexer, commons, config, RPC, utils } from '@ckb-lumos/lumos'
 import type { FromInfo } from '@ckb-lumos/common-scripts'
 
@@ -11,18 +11,18 @@ export type MessageSigner = (message: string, fromInfo: FromInfo) => Promise<Sig
 export class ContractDeployer {
   #rpc: RPC
   #index: Indexer
-  #signer: MessageSigner
+  #signer?: MessageSigner
   #network: {
     rpcUrl: string
     config: config.Config
   }
 
   constructor(
-    signer: MessageSigner,
     network: {
       rpcUrl: string
       config: config.Config
     },
+    signer?: MessageSigner,
   ) {
     this.#signer = signer
     this.#rpc = new RPC(network.rpcUrl)
@@ -38,10 +38,11 @@ export class ContractDeployer {
       enableTypeId?: boolean
     },
   ): Promise<{
-    txHash: Hash
+    tx: Transaction
     index: number
     dataHash: string
     typeId?: string
+    send: () => Promise<Hash>
   }> {
     const { feeRate = 1000 } = options || {}
     const contractBin = readFileSync(contractBinPath)
@@ -60,17 +61,26 @@ export class ContractDeployer {
       config: this.#network.config,
     })
     txSkeleton = commons.common.prepareSigningEntries(txSkeleton)
-    const signatures = await Promise.all(
-      txSkeleton.signingEntries.map(({ message }) => this.#signer(message, fromInfo)),
-    )
-    const signedTx = sealTransaction(txSkeleton, signatures)
-    const txHash = await this.#rpc.sendTransaction(signedTx)
+
+    const tx = await (async () => {
+      if (this.#signer) {
+        const signerProvider = this.#signer
+        const signatures = await Promise.all(
+          txSkeleton.signingEntries.map(({ message }) => signerProvider(message, fromInfo)),
+        )
+
+        return sealTransaction(txSkeleton, signatures)
+      }
+
+      return createTransactionFromSkeleton(txSkeleton)
+    })()
 
     return {
-      txHash,
+      tx,
       index: parseInt(scriptConfig.INDEX),
       dataHash: scriptConfig.CODE_HASH,
       typeId: utils.ckbHash(blockchain.Script.pack(typeId)),
+      send: () => this.#rpc.sendTransaction(tx),
     }
   }
 }

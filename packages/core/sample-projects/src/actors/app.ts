@@ -9,7 +9,7 @@ interface HelloMessage {
 
 export type AppMessage = HelloMessage;
 
-@ActorProvider({ name: 'app' }, true)
+@ActorProvider({ ref: { name: 'app' }, autoBind: true })
 export class CustomActor extends Actor<object, MessagePayload<AppMessage>> {
   handleCall = (_msg: ActorMessage<MessagePayload<AppMessage>>): void => {
     switch (_msg.payload?.value?.type) {
