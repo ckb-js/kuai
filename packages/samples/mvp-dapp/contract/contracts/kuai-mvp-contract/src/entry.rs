@@ -31,19 +31,16 @@ pub fn main() -> Result<(), Error> {
 
     let data = load_cell_data(0, Source::Output).map_err(|_| Error::DataParseError)?;
     debug!("data is {:?}", data.clone());
-    //
-    // let view = KuaiMvpView::new(data.as_slice()).unwrap();
-    // debug!("data is {:?}", view);
-    //
-    // view.verify();
 
-    let jsonStr = str::from_utf8(data.as_slice()).map_err(|_| Error::DataParseError)?;
-    let json = KuaiMvpView::as_json_str(jsonStr);
-    debug!("data is {:?}", json);
+    let jsonStr = str::from_utf8(&data[8..data.len()]).map_err(|_| Error::DataParseError)?;
+    debug!("jsonStr is {:?}", jsonStr);
+    let view = KuaiMvpView::as_json_str(jsonStr);
+    debug!("data is {:?}", view);
+
 
     // return an error if args is invalid
-    if args.is_empty() {
-        return Err(Error::MyError);
+    if !view.verify() {
+        return Err(Error::CkbAddressEmptyError);
     }
 
     let tx_hash = load_tx_hash()?;
