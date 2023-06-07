@@ -1,27 +1,27 @@
-import { KuaiRouter } from '@ckb-js/kuai-io';
+import { BaseController, Controller, Get, Query } from '@ckb-js/kuai-io';
 import { appRegistry } from './actors';
-import { Actor } from '@ckb-js/kuai-models';
+import { Actor, ActorNotFoundException } from '@ckb-js/kuai-models';
 
-const router = new KuaiRouter();
+@Controller('/')
+export default class AppController extends BaseController {
+  @Get('/')
+  async hello(@Query('name') name: string) {
+    const appActor = appRegistry.find('local://app');
 
-router.get('/', async (ctx) => {
-  const appActor = appRegistry.find('local://app');
+    if (!appActor) {
+      throw new ActorNotFoundException('local://app');
+    }
 
-  if (!appActor) {
-    return ctx.err('not found app actor');
-  }
-
-  await Actor.call(appActor.ref.uri, appActor.ref, {
-    pattern: 'normal',
-    value: {
-      type: 'hello',
-      hello: {
-        name: ctx?.payload?.query?.name,
+    await Actor.call(appActor.ref.uri, appActor.ref, {
+      pattern: 'normal',
+      value: {
+        type: 'hello',
+        hello: {
+          name,
+        },
       },
-    },
-  });
+    });
 
-  ctx.ok(`hello ${ctx?.payload?.query?.name || 'world'}`);
-});
-
-export { router };
+    return `hello ${name || 'world'}`;
+  }
+}
