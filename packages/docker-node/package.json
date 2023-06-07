@@ -12,6 +12,7 @@
     "@types/dockerode": "3.3.18"
   },
   "dependencies": {
+    "@ckb-js/kuai-common": "0.0.1",
     "dockerode": "3.3.5"
   }
 }
