@@ -236,6 +236,7 @@ $RECYCLE.BIN/
 
 # Kuai
 _cache
+.bin
 
 # capsule
 target
