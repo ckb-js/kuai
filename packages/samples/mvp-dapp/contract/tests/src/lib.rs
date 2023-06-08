@@ -1,3 +1,4 @@
+#![feature(slice_pattern)]
 extern crate core;
 
 use ckb_testtool::ckb_types::bytes::Bytes;
