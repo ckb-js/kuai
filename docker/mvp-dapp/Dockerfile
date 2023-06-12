@@ -4,6 +4,6 @@ WORKDIR /home/app
 COPY . /home/app
 
 RUN npm i
-RUN npm run build
+RUN npx lerna run build
 
-CMD npm run start:prod --scope=kuai-mvp-dapp
+CMD npx lerna run start:prod --scope=kuai-mvp-dapp

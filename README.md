@@ -15,7 +15,7 @@ $ git clone https://github.com/ckb-js/kuai.git
 `Kuai` uses [lerna](https://lerna.js.org/) to manage dependencies
 
 ```sh
-# use npm to install dependencies, run `npx i` under the hood
+# use npm to install dependencies
 $ npm i
 ```
 
