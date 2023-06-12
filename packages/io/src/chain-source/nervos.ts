@@ -1,4 +1,4 @@
-import type { ChainSource } from './types'
+import type { ChainSource } from '../types'
 import { Script, RPC, BI } from '@ckb-lumos/lumos'
 import type { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
 
