@@ -15,8 +15,8 @@ $ git clone https://github.com/ckb-js/kuai.git
 `Kuai` uses [lerna](https://lerna.js.org/) to manage dependencies
 
 ```sh
-# use lerna to install dependencies, run `npx lerna bootstrap --hoist` under the hood
-$ npm run bootstrap
+# use npm to install dependencies, run `npx i` under the hood
+$ npm i
 ```
 
 ## Build pacakges
@@ -43,13 +43,8 @@ Outputs will be built in the `lib` directory in their own workspaces
 First, install `kuai` globally by `npm link`:
 
 ```bash
-$ git clone git@github.com:ckb-js/kuai.git
 
-$ cd kuai
-
-$ yarn bootstrap
-
-$ yarn build
+$ npm run build
 
 $ cd packages/cli
 
