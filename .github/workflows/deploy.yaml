@@ -23,7 +23,7 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install project dependencies and build
-        run: npx lerna bootstrap
+        run: npm i
 
       - name: Build packages
         run: npm run build
