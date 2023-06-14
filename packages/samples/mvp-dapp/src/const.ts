@@ -19,14 +19,14 @@ export const INITIAL_RECORD_STATE = bytes
 export const TX_FEE = 100000
 
 export const MVP_CONTRACT_TYPE_SCRIPT: Script = {
-  codeHash: '0x2e84615cbe410d71210472aff6489d55267769213e03b3d613d6c9b3d9df773f',
+  codeHash: '0x1a3de2a61b454e8492a775cf438748e362e71930170bec90c4e6b79e4dd7ea3c',
   hashType: 'type',
   args: '0x',
 }
 
 export const MVP_CONTRACT_CELL_DEP: CellDep = {
   outPoint: {
-    txHash: '0xf0c0b63a07940359d605b04f26a96b509a31dacc4d548293f69091ef2e4a6b18',
+    txHash: '0x005a153ec6a35adbc8d82544ae11d8c6f8c0601fc9059f8a872e01f638fc9f62',
     index: '0x0',
   },
   depType: 'code',

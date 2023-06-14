@@ -14,7 +14,6 @@ import {
   OutPointString,
   SchemaPattern,
   UpdateStorageValue,
-  DataPrefixPattern,
   LockPattern,
   TypePattern,
   Type,
@@ -22,13 +21,7 @@ import {
 import type { Cell, CellDep } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
 import { BI } from '@ckb-lumos/bi'
-import {
-  DAPP_DATA_PREFIX,
-  DAPP_DATA_PREFIX_LEN,
-  MVP_CONTRACT_CELL_DEP,
-  MVP_CONTRACT_TYPE_SCRIPT,
-  TX_FEE,
-} from '../const'
+import { DAPP_DATA_PREFIX_LEN, MVP_CONTRACT_CELL_DEP, MVP_CONTRACT_TYPE_SCRIPT, TX_FEE } from '../const'
 
 export type ItemData = {
   key: string
@@ -51,7 +44,6 @@ export type StoreType = {
 @ActorProvider({ ref: { name: 'record', path: '/:codeHash/:hashType/:args/' } })
 @LockPattern()
 @TypePattern()
-@DataPrefixPattern(DAPP_DATA_PREFIX)
 @Lock()
 @Type(MVP_CONTRACT_TYPE_SCRIPT)
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
@@ -126,6 +118,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
             capacity: BI.from(v.cell.cellOutput.capacity).sub(TX_FEE).toHexString(),
             type: undefined,
           },
+          data: '0x',
         }
       }
       return {
@@ -134,6 +127,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
           ...v.cell.cellOutput,
           type: undefined,
         },
+        data: '0x',
       }
     })
     return {
