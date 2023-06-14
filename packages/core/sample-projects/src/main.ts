@@ -4,11 +4,14 @@ import { initialKuai } from '@ckb-js/kuai-core';
 import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io';
 import AppController from './app.controller';
 import './type-extends';
+import { initiateResourceBindingManager } from '@ckb-js/kuai-models';
 
 async function bootstrap() {
   const kuaiCtx = await initialKuai();
   const kuaiEnv = kuaiCtx.getRuntimeEnvironment();
   const port = kuaiEnv.config?.port || 3000;
+
+  initiateResourceBindingManager({ rpc: kuaiEnv.config.ckbChain.rpcUrl });
 
   const app = new Koa();
   app.use(koaBody());

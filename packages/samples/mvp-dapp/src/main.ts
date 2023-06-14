@@ -9,7 +9,7 @@ import Koa from 'koa'
 import { koaBody } from 'koa-body'
 import { initialKuai, getGenesisScriptsConfig } from '@ckb-js/kuai-core'
 import { config } from '@ckb-lumos/lumos'
-import { KoaRouterAdapter, CoR, TipHeaderListener, NervosChainSource } from '@ckb-js/kuai-io'
+import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io'
 import cors from '@koa/cors'
 import { router } from './app.controller'
 import { mqContainer, REDIS_PORT_SYMBOL, REDIS_HOST_SYMBOL, initiateResourceBindingManager } from '@ckb-js/kuai-models'
@@ -40,8 +40,7 @@ async function bootstrap() {
   const port = kuaiEnv.config.port || 3000
   const host = kuaiEnv.config.host || '127.0.0.1'
 
-  const dataSource = new NervosChainSource(kuaiEnv.config.ckbChain.rpcUrl)
-  initiateResourceBindingManager(dataSource, new TipHeaderListener(dataSource))
+  initiateResourceBindingManager({ rpc: kuaiEnv.config.ckbChain.rpcUrl })
 
   const app = new Koa()
   app.use(koaBody())
