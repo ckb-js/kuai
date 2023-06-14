@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process'
 import read from 'read'
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync, writeFileSync, cpSync, rmSync } from 'node:fs'
 import path from 'node:path'
 import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
@@ -289,4 +289,33 @@ subtask('contract:new')
   .setAction(async ({ name, template }: NewArgs, { run }) => {
     const workspace = await run('contract:get-workspace')
     execSync(`cd ${workspace} && capsule new-contract ${name} --template ${template}`, { stdio: 'inherit' })
+  })
+
+interface InitArgs {
+  name: string
+  template: string
+}
+
+subtask('contract:init')
+  .addParam('name', 'The name of new contract project')
+  .addParam(
+    'template',
+    'language template  [default: rust]  [possible values: rust, c, c-sharedlib]',
+    'rust',
+    paramTypes.string,
+    true,
+  )
+  .setAction(async ({ name, template }: InitArgs, { run }) => {
+    const workspace = (await run('contract:get-workspace')) as string
+    const newProjectPath = path.join(workspace, '..', name)
+    execSync(`capsule new ${name} --template ${template}`, { stdio: 'inherit' })
+
+    // remove .git file
+    rmSync(path.join(newProjectPath, '.git'), { recursive: true })
+
+    // copy project to workspace directory
+    cpSync(newProjectPath, workspace, { recursive: true })
+
+    // remove temp files
+    rmSync(newProjectPath, { recursive: true })
   })
