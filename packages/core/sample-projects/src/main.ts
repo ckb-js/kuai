@@ -1,14 +1,33 @@
 import Koa from 'koa';
 import { koaBody } from 'koa-body';
-import { initialKuai } from '@ckb-js/kuai-core';
+import { getGenesisScriptsConfig, initialKuai } from '@ckb-js/kuai-core';
 import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io';
 import AppController from './app.controller';
 import './type-extends';
-import { initiateResourceBindingManager } from '@ckb-js/kuai-models';
+import { REDIS_HOST_SYMBOL, REDIS_PORT_SYMBOL, initiateResourceBindingManager, mqContainer } from '@ckb-js/kuai-models';
+import { config } from '@ckb-lumos/lumos';
 
 async function bootstrap() {
   const kuaiCtx = await initialKuai();
   const kuaiEnv = kuaiCtx.getRuntimeEnvironment();
+
+  if (kuaiEnv.config.redisPort) {
+    mqContainer.bind(REDIS_PORT_SYMBOL).toConstantValue(kuaiEnv.config.redisPort);
+  }
+
+  if (kuaiEnv.config.redisHost) {
+    mqContainer.bind(REDIS_HOST_SYMBOL).toConstantValue(kuaiEnv.config.redisHost);
+  }
+
+  config.initializeConfig(
+    config.createConfig({
+      PREFIX: kuaiEnv.config.ckbChain.prefix,
+      SCRIPTS: kuaiEnv.config.ckbChain.scripts || {
+        ...(await getGenesisScriptsConfig(kuaiEnv.config.ckbChain.rpcUrl)),
+      },
+    }),
+  );
+
   const port = kuaiEnv.config?.port || 3000;
 
   initiateResourceBindingManager({ rpc: kuaiEnv.config.ckbChain.rpcUrl });
