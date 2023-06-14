@@ -11,7 +11,6 @@ declare module '@ckb-js/kuai-core' {
   export interface KuaiConfig {
     port?: number
     host?: string
-    rpcUrl: string
     lumosConfig?: Config | 'aggron4' | 'lina'
     redisPort?: number
     redisHost?: string
