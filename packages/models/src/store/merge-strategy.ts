@@ -1,6 +1,5 @@
 import { get, mergeWith, set } from 'lodash/fp'
 import { BI } from '@ckb-lumos/bi'
-import BigNumber from 'bignumber.js'
 import { CantSetValueInSimpleType, NoCellToUseException, NonExistentException } from '../exceptions'
 import { deepForIn } from '../utils'
 import type { OutPointString } from './interface'
@@ -29,17 +28,13 @@ export abstract class MergeStrategy<S, T = S> {
       vType === 'number' ||
       vType === 'undefined' ||
       vType === null ||
-      value instanceof BI ||
-      value instanceof BigNumber
+      value instanceof BI
     )
   }
 
   isValueEqual(value: unknown, compare: unknown): boolean {
     if (this.isSimpleType(value) && this.isSimpleType(compare)) {
       if (value instanceof BI && compare instanceof BI) {
-        return value.eq(compare)
-      }
-      if (value instanceof BigNumber && compare instanceof BigNumber) {
         return value.eq(compare)
       }
       return value === compare

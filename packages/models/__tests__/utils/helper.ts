@@ -1,5 +1,4 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
-import BigNumber from 'bignumber.js'
 import { BI } from '@ckb-lumos/bi'
 import { deepForIn } from '../../src'
 
@@ -25,12 +24,6 @@ describe('test deep for in', () => {
     expect(callBack).toBeCalledWith(true, [])
     expect(callBack).toBeCalledTimes(3)
   })
-  it('call break when callback Return false with BigNumber', () => {
-    callBack.mockReturnValue(false)
-    deepForIn(BigNumber(10), callBack)
-    expect(callBack).toBeCalledWith(BigNumber(10), [])
-    expect(callBack).toBeCalledTimes(1)
-  })
   it('call break when callback Return false with BI', () => {
     callBack.mockReturnValue(false)
     deepForIn(BI.from(10), callBack)
@@ -38,11 +31,10 @@ describe('test deep for in', () => {
     expect(callBack).toBeCalledTimes(1)
   })
   it('call with object', () => {
-    callBack.mockImplementation((v) => (v instanceof BigNumber ? false : true))
-    deepForIn({ a: BigNumber(10), b: 'b1' }, callBack)
-    expect(callBack).toBeCalledWith({ a: BigNumber(10), b: 'b1' }, [])
-    expect(callBack).toBeCalledWith(BigNumber(10), ['a'])
+    callBack.mockImplementation((_v) => true)
+    deepForIn({ b: 'b1' }, callBack)
+    expect(callBack).toBeCalledWith({ b: 'b1' }, [])
     expect(callBack).toBeCalledWith('b1', ['b'])
-    expect(callBack).toBeCalledTimes(3)
+    expect(callBack).toBeCalledTimes(2)
   })
 })
