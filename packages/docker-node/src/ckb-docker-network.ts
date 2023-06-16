@@ -1,15 +1,16 @@
 import Docker, { ContainerCreateOptions } from 'dockerode'
-import type { DockerNodeStartOptions, InfraScript } from './types'
+import type { DockerNodeDeployOptions, DockerNodeStartOptions, InfraScript } from './types'
 import { join } from 'node:path'
 import fs from 'node:fs'
 import path from 'node:path'
 import { Address, Indexer, RPC, commons, helpers, hd, Transaction, config, CellDep } from '@ckb-lumos/lumos'
 import { waitUntilCommitted } from '@ckb-js/kuai-common'
+import Node from './interface'
 
 const CKB_NODE_IMAGE = 'kuai/ckb-dev'
 const DOCKER_SOCKET_PATH = process.env.DOCKER_SOCKET || '/var/run/docker.sock'
 
-export class CkbDockerNetwork {
+export class CkbDockerNetwork implements Node<DockerNodeStartOptions, DockerNodeDeployOptions> {
   #docker: Docker
   #lumosConfig: config.Config = config.getConfig()
   #port = '8114'
@@ -175,14 +176,7 @@ lock.hash_type = "type"\n`
     indexer,
     rpc,
     privateKey,
-  }: {
-    builtInScriptName: string[]
-    configFilePath: string
-    builtInDirPath: string
-    indexer: Indexer
-    rpc: RPC
-    privateKey: string
-  }): Promise<void> {
+  }: DockerNodeDeployOptions): Promise<void> {
     const from = helpers.encodeToConfigAddress(hd.key.privateKeyToBlake160(privateKey), 'SECP256K1_BLAKE160')
     await indexer.waitForSync()
     const config = {
@@ -234,5 +228,13 @@ lock.hash_type = "type"\n`
 
   get url(): string {
     return `http://${this.#host}:${this.#port}`
+  }
+
+  get host(): string {
+    return this.#host
+  }
+
+  get port(): string {
+    return this.#port
   }
 }
