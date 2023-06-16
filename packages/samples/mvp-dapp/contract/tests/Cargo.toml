@@ -1,0 +1,12 @@
+[package]
+name = "tests"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ckb-testtool = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.96"
+types = { path = "../types", default-features = false }

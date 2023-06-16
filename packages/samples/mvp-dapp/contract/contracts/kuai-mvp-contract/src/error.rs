@@ -8,7 +8,9 @@ pub enum Error {
     LengthNotEnough,
     Encoding,
     // Add customized errors here...
-    MyError,
+    CkbAddressEmptyError,
+    DataParseError,
+    NotMvpData,
 }
 
 impl From<SysError> for Error {

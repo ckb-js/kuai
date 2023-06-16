@@ -9,7 +9,7 @@ require('dotenv').config()
 module.exports = {
   host: process.env.HOST,
   port: process.env.PORT,
-  network: process.env.NETWORK || 'devnet',
+  network: 'testnet',
   redisPort: process.env.REDIS_PORT,
   redisHost: process.env.REDIS_HOST,
   jest: {
