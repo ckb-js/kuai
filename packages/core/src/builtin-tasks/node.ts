@@ -5,11 +5,10 @@ import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import '../type/runtime'
 import { Indexer, RPC, config } from '@ckb-lumos/lumos'
-import { cachePath, configPath } from '../helper'
+import { cachePath, configPath, download } from '../helper'
 import path from 'node:path'
 import fs from 'fs'
 import { scheduler } from 'node:timers/promises'
-import undici from 'undici'
 import { DEFAULT_KUAI_PRIVATE_KEY } from '../constants'
 
 interface Args {
@@ -46,18 +45,12 @@ subtask('node:start', 'start a ckb node')
 
     const builtInDirPath = cachePath('built-in')
     for (const script of BUILTIN_SCRIPTS) {
-      const filePath = path.join(builtInDirPath, script)
-      if (!fs.existsSync(filePath)) {
-        const out = fs.createWriteStream(path.resolve(builtInDirPath, script))
-        await undici.stream(
+      if (!fs.existsSync(path.join(builtInDirPath, script))) {
+        download(
           `${
             env.config.devNode?.builtInContractDownloadBaseUrl ?? DEFAULT_BUILTIN_CONTRACT_DOWNLOAD_BASE_URL
           }/${script}}`,
-          {
-            opaque: out,
-            method: 'GET',
-          },
-          ({ opaque }) => opaque as fs.WriteStream,
+          path.resolve(builtInDirPath, script),
         )
       }
     }

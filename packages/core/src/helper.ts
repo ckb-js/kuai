@@ -6,6 +6,7 @@ import { KuaiArguments } from './type'
 import path from 'node:path'
 import { PATH } from './constants'
 import fs from 'node:fs'
+import undici from 'undici'
 
 export async function initialKuai(args: KuaiArguments = {}): Promise<KuaiContext> {
   loadTsNode()
@@ -30,3 +31,10 @@ export const createPath = (path: string) => {
 export const cachePath = (...paths: string[]) => createPath(path.resolve(PATH.cache, ...paths))
 
 export const configPath = (...paths: string[]) => createPath(path.resolve(PATH.config, ...paths))
+
+export const download = async (url: string, filePath: string) =>
+  await undici.stream(
+    url,
+    { opaque: fs.createWriteStream(filePath), method: 'GET' },
+    ({ opaque }) => opaque as fs.WriteStream,
+  )
