@@ -7,7 +7,8 @@ import { MvpError } from '../exception'
  * and will be obsolete once these information are injected by kuai framework
  */
 export const getDeployedContracts = () => {
-  const PATH = join('contract', 'deployed', 'contracts.json')
+  const DIR_NAME = process.env.NODE_ENV === 'test' ? 'deployed_demo' : 'deployed'
+  const PATH = join('contract', DIR_NAME, 'contracts.json')
   if (!existsSync(PATH)) {
     throw new MvpError(`${PATH}, please deploy contracts first`, '500')
   }
