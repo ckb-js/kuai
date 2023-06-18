@@ -78,7 +78,9 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     if (currentTotalCapacity.lt(needCapacity)) throw new InternalServerError('not enough capacity')
 
     const INITIAL_RECORD_STATE = bytes
-      .hexify(new JSONStorage().serialize({ addresses: [{ key: 'ckb', value: this.#omnilockAddress }] }))
+      .hexify(
+        new JSONStorage().serialize({ addresses: [{ key: 'ckb', value: this.#omnilockAddress, label: 'required' }] }),
+      )
       .slice(2)
 
     return {
