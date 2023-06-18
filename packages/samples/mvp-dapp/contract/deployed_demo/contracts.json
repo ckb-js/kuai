@@ -1,0 +1,14 @@
+{
+  "kuai-mvp-contract": {
+    "depType": "code",
+    "outPoint": {
+      "txHash": "0x005a153ec6a35adbc8d82544ae11d8c6f8c0601fc9059f8a872e01f638fc9f62",
+      "index": "0x0"
+    },
+    "script": {
+      "codeHash": "0x1a3de2a61b454e8492a775cf438748e362e71930170bec90c4e6b79e4dd7ea3c",
+      "hashType": "type",
+      "args": "0x"
+    }
+  }
+}

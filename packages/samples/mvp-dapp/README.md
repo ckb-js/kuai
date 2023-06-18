@@ -117,6 +117,16 @@ It's quite similar to the [setState](https://reactjs.org/docs/faq-state.html#wha
 
 Follow the [Guide](../../../README.md) to build libraries developed in other workspaces.
 
+### Get Contract Ready
+
+#### Deploy your own contract
+
+Follow https://github.com/ckb-js/kuai/issues/306 to deploy your own contract. Or
+
+#### Connect to the demo contract deployed on the Testnet
+
+The deployment information located at `mvp-dapp/contract/deployed_demo`, rename it to `mvp-dapp/contract/deployed` to connect to
+
 ### Build the mvp dapp
 
 ```sh

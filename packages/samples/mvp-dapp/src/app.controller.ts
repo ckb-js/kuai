@@ -44,7 +44,7 @@ router.post<never, { address: string }, { capacity: HexString }>('/claim/:addres
     new ActorReference('omnilock', `/${getLock(params?.address).args}/`),
   )
   const result = omniLockModel.claim(body.capacity)
-  ctx.ok(MvpResponse.ok(Tx.toJsonString(result)))
+  ctx.ok(MvpResponse.ok(await Tx.toJsonString(result)))
 })
 
 router.get<never, { path: string; address: string }>('/load/:address/:path', async (ctx) => {
@@ -84,7 +84,7 @@ router.post<never, { address: string }, { value: StoreType['data'] }>('/set/:add
     new ActorReference('record', `/${lock.codeHash}/${lock.hashType}/${lock.args}/`),
   )
   const result = recordModel.update(ctx.payload.body.value)
-  ctx.ok(MvpResponse.ok(Tx.toJsonString(result)))
+  ctx.ok(MvpResponse.ok(await Tx.toJsonString(result)))
 })
 
 router.post<never, { address: string }>('/clear/:address', async (ctx) => {
