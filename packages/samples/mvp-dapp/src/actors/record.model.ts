@@ -4,9 +4,11 @@
  * This is the actor model for record, which is used to store data in a json format.
  */
 
+import type { Cell } from '@ckb-lumos/base'
 import {
   ActorProvider,
   Lock,
+  Type,
   Param,
   ActorReference,
   CellPattern,
@@ -14,13 +16,12 @@ import {
   OutPointString,
   SchemaPattern,
   UpdateStorageValue,
-  DataPrefixPattern,
   LockPattern,
+  TypePattern,
 } from '@ckb-js/kuai-models'
-import { Cell } from '@ckb-lumos/base'
 import { InternalServerError } from 'http-errors'
 import { BI } from '@ckb-lumos/bi'
-import { DAPP_DATA_PREFIX, DAPP_DATA_PREFIX_LEN, TX_FEE } from '../const'
+import { DAPP_DATA_PREFIX_LEN, MVP_CONTRACT_TYPE_SCRIPT, TX_FEE } from '../const'
 
 export type ItemData = {
   key: string
@@ -42,8 +43,9 @@ export type StoreType = {
  */
 @ActorProvider({ ref: { name: 'record', path: '/:codeHash/:hashType/:args/' } })
 @LockPattern()
-@DataPrefixPattern(DAPP_DATA_PREFIX)
+@TypePattern()
 @Lock()
+@Type(MVP_CONTRACT_TYPE_SCRIPT)
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
   constructor(
     @Param('codeHash') codeHash: string,
@@ -112,12 +114,17 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
           cellOutput: {
             ...v.cell.cellOutput,
             capacity: BI.from(v.cell.cellOutput.capacity).sub(TX_FEE).toHexString(),
+            type: undefined,
           },
           data: '0x',
         }
       }
       return {
         ...v.cell,
+        cellOutput: {
+          ...v.cell.cellOutput,
+          type: undefined,
+        },
         data: '0x',
       }
     })

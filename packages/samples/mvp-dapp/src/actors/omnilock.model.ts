@@ -4,6 +4,7 @@
  * This is the actor model for omnilock, which is used to gather omnilock cells to generate record models.
  */
 
+import type { Cell, HexString } from '@ckb-lumos/base'
 import {
   ActorProvider,
   Omnilock,
@@ -16,11 +17,13 @@ import {
   UpdateStorageValue,
   DataPattern,
   LockPattern,
+  JSONStorage,
 } from '@ckb-js/kuai-models'
-import { Cell, HexString } from '@ckb-lumos/base'
 import { BI } from '@ckb-lumos/bi'
+import { helpers } from '@ckb-lumos/lumos'
 import { InternalServerError } from 'http-errors'
-import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
+import { DAPP_DATA_PREFIX, TX_FEE, MVP_CONTRACT_TYPE_SCRIPT } from '../const'
+import { bytes } from '@ckb-lumos/codec'
 
 /**
  * add business logic in an actor
@@ -30,6 +33,8 @@ import { DAPP_DATA_PREFIX, INITIAL_RECORD_STATE, TX_FEE } from '../const'
 @DataPattern('0x')
 @Omnilock()
 export class OmnilockModel extends JSONStore<Record<string, never>> {
+  #omnilockAddress: string
+
   constructor(
     @Param('args') args: string,
     _schemaOption?: void,
@@ -45,6 +50,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       throw new Error('lock script is required')
     }
     this.registerResourceBinding()
+    this.#omnilockAddress = helpers.encodeToAddress(this.lockScript)
   }
 
   get meta(): Record<'capacity', string> {
@@ -70,6 +76,13 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       return true
     })
     if (currentTotalCapacity.lt(needCapacity)) throw new InternalServerError('not enough capacity')
+
+    const INITIAL_RECORD_STATE = bytes
+      .hexify(
+        new JSONStorage().serialize({ addresses: [{ key: 'ckb', value: this.#omnilockAddress, label: 'required' }] }),
+      )
+      .slice(2)
+
     return {
       inputs: inputs.map((v) => v.cell),
       outputs: [
@@ -77,6 +90,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
           cellOutput: {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             lock: this.lockScript!,
+            type: MVP_CONTRACT_TYPE_SCRIPT,
             capacity,
           },
           data: `${DAPP_DATA_PREFIX}${INITIAL_RECORD_STATE}`,
