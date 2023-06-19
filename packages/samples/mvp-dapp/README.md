@@ -113,10 +113,6 @@ It's quite similar to the [setState](https://reactjs.org/docs/faq-state.html#wha
 
 ## Getting started
 
-### Build dependencies in other workspaces
-
-Follow the [Guide](../../../README.md) to build libraries developed in other workspaces.
-
 ### Get Contract Ready
 
 #### Deploy your own contract
@@ -127,10 +123,38 @@ Follow https://github.com/ckb-js/kuai/issues/306 to deploy your own contract. Or
 
 The deployment information located at `mvp-dapp/contract/deployed_demo`, rename it to `mvp-dapp/contract/deployed` to connect to
 
-### Build the mvp dapp
+### Start server
+
+#### Clone this project locally
 
 ```sh
+$ git clone https://github.com/ckb-js/kuai.git
+```
+
+#### Install dependencies and build kuai modules locally
+
+```sh
+$ cd kuai
+$ npm i
 $ npm run build
+```
+
+#### Run the mvp dapp
+
+- run the mvp dapp in develop mode
+
+```sh
+$ cd ./packages/samples/mvp-dapp
+$ npm run dev
+```
+
+- run the mvp dapp in production mode
+
+```sh
+$ cd ./packages/samples/mvp-dapp
+$ npm run build
+# Service is expected to run on port 3000
+$ npm run start:prod
 ```
 
 ### Get CKB Node Ready
@@ -151,10 +175,3 @@ $ npm run build
 ### Run Redis
 
 [Getting redis started](https://redis.io/docs/getting-started/)
-
-### Run server
-
-```sh
-# Service is expected to run on port 3000
-$ npm run start:prod
-```
