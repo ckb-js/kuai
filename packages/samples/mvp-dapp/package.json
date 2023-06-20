@@ -5,6 +5,7 @@
     "build": "tsc",
     "build:watch": "tsc -w",
     "start:prod": "node ./dist/main.js",
+    "cp-deploy-file": "cp -r ./contract/deployed_demo ./contract/deployed",
     "test": "jest test"
   },
   "dependencies": {
