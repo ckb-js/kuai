@@ -16,6 +16,7 @@
     "@ckb-lumos/helpers": "0.19.0",
     "@iarna/toml": "2.2.5",
     "chalk": "4.1.2",
+    "decompress": "4.2.1",
     "enquirer": "2.3.6",
     "find-up": "5.0.0",
     "lodash": "4.17.21",
@@ -23,6 +24,7 @@
     "undici": "5.22.1"
   },
   "devDependencies": {
+    "@types/decompress": "4.2.4",
     "@types/lodash": "4.14.195"
   }
 }

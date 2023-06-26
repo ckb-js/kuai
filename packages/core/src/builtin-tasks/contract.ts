@@ -247,7 +247,7 @@ subtask('contract:get-workspace').setAction(async (_, { config }) => {
 
   const userConfigPath = getUserConfigPath()
   if (!userConfigPath) {
-    throw new Error('Please run in kuai project file')
+    throw new Error('Please run in kuai project')
   }
 
   return path.join(path.dirname(userConfigPath), 'contract')

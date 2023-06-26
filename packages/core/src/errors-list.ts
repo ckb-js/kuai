@@ -46,6 +46,10 @@ Please run: npm install --save-dev typescript`,
       code: 'NETWORK_NOT_FOUND',
       message: `The specified network is not defined, please configure it first`,
     },
+    CKB_CLI_NOT_FOUND: {
+      code: 'CKB_CLI_NOT_FOUND',
+      message: `The ckb-cli command is not found, please install or accept kuai auto download`,
+    },
   },
   BUILTIN_TASKS: {
     UNSUPPORTED_NETWORK: {
