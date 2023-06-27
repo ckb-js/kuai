@@ -34,5 +34,9 @@ export const DEFAULT_NETWORKDS: {
     rpcUrl: 'http://127.0.0.1:8114',
     prefix: 'ckt',
   },
+  'bin-node': {
+    rpcUrl: 'http://127.0.0.1:8114',
+    prefix: 'ckt',
+  },
 }
 export const PATH = envPaths('kuai')

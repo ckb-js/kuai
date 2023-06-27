@@ -1,62 +1,90 @@
-import Docker, { ContainerCreateOptions } from 'dockerode'
-import type { DeployOptions, InfraScript, StartOptions } from './types'
-import { join } from 'node:path'
-import fs from 'node:fs'
-import path from 'node:path'
-import { Address, Indexer, RPC, commons, helpers, hd, Transaction, config, CellDep } from '@ckb-lumos/lumos'
-import { waitUntilCommitted } from '@ckb-js/kuai-common'
-import { generateDevConfig } from './helper'
+import { Address, CellDep, Indexer, RPC, Transaction, commons, config, hd, helpers } from '@ckb-lumos/lumos'
 import { CKBNode } from './interface'
+import type { BinNodeStartOptions, BinNodeStopOptions, DeployOptions, InfraScript } from './types'
+import { spawn, execSync } from 'child_process'
+import { generateDevConfig } from './helper'
+import fs from 'fs'
+import path from 'node:path'
+import { waitUntilCommitted } from '@ckb-js/kuai-common'
 
-const CKB_NODE_IMAGE = 'kuai/ckb-dev'
-const DOCKER_SOCKET_PATH = process.env.DOCKER_SOCKET || '/var/run/docker.sock'
-
-export class CkbDockerNetwork implements CKBNode {
-  #docker: Docker
-  #lumosConfig: config.Config = config.getConfig()
+export class CKBBinNetwork implements CKBNode {
   #port = '8114'
   #host = 'localhost'
+  #lumosConfig: config.Config = config.getConfig()
 
-  constructor() {
-    this.#docker = new Docker({ socketPath: DOCKER_SOCKET_PATH })
+  stop({ ckbPath }: BinNodeStopOptions): void {
+    if (fs.existsSync(path.resolve(ckbPath, 'pid'))) {
+      const pid = fs.readFileSync(path.resolve(ckbPath, 'pid', 'indexer'), 'utf-8')
+      spawn('kill', ['-9', pid])
+    }
   }
 
-  public async start({ port, detached = false, genesisAccountArgs = [] }: StartOptions): Promise<void> {
-    this.#port = port
+  #initConfig(ckbPath: string, genesisAccountArgs?: string[]) {
     const devConfig = generateDevConfig(genesisAccountArgs)
-    fs.writeFileSync(join(__dirname, '../ckb', 'dev.toml'), devConfig)
+    fs.writeFileSync(path.resolve(ckbPath, 'dev.toml'), devConfig, { flag: 'w' })
 
-    const config: ContainerCreateOptions = {
-      HostConfig: {
-        AutoRemove: true,
-        PortBindings: { '8114/tcp': [{ HostPort: this.#port }] },
-      },
+    if (!fs.existsSync(path.resolve(ckbPath, 'ckb.toml'))) {
+      const out = execSync(
+        `${path.resolve(ckbPath, 'ckb')} init -C ${ckbPath} --chain dev --import-spec ${path.resolve(
+          ckbPath,
+          'dev.toml',
+        )} --ba-arg 0x839f6f4d6fdf773d3e015f8b19fe5c4ccb07723d --ba-code-hash 0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8 --ba-hash-type type --ba-message 0x1234`,
+      )
+
+      console.info(out.toString())
+
+      fs.copyFileSync(path.resolve(__dirname, '../ckb/ckb-miner.toml'), path.join(ckbPath, 'ckb-miner.toml'))
     }
 
-    const buildStream = await this.#docker.buildImage(
-      {
-        context: join(__dirname, '../ckb'),
-        src: ['Dockerfile', 'dev.toml', 'ckb-miner.toml', 'entrypoint.sh'],
-      },
-      { t: CKB_NODE_IMAGE },
-    )
-
-    await new Promise((resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.#docker.modem.followProgress(buildStream, (err: any, res: any) => (err ? reject(err) : resolve(res)))
-    })
-
-    if (!detached) {
-      return this.#docker.run(CKB_NODE_IMAGE, [], process.stdout, config)
+    if (!fs.existsSync(path.join(ckbPath, 'pid'))) {
+      fs.mkdirSync(path.join(ckbPath, 'pid'))
     }
+  }
 
-    const container = await this.#docker.createContainer({
-      Image: CKB_NODE_IMAGE,
-      Tty: false,
-      ...config,
+  async #startIndexer(ckbPath: string, detached: boolean) {
+    const indexer = spawn(path.resolve(ckbPath, 'ckb'), ['run', '-C', ckbPath, '--indexer'], {
+      detached,
+    })
+    if (indexer.pid) {
+      fs.writeFileSync(path.resolve(ckbPath, 'pid', 'indexer'), indexer.pid.toString(), {
+        flag: 'w',
+        encoding: 'utf-8',
+      })
+    }
+    indexer.stdout?.on('data', (data) => {
+      console.info(data.toString())
+    })
+    indexer.stderr?.on('data', (data) => {
+      console.info(data.toString())
     })
 
-    return container.start()
+    indexer.unref()
+  }
+
+  async #startMiner(ckbPath: string, detached: boolean) {
+    const miner = spawn(path.resolve(ckbPath, 'ckb'), ['miner', '-C', ckbPath], {
+      detached,
+    })
+    if (miner.pid) {
+      fs.writeFileSync(path.resolve(ckbPath, 'pid', 'miner'), miner.pid.toString(), {
+        flag: 'w',
+        encoding: 'utf-8',
+      })
+    }
+    miner.stdout?.on('data', (data) => {
+      console.info(data.toString())
+    })
+    miner.stderr?.on('data', (data) => {
+      console.info(data.toString())
+    })
+    miner.unref()
+  }
+
+  start({ detached = true, ckbPath, genesisAccountArgs, port }: BinNodeStartOptions): void {
+    this.#port = port
+    this.#initConfig(ckbPath, genesisAccountArgs)
+    this.#startIndexer(ckbPath, detached)
+    this.#startMiner(ckbPath, detached)
   }
 
   private async doDeploy(
@@ -175,16 +203,7 @@ export class CkbDockerNetwork implements CKBNode {
     fs.writeFileSync(configFilePath, Buffer.from(JSON.stringify(config)), { flag: 'w' })
   }
 
-  public async stop(): Promise<void> {
-    const containers = await this.#docker.listContainers()
-    await Promise.all(
-      containers
-        .filter((container) => container.Image === CKB_NODE_IMAGE)
-        .map((container) => this.#docker.getContainer(container.Id).stop()),
-    )
-  }
-
-  public async generateLumosConfig(): Promise<void> {
+  async generateLumosConfig() {
     const rpc = new RPC(this.url)
     const block = await rpc.getBlockByNumber('0x0')
     this.#lumosConfig = {
@@ -210,19 +229,19 @@ export class CkbDockerNetwork implements CKBNode {
     }
   }
 
-  get lumosConfig(): config.Config {
-    return this.#lumosConfig
-  }
-
   get url(): string {
     return `http://${this.#host}:${this.#port}`
+  }
+
+  get port(): string {
+    return this.#port
   }
 
   get host(): string {
     return this.#host
   }
 
-  get port(): string {
-    return this.#port
+  get lumosConfig(): config.Config {
+    return this.#lumosConfig
   }
 }

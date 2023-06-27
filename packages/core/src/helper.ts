@@ -7,6 +7,7 @@ import path from 'node:path'
 import { PATH } from './constants'
 import fs from 'node:fs'
 import { request } from 'undici'
+import os from 'node:os'
 
 export async function initialKuai(args: KuaiArguments = {}): Promise<KuaiContext> {
   loadTsNode()
@@ -51,4 +52,25 @@ export const download = async (url: string, filePath: string) => {
 
     body.pipe(fileStream)
   })
+}
+
+export const osPlatform = () => {
+  switch (os.platform()) {
+    case 'darwin':
+      return 'apple-darwin'
+    case 'linux':
+      return 'unknown-linux-gnu'
+    case 'win32':
+      return 'pc-windows-msvc'
+  }
+}
+
+export const packageType = () => {
+  switch (os.platform()) {
+    case 'darwin':
+    case 'win32':
+      return 'zip'
+    case 'linux':
+      return 'tar.gz'
+  }
 }
