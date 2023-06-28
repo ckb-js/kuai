@@ -110,10 +110,10 @@ subtask('node:start', 'start a ckb node')
     })
   })
 
-const stopBinNode = async (version: string): Promise<void> => {
+const stopBinNode = async (version: string, clear: boolean): Promise<void> => {
   const packageName = `ckb_${version}_${os.machine()}-${osPlatform()}`
   const network = new CKBBinNetwork()
-  network.stop({ ckbPath: cachePath('ckb', 'bin', packageName) })
+  network.stop({ ckbPath: cachePath('ckb', 'bin', packageName), clear })
 }
 
 const stopDockerNode = async (): Promise<void> => {
@@ -121,18 +121,20 @@ const stopDockerNode = async (): Promise<void> => {
   network.stop()
 }
 
-subtask('node:stop', 'stop ckb node').setAction(async (_, env) => {
-  switch (env.config.kuaiArguments?.network) {
-    case 'docker-node':
-      return await stopDockerNode()
-    case 'bin-node':
-      return await stopBinNode(env.config.devNode?.ckb.version ?? DEFAULT_CKB_BIN_VERSION)
-    default:
-      throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_NETWORK, {
-        var: env.config.kuaiArguments?.network,
-      })
-  }
-})
+subtask('node:stop', 'stop ckb node')
+  .addParam('clear', 'clear data when using binary node', false, paramTypes.boolean)
+  .setAction(async ({ clear }: { clear: boolean }, env) => {
+    switch (env.config.kuaiArguments?.network) {
+      case 'docker-node':
+        return await stopDockerNode()
+      case 'bin-node':
+        return await stopBinNode(env.config.devNode?.ckb.version ?? DEFAULT_CKB_BIN_VERSION, clear)
+      default:
+        throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_NETWORK, {
+          var: env.config.kuaiArguments?.network,
+        })
+    }
+  })
 
 task('node')
   .setDescription('run a ckb node for develop')

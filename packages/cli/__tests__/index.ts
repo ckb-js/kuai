@@ -1,101 +1,199 @@
 import { describe, expect, test, beforeAll, afterAll } from '@jest/globals'
-import { execSync } from 'node:child_process'
+import { execSync, exec } from 'node:child_process'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const { scheduler } = require('node:timers/promises')
 const CONFIG_PATH = './__tests__/__fixtures__/kuai-config-case/kuai.config.ts'
 
 describe('kuai cli', () => {
-  beforeAll(async () => {
-    execSync('npm link')
-    execSync(
-      'npx kuai node --port 9002 --detached --genesisArgs 0x0000000000000000000000000000000000000000 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-    )
-    await scheduler.wait(10000)
-  }, 50000)
+  describe('docker node', () => {
+    beforeAll(async () => {
+      execSync('npm link')
+      execSync(
+        'npx kuai node --port 9002 --detached --genesisArgs 0x0000000000000000000000000000000000000000 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+      )
+      await scheduler.wait(10000)
+    }, 50000)
 
-  afterAll(() => {
-    execSync('npx kuai node stop')
-    execSync('npm unlink -g @ckb-js/kuai-cli')
-  })
-
-  test('ckb node listening port', async () => {
-    const res = await fetch('http://localhost:9002/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id: 0,
-        jsonrpc: '2.0',
-        method: 'get_tip_header',
-        params: [],
-      }),
+    afterAll(() => {
+      execSync('npx kuai node stop')
+      execSync('npm unlink -g @ckb-js/kuai-cli')
     })
 
-    expect(res.status).toEqual(200)
-
-    const data = await res.json()
-    expect(typeof data.result.number).toEqual('string')
-    expect(typeof data.result.hash).toEqual('string')
-  })
-
-  test('ckb node accept genesis accounts', async () => {
-    const res = await fetch('http://localhost:9002/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify([
-        {
+    test('ckb node listening port', async () => {
+      const res = await fetch('http://localhost:9002/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           id: 0,
           jsonrpc: '2.0',
-          method: 'get_cells',
-          params: [
-            {
-              script: {
-                code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
-                hash_type: 'type',
-                args: '0x0000000000000000000000000000000000000000',
-              },
-              script_type: 'lock',
-            },
-            'asc',
-            '0x64',
-          ],
-        },
-        {
-          id: 0,
-          jsonrpc: '2.0',
-          method: 'get_cells',
-          params: [
-            {
-              script: {
-                code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
-                hash_type: 'type',
-                args: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-              },
-              script_type: 'lock',
-            },
-            'asc',
-            '0x64',
-          ],
-        },
-      ]),
+          method: 'get_tip_header',
+          params: [],
+        }),
+      })
+
+      expect(res.status).toEqual(200)
+
+      const data = await res.json()
+      expect(typeof data.result.number).toEqual('string')
+      expect(typeof data.result.hash).toEqual('string')
     })
 
-    expect(res.status).toEqual(200)
+    test('ckb node accept genesis accounts', async () => {
+      const res = await fetch('http://localhost:9002/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          {
+            id: 0,
+            jsonrpc: '2.0',
+            method: 'get_cells',
+            params: [
+              {
+                script: {
+                  code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+                  hash_type: 'type',
+                  args: '0x0000000000000000000000000000000000000000',
+                },
+                script_type: 'lock',
+              },
+              'asc',
+              '0x64',
+            ],
+          },
+          {
+            id: 0,
+            jsonrpc: '2.0',
+            method: 'get_cells',
+            params: [
+              {
+                script: {
+                  code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+                  hash_type: 'type',
+                  args: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                },
+                script_type: 'lock',
+              },
+              'asc',
+              '0x64',
+            ],
+          },
+        ]),
+      })
 
-    const rpcResponses = await res.json()
+      expect(res.status).toEqual(200)
 
-    expect(rpcResponses.length).toEqual(2)
+      const rpcResponses = await res.json()
 
-    expect(rpcResponses[0].result.objects.length).toEqual(1)
-    expect(rpcResponses[0].result.objects.length).toEqual(1)
-    expect(rpcResponses[0].result.objects[0].output.capacity).toEqual('0x1bc16d674ec80000')
+      expect(rpcResponses.length).toEqual(2)
 
-    expect(rpcResponses[1].result.objects.length).toEqual(1)
-    expect(rpcResponses[1].result.objects.length).toEqual(1)
-    expect(rpcResponses[1].result.objects[0].output.capacity).toEqual('0x1bc16d674ec80000')
+      expect(rpcResponses[0].result.objects.length).toEqual(1)
+      expect(rpcResponses[0].result.objects.length).toEqual(1)
+      expect(rpcResponses[0].result.objects[0].output.capacity).toEqual('0x1bc16d674ec80000')
+
+      expect(rpcResponses[1].result.objects.length).toEqual(1)
+      expect(rpcResponses[1].result.objects.length).toEqual(1)
+      expect(rpcResponses[1].result.objects[0].output.capacity).toEqual('0x1bc16d674ec80000')
+    })
+  })
+
+  describe('bin node', () => {
+    beforeAll(async () => {
+      execSync('npm link')
+      exec(
+        'npx kuai --network bin-node node --detached --genesisArgs 0x0000000000000000000000000000000000000001 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeef',
+        // { detached: true },
+      )
+      await scheduler.wait(10000)
+    }, 50000)
+
+    afterAll(() => {
+      execSync('npx kuai --network bin-node node stop --clear')
+      execSync('npm unlink -g @ckb-js/kuai-cli')
+    })
+
+    test('ckb node listening port', async () => {
+      const res = await fetch('http://127.0.0.1:8114/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: 0,
+          jsonrpc: '2.0',
+          method: 'get_tip_header',
+          params: [],
+        }),
+      })
+
+      expect(res.status).toEqual(200)
+
+      const data = await res.json()
+      expect(typeof data.result.number).toEqual('string')
+      expect(typeof data.result.hash).toEqual('string')
+    })
+
+    test('ckb node accept genesis accounts', async () => {
+      const res = await fetch('http://127.0.0.1:8114/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          {
+            id: 0,
+            jsonrpc: '2.0',
+            method: 'get_cells',
+            params: [
+              {
+                script: {
+                  code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+                  hash_type: 'type',
+                  args: '0x0000000000000000000000000000000000000001',
+                },
+                script_type: 'lock',
+              },
+              'asc',
+              '0x64',
+            ],
+          },
+          {
+            id: 0,
+            jsonrpc: '2.0',
+            method: 'get_cells',
+            params: [
+              {
+                script: {
+                  code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+                  hash_type: 'type',
+                  args: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeef',
+                },
+                script_type: 'lock',
+              },
+              'asc',
+              '0x64',
+            ],
+          },
+        ]),
+      })
+
+      expect(res.status).toEqual(200)
+
+      const rpcResponses = await res.json()
+
+      expect(rpcResponses.length).toEqual(2)
+
+      expect(rpcResponses[0].result.objects.length).toEqual(1)
+      expect(rpcResponses[0].result.objects.length).toEqual(1)
+      expect(rpcResponses[0].result.objects[0].output.capacity).toEqual('0x1bc16d674ec80000')
+
+      expect(rpcResponses[1].result.objects.length).toEqual(1)
+      expect(rpcResponses[1].result.objects.length).toEqual(1)
+      expect(rpcResponses[1].result.objects[0].output.capacity).toEqual('0x1bc16d674ec80000')
+    })
   })
 
   test('Unsupported network', async () => {

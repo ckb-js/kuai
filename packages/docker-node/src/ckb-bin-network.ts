@@ -9,13 +9,25 @@ import { waitUntilCommitted } from '@ckb-js/kuai-common'
 
 export class CKBBinNetwork implements CKBNode {
   #port = '8114'
-  #host = 'localhost'
+  #host = '127.0.0.1'
   #lumosConfig: config.Config = config.getConfig()
 
-  stop({ ckbPath }: BinNodeStopOptions): void {
+  stop({ ckbPath, clear }: BinNodeStopOptions): void {
     if (fs.existsSync(path.resolve(ckbPath, 'pid'))) {
-      const pid = fs.readFileSync(path.resolve(ckbPath, 'pid', 'indexer'), 'utf-8')
-      spawn('kill', ['-9', pid])
+      const indexer = fs.readFileSync(path.resolve(ckbPath, 'pid', 'indexer'), 'utf-8')
+      spawn('kill', ['-9', indexer])
+      const miner = fs.readFileSync(path.resolve(ckbPath, 'pid', 'miner'), 'utf-8')
+      spawn('kill', ['-9', miner])
+    }
+
+    if (clear) {
+      fs.rmSync(path.resolve(ckbPath, 'ckb-miner.toml'))
+      fs.rmSync(path.resolve(ckbPath, 'ckb.toml'))
+      fs.rmSync(path.resolve(ckbPath, 'data'), { recursive: true, force: true })
+      fs.rmSync(path.resolve(ckbPath, 'default.db-options'))
+      fs.rmSync(path.resolve(ckbPath, 'specs'), { recursive: true, force: true })
+      fs.rmSync(path.resolve(ckbPath, 'pid'), { recursive: true, force: true })
+      fs.rmSync(path.resolve(ckbPath, 'dev.toml'))
     }
   }
 

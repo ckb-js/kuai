@@ -24,6 +24,7 @@ export interface BinNodeStartOptions extends StartOptions {
 
 export interface BinNodeStopOptions extends StopOptions {
   ckbPath: string
+  clear: boolean
 }
 
 export type InfraScript = {
