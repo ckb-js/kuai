@@ -5,9 +5,16 @@ const { scheduler } = require('node:timers/promises')
 const CONFIG_PATH = './__tests__/__fixtures__/kuai-config-case/kuai.config.ts'
 
 describe('kuai cli', () => {
+  beforeAll(() => {
+    execSync('npm link')
+  })
+
+  afterAll(() => {
+    execSync('npm unlink -g @ckb-js/kuai-cli')
+  })
+
   describe('docker node', () => {
     beforeAll(async () => {
-      execSync('npm link')
       execSync(
         'npx kuai node --port 9002 --detached --genesisArgs 0x0000000000000000000000000000000000000000 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
       )
@@ -16,7 +23,6 @@ describe('kuai cli', () => {
 
     afterAll(() => {
       execSync('npx kuai node stop')
-      execSync('npm unlink -g @ckb-js/kuai-cli')
     })
 
     test('ckb node listening port', async () => {
@@ -102,7 +108,6 @@ describe('kuai cli', () => {
 
   describe('bin node', () => {
     beforeAll(async () => {
-      execSync('npm link')
       exec(
         'npx kuai --network bin-node node --detached --genesisArgs 0x0000000000000000000000000000000000000001 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeef',
         // { detached: true },
@@ -112,7 +117,6 @@ describe('kuai cli', () => {
 
     afterAll(() => {
       execSync('npx kuai --network bin-node node stop --clear')
-      execSync('npm unlink -g @ckb-js/kuai-cli')
     })
 
     test('ckb node listening port', async () => {

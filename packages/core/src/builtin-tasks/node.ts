@@ -30,7 +30,7 @@ const DEFAULT_CKB_BIN_VERSION = 'v0.109.0'
 
 const startBinNode = async (version: string, port: number, genesisArgs: string[]): Promise<CKBNode> => {
   const packageName = `ckb_${version}_${os.machine()}-${osPlatform()}`
-  const packageFileName = `${packageName}.${packageType}`
+  const packageFileName = `${packageName}.${packageType()}`
 
   if (!fs.existsSync(path.resolve(cachePath('ckb', 'bin'), packageName))) {
     await download(
@@ -38,9 +38,15 @@ const startBinNode = async (version: string, port: number, genesisArgs: string[]
       path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`),
     )
 
-    execSync.execSync(
-      `unzip ${path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`)} -d ${cachePath('ckb', 'bin')}`,
-    )
+    if (osPlatform() === 'unknown-linux-gnu') {
+      execSync.execSync(
+        `tar -xf ${path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`)} -C ${cachePath('ckb', 'bin')}`,
+      )
+    } else {
+      execSync.execSync(
+        `unzip ${path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`)} -d ${cachePath('ckb', 'bin')}`,
+      )
+    }
   }
 
   const network = new CKBBinNetwork()
