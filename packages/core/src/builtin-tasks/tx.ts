@@ -56,7 +56,7 @@ interface AddOutputArgs extends TxCommandCommonArgs {
 
 subtask('tx:add-output', 'Add cell output')
   .addParam('tx-file', 'Multisig transaction data file (format: json)')
-  .addParam('to-sighash-address', 'To normal sighash address', undefined, paramTypes.string, false)
+  .addParam('to-sighash-address', 'To secp256k1 sighash address', undefined, paramTypes.string, false)
   .addParam(
     'to-multisig-address',
     'To long multisig address (special case, include since)',

@@ -20,6 +20,7 @@ export async function downloadFile(url: string | URL | UrlObject, filePath: stri
           body
             .pipe(fileStream)
             .on('finish', () => {
+              fileStream.close()
               res(0)
             })
             .on('error', (error) => {

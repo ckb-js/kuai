@@ -75,7 +75,7 @@ interface AccountImportArgs {
   console: boolean
 }
 
-subtask('signer:account-import', 'import an unencrypted private key from <privkey-path> and create a new account.')
+subtask('signer:account-import', 'import an unencrypted private key from <privkey-path> and create a new account')
   .addParam(
     'privkey-path',
     'The privkey is assumed to contain an unencrypted private key in hexadecimal format. (only read first line)',
