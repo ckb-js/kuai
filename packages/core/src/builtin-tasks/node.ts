@@ -10,7 +10,7 @@ import path from 'node:path'
 import fs from 'fs'
 import { scheduler } from 'node:timers/promises'
 import { DEFAULT_KUAI_PRIVATE_KEY } from '../constants'
-import execSync from 'node:child_process'
+import { execSync } from 'node:child_process'
 import os from 'node:os'
 import { CKBNode } from '@ckb-js/kuai-docker-node'
 
@@ -39,13 +39,9 @@ const startBinNode = async (version: string, port: number, genesisArgs: string[]
     )
 
     if (osPlatform() === 'unknown-linux-gnu') {
-      execSync.execSync(
-        `tar -xf ${path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`)} -C ${cachePath('ckb', 'bin')}`,
-      )
+      execSync(`tar -xf ${path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`)} -C ${cachePath('ckb', 'bin')}`)
     } else {
-      execSync.execSync(
-        `unzip ${path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`)} -d ${cachePath('ckb', 'bin')}`,
-      )
+      execSync(`unzip ${path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`)} -d ${cachePath('ckb', 'bin')}`)
     }
   }
 
