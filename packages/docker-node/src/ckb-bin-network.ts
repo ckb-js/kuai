@@ -15,9 +15,9 @@ export class CKBBinNetwork implements CKBNode {
   stop({ ckbPath, clear }: BinNodeStopOptions): void {
     if (fs.existsSync(path.resolve(ckbPath, 'pid'))) {
       const indexer = fs.readFileSync(path.resolve(ckbPath, 'pid', 'indexer'), 'utf-8')
-      spawn('kill', ['-9', indexer])
+      spawn('kill', ['-15', indexer])
       const miner = fs.readFileSync(path.resolve(ckbPath, 'pid', 'miner'), 'utf-8')
-      spawn('kill', ['-9', miner])
+      spawn('kill', ['-15', miner])
     }
 
     if (clear) {
