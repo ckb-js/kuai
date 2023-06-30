@@ -1,6 +1,6 @@
 import { task, subtask } from '../config/config-env'
 import { paramTypes } from '../params'
-import { CKBBinNetwork, CkbDockerNetwork } from '@ckb-js/kuai-docker-node'
+import { CKBBinNetwork, CkbDockerNetwork, CKBNode } from '@ckb-js/kuai-docker-node'
 import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import '../type/runtime'
@@ -12,7 +12,6 @@ import { scheduler } from 'node:timers/promises'
 import { DEFAULT_KUAI_PRIVATE_KEY } from '../constants'
 import { execSync } from 'node:child_process'
 import os from 'node:os'
-import { CKBNode } from '@ckb-js/kuai-docker-node'
 
 interface Args {
   port: number
