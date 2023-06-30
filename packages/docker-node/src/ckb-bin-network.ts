@@ -53,50 +53,43 @@ export class CKBBinNetwork implements CKBNode {
     }
   }
 
-  async #startIndexer(ckbPath: string, detached: boolean) {
-    const indexer = spawn(path.resolve(ckbPath, 'ckb'), ['run', '-C', ckbPath, '--indexer'], {
-      detached,
-    })
-    if (indexer.pid) {
-      fs.writeFileSync(path.resolve(ckbPath, 'pid', 'indexer'), indexer.pid.toString(), {
+  async #startNode(ckbPath: string, detached: boolean, nodeType: 'indexer' | 'miner') {
+    const child = (() => {
+      switch (nodeType) {
+        case 'indexer':
+          return spawn(path.resolve(ckbPath, 'ckb'), ['run', '-C', ckbPath, '--indexer'], {
+            detached,
+          })
+        case 'miner':
+          return spawn(path.resolve(ckbPath, 'ckb'), ['miner', '-C', ckbPath], {
+            detached,
+          })
+      }
+    })()
+
+    if (child.pid) {
+      fs.writeFileSync(path.resolve(ckbPath, 'pid', nodeType), child.pid.toString(), {
         flag: 'w',
         encoding: 'utf-8',
       })
     }
-    indexer.stdout?.on('data', (data) => {
+    child.stdout?.on('data', (data) => {
       console.info(data.toString())
     })
-    indexer.stderr?.on('data', (data) => {
+    child.stderr?.on('data', (data) => {
       console.info(data.toString())
     })
 
-    indexer.unref()
-  }
-
-  async #startMiner(ckbPath: string, detached: boolean) {
-    const miner = spawn(path.resolve(ckbPath, 'ckb'), ['miner', '-C', ckbPath], {
-      detached,
-    })
-    if (miner.pid) {
-      fs.writeFileSync(path.resolve(ckbPath, 'pid', 'miner'), miner.pid.toString(), {
-        flag: 'w',
-        encoding: 'utf-8',
-      })
+    if (detached) {
+      child.unref()
     }
-    miner.stdout?.on('data', (data) => {
-      console.info(data.toString())
-    })
-    miner.stderr?.on('data', (data) => {
-      console.info(data.toString())
-    })
-    miner.unref()
   }
 
   start({ detached = true, ckbPath, genesisAccountArgs, port }: BinNodeStartOptions): void {
     this.#port = port
     this.#initConfig(ckbPath, genesisAccountArgs)
-    this.#startIndexer(ckbPath, detached)
-    this.#startMiner(ckbPath, detached)
+    this.#startNode(ckbPath, detached, 'indexer')
+    this.#startNode(ckbPath, detached, 'miner')
   }
 
   private async doDeploy(
