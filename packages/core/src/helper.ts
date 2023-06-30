@@ -33,6 +33,7 @@ export const cachePath = (...paths: string[]) => createPath(path.resolve(PATH.ca
 
 export const configPath = (...paths: string[]) => createPath(path.resolve(PATH.config, ...paths))
 
+// TODO: use https://github.com/ckb-js/kuai/pull/301/files#diff-da43545226f71917e5fefffc9bdffb47fa72d32931412964b3b9ccc8b834e1aeR7 when merged
 export const download = async (url: string, filePath: string) => {
   const { body } = await request(url, {
     maxRedirections: 5,
