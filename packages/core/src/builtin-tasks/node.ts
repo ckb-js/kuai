@@ -1,6 +1,6 @@
 import { task, subtask } from '../config/config-env'
 import { paramTypes } from '../params'
-import { CKBBinNetwork, CkbDockerNetwork, CKBNode } from '@ckb-js/kuai-docker-node'
+import { CKBBinNetwork, CkbDockerNetwork, CKBLatestBinVersion, CKBNode } from '@ckb-js/kuai-docker-node'
 import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import '../type/runtime'
@@ -25,7 +25,7 @@ const BUILTIN_SCRIPTS = ['anyone_can_pay', 'omni_lock', 'simple_udt']
 const DEFAULT_BUILTIN_CONTRACT_DOWNLOAD_BASE_URL =
   'https://github.com/ckb-js/ckb-production-scripts/releases/download/scripts'
 const DEFAULT_CKB_BIN_DOWNLOAD_BASE_URL = 'https://github.com/nervosnetwork/ckb/releases/download'
-const DEFAULT_CKB_BIN_VERSION = 'v0.109.0'
+const DEFAULT_CKB_BIN_VERSION = 'v0.110.0'
 
 const startBinNode = async (version: string, port: number, genesisArgs: string[]): Promise<CKBNode> => {
   const packageName = `ckb_${version}_${os.machine()}-${osPlatform()}`
@@ -76,7 +76,11 @@ subtask('node:start', 'start a ckb node')
         case 'docker-node':
           return await startDockerNode(port, detached, genesisArgs)
         case 'bin-node':
-          return await startBinNode(env.config.devNode?.ckb.version ?? DEFAULT_CKB_BIN_VERSION, port, genesisArgs)
+          return await startBinNode(
+            env.config.devNode?.ckb.version ?? (await CKBLatestBinVersion()) ?? DEFAULT_CKB_BIN_VERSION,
+            port,
+            genesisArgs,
+          )
         default:
           throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_NETWORK, {
             var: env.config.kuaiArguments?.network,
