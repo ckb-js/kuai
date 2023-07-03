@@ -28,19 +28,21 @@ const DEFAULT_CKB_BIN_DOWNLOAD_BASE_URL = 'https://github.com/nervosnetwork/ckb/
 const DEFAULT_CKB_BIN_VERSION = 'v0.110.0'
 
 const startBinNode = async (version: string, port: number, genesisArgs: string[]): Promise<CKBNode> => {
+  const binPath = cachePath('ckb', 'bin')
+  const zipPath = cachePath('ckb', 'zip')
   const packageName = `ckb_${version}_${os.machine()}-${osPlatform()}`
   const packageFileName = `${packageName}.${packageType()}`
 
-  if (!fs.existsSync(path.resolve(cachePath('ckb', 'bin'), packageName))) {
+  if (!fs.existsSync(path.resolve(binPath, packageName))) {
     await download(
       `${DEFAULT_CKB_BIN_DOWNLOAD_BASE_URL}/${version}/${packageFileName}`,
-      path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`),
+      path.resolve(zipPath, `${packageFileName}`),
     )
 
     if (osPlatform() === 'unknown-linux-gnu') {
-      execSync(`tar -xf ${path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`)} -C ${cachePath('ckb', 'bin')}`)
+      execSync(`tar -xf ${path.resolve(zipPath, `${packageFileName}`)} -C ${binPath}`)
     } else {
-      execSync(`unzip ${path.resolve(cachePath('ckb', 'zip'), `${packageFileName}`)} -d ${cachePath('ckb', 'bin')}`)
+      execSync(`unzip ${path.resolve(zipPath, `${packageFileName}`)} -d ${binPath}`)
     }
   }
 
