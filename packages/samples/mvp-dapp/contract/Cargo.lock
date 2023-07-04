@@ -44,6 +44,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95916998c798756098a4eb1b3f2cd510659705a9817bf203d61abd30fbec3e7b"
 
 [[package]]
+name = "blake2b-ref"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "294d17c72e0ba59fad763caa112368d0672083779cdebbb97164f4bb4c1e339a"
+
+[[package]]
 name = "blake2b-rs"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -55,9 +61,9 @@ dependencies = [
 
 [[package]]
 name = "buddy-alloc"
-version = "0.4.2"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3240a4cb09cf0da6a51641bd40ce90e96ea6065e3a1adc46434029254bcc2d09"
+checksum = "1f0d2da64a6a895d5a7e0724882825d50f83c13396b1b9f1878e19a024bab395"
 
 [[package]]
 name = "bumpalo"
@@ -223,7 +229,7 @@ version = "0.104.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac70ef20b9dac406f06bead70c0a2e4742205234f58051885e6ae1f50786e6be"
 dependencies = [
- "blake2b-ref",
+ "blake2b-ref 0.2.1",
  "blake2b-rs",
 ]
 
@@ -337,24 +343,24 @@ dependencies = [
 
 [[package]]
 name = "ckb-standalone-types"
-version = "0.1.2"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22d7cbbdab96e6b809a102cf88bfec28795a0a3c06bfdea4abe4de89777801cd"
+checksum = "dd206470d9b270fe13f38c4c7fecabf323739f4930ea6f9b80e9490bfa750447"
 dependencies = [
+ "blake2b-ref 0.3.1",
  "cfg-if",
  "molecule",
 ]
 
 [[package]]
 name = "ckb-std"
-version = "0.10.0"
+version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47a6ad40455c446ad6fbb303dae24827fc309f43558f59d1f1b863a9de3e9f81"
+checksum = "8e05fb8e44ea056a54666881031036c9f58301037bf43b11a8e820634ee93d4d"
 dependencies = [
  "buddy-alloc",
  "cc",
  "ckb-standalone-types",
- "cstr_core",
 ]
 
 [[package]]
@@ -511,16 +517,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c063cd8cc95f5c377ed0d4b49a4b21f632396ff690e8470c29b3359b346984b"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "cstr_core"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd98742e4fdca832d40cab219dc2e3048de17d873248f83f17df47c1bea70956"
-dependencies = [
- "cty",
- "memchr",
 ]
 
 [[package]]
@@ -798,12 +794,6 @@ dependencies = [
  "libc",
  "winapi",
 ]
-
-[[package]]
-name = "memchr"
-version = "2.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
 name = "merkle-cbt"
