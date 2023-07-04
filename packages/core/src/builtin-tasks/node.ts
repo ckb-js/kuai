@@ -1,17 +1,14 @@
 import { task, subtask } from '../config/config-env'
 import { paramTypes } from '../params'
 import { CKBBinNetwork, CkbDockerNetwork, CKBLatestBinVersion, CKBNode } from '@ckb-js/kuai-docker-node'
-import { KuaiError } from '@ckb-js/kuai-common'
+import { KuaiError, cachePath, configPath, download } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import '../type/runtime'
 import { Indexer, RPC, config } from '@ckb-lumos/lumos'
-import { cachePath, configPath, download, osPlatform, packageType } from '../helper'
 import path from 'node:path'
 import fs from 'fs'
 import { scheduler } from 'node:timers/promises'
 import { DEFAULT_KUAI_PRIVATE_KEY } from '../constants'
-import { execSync } from 'node:child_process'
-import os from 'node:os'
 
 interface Args {
   port: number
@@ -24,31 +21,12 @@ const TERMINATION_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGQUIT']
 const BUILTIN_SCRIPTS = ['anyone_can_pay', 'omni_lock', 'simple_udt']
 const DEFAULT_BUILTIN_CONTRACT_DOWNLOAD_BASE_URL =
   'https://github.com/ckb-js/ckb-production-scripts/releases/download/scripts'
-const DEFAULT_CKB_BIN_DOWNLOAD_BASE_URL = 'https://github.com/nervosnetwork/ckb/releases/download'
 const DEFAULT_CKB_BIN_VERSION = 'v0.110.0'
 
 const startBinNode = async (version: string, port: number, genesisArgs: string[]): Promise<CKBNode> => {
-  const binPath = cachePath('ckb', 'bin')
-  const zipPath = cachePath('ckb', 'zip')
-  const packageName = `ckb_${version}_${os.machine()}-${osPlatform()}`
-  const packageFileName = `${packageName}.${packageType()}`
-
-  if (!fs.existsSync(path.resolve(binPath, packageName))) {
-    await download(
-      `${DEFAULT_CKB_BIN_DOWNLOAD_BASE_URL}/${version}/${packageFileName}`,
-      path.resolve(zipPath, `${packageFileName}`),
-    )
-
-    if (osPlatform() === 'unknown-linux-gnu') {
-      execSync(`tar -xf ${path.resolve(zipPath, `${packageFileName}`)} -C ${binPath}`)
-    } else {
-      execSync(`unzip ${path.resolve(zipPath, `${packageFileName}`)} -d ${binPath}`)
-    }
-  }
-
   const network = new CKBBinNetwork()
-  network.start({
-    ckbPath: cachePath('ckb', 'bin', packageName),
+  await network.start({
+    version,
     port: port.toString(),
     detached: true,
     genesisAccountArgs: genesisArgs,
@@ -118,9 +96,8 @@ subtask('node:start', 'start a ckb node')
   })
 
 const stopBinNode = async (version: string, clear: boolean): Promise<void> => {
-  const packageName = `ckb_${version}_${os.machine()}-${osPlatform()}`
   const network = new CKBBinNetwork()
-  network.stop({ ckbPath: cachePath('ckb', 'bin', packageName), clear })
+  network.stop({ version, clear })
 }
 
 const stopDockerNode = async (): Promise<void> => {
@@ -135,7 +112,10 @@ subtask('node:stop', 'stop ckb node')
       case 'docker-node':
         return await stopDockerNode()
       case 'bin-node':
-        return await stopBinNode(env.config.devNode?.ckb.version ?? DEFAULT_CKB_BIN_VERSION, clear)
+        return await stopBinNode(
+          env.config.devNode?.ckb.version ?? (await CKBLatestBinVersion()) ?? DEFAULT_CKB_BIN_VERSION,
+          clear,
+        )
       default:
         throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_NETWORK, {
           var: env.config.kuaiArguments?.network,

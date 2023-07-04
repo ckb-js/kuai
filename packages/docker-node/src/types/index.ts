@@ -19,11 +19,11 @@ export interface DeployOptions {
 export interface StopOptions {}
 
 export interface BinNodeStartOptions extends StartOptions {
-  ckbPath: string
+  version: string
 }
 
 export interface BinNodeStopOptions extends StopOptions {
-  ckbPath: string
+  version: string
   clear: boolean
 }
 

@@ -3,11 +3,6 @@ import { KuaiContext } from './context'
 import { KuaiRuntimeEnvironment } from './runtime'
 import { loadConfigAndTasks } from './config'
 import { KuaiArguments } from './type'
-import path from 'node:path'
-import { PATH } from './constants'
-import fs from 'node:fs'
-import { request } from 'undici'
-import os from 'node:os'
 
 export async function initialKuai(args: KuaiArguments = {}): Promise<KuaiContext> {
   loadTsNode()
@@ -20,58 +15,4 @@ export async function initialKuai(args: KuaiArguments = {}): Promise<KuaiContext
   ctx.setRuntimeEnvironment(env)
 
   return ctx
-}
-
-export const createPath = (path: string) => {
-  if (!fs.existsSync(path)) {
-    fs.mkdirSync(path, { recursive: true })
-  }
-  return path
-}
-
-export const cachePath = (...paths: string[]) => createPath(path.resolve(PATH.cache, ...paths))
-
-export const configPath = (...paths: string[]) => createPath(path.resolve(PATH.config, ...paths))
-
-// TODO: use https://github.com/ckb-js/kuai/pull/301/files#diff-da43545226f71917e5fefffc9bdffb47fa72d32931412964b3b9ccc8b834e1aeR7 when merged
-export const download = async (url: string, filePath: string) => {
-  const { body } = await request(url, {
-    maxRedirections: 5,
-    method: 'GET',
-  })
-
-  await new Promise<void>((resolve, reject) => {
-    const fileStream = fs.createWriteStream(filePath)
-
-    body.on('error', (error: Error) => {
-      reject(error)
-    })
-
-    fileStream.on('finish', () => {
-      resolve()
-    })
-
-    body.pipe(fileStream)
-  })
-}
-
-export const osPlatform = () => {
-  switch (os.platform()) {
-    case 'darwin':
-      return 'apple-darwin'
-    case 'linux':
-      return 'unknown-linux-gnu'
-    case 'win32':
-      return 'pc-windows-msvc'
-  }
-}
-
-export const packageType = () => {
-  switch (os.platform()) {
-    case 'darwin':
-    case 'win32':
-      return 'zip'
-    case 'linux':
-      return 'tar.gz'
-  }
 }

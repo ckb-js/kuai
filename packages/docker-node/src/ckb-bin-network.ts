@@ -6,13 +6,16 @@ import { generateDevConfig } from './helper'
 import fs from 'fs'
 import path from 'node:path'
 import { CKBNodeBase } from './base'
+import { cachePath, download } from '@ckb-js/kuai-common'
+import os from 'node:os'
 
 export class CKBBinNetwork extends CKBNodeBase implements CKBNode {
   #port = '8114'
   #host = '127.0.0.1'
   #lumosConfig: config.Config = config.getConfig()
 
-  stop({ ckbPath, clear }: BinNodeStopOptions): void {
+  stop({ version, clear }: BinNodeStopOptions): void {
+    const ckbPath = cachePath('ckb', 'bin', `ckb_${version}_${os.machine()}-${this.#osPlatform()}`)
     if (fs.existsSync(path.resolve(ckbPath, 'pid'))) {
       const indexer = fs.readFileSync(path.resolve(ckbPath, 'pid', 'indexer'), 'utf-8')
       spawn('kill', ['-15', indexer])
@@ -85,8 +88,56 @@ export class CKBBinNetwork extends CKBNodeBase implements CKBNode {
     }
   }
 
-  start({ detached = true, ckbPath, genesisAccountArgs, port }: BinNodeStartOptions): void {
+  #osPlatform = () => {
+    switch (os.platform()) {
+      case 'darwin':
+        return 'apple-darwin'
+      case 'linux':
+        return 'unknown-linux-gnu'
+      case 'win32':
+        return 'pc-windows-msvc'
+    }
+  }
+
+  #packageType = () => {
+    switch (os.platform()) {
+      case 'darwin':
+      case 'win32':
+        return 'zip'
+      case 'linux':
+        return 'tar.gz'
+    }
+  }
+
+  async #download(version: string): Promise<{ ckbPath: string }> {
+    const binPath = cachePath('ckb', 'bin')
+    const zipPath = cachePath('ckb', 'zip')
+    const packageName = `ckb_${version}_${os.machine()}-${this.#osPlatform()}`
+    const packageFileName = `${packageName}.${this.#packageType()}`
+    const ckbPath = path.join(binPath, packageName)
+    const packagePath = path.resolve(zipPath, `${packageFileName}`)
+
+    if (!fs.existsSync(ckbPath)) {
+      if (!fs.existsSync(packagePath)) {
+        await download(
+          `https://github.com/nervosnetwork/ckb/releases/download/${version}/${packageFileName}`,
+          packagePath,
+        )
+      }
+
+      if (this.#osPlatform() === 'unknown-linux-gnu') {
+        execSync(`tar -xf ${path.resolve(zipPath, `${packageFileName}`)} -C ${binPath}`)
+      } else {
+        execSync(`unzip ${path.resolve(zipPath, `${packageFileName}`)} -d ${binPath}`)
+      }
+    }
+
+    return { ckbPath: path.join(binPath, packageName) }
+  }
+
+  async start({ detached = true, genesisAccountArgs, port, version }: BinNodeStartOptions): Promise<void> {
     this.#port = port
+    const { ckbPath } = await this.#download(version)
     this.#initConfig(ckbPath, genesisAccountArgs)
     this.#startNode(ckbPath, detached, 'indexer')
     this.#startNode(ckbPath, detached, 'miner')

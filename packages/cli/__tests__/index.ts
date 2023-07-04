@@ -110,7 +110,6 @@ describe('kuai cli', () => {
     beforeAll(async () => {
       exec(
         'npx kuai --network bin-node node --detached --genesisArgs 0x0000000000000000000000000000000000000001 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeef',
-        // { detached: true },
       )
       await scheduler.wait(10000)
     }, 50000)

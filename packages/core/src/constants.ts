@@ -1,6 +1,5 @@
 import { NetworkConfig } from './type'
 import { config } from '@ckb-lumos/lumos'
-import envPaths from 'env-paths'
 
 export const DEFAULT_KUAI_PRIVATE_KEY = '0xfd686a48908e8caf97723578bf85f746e1e1d8956cb132f6a2e92e7234a2a245'
 
@@ -39,4 +38,3 @@ export const DEFAULT_NETWORKDS: {
     prefix: 'ckt',
   },
 }
-export const PATH = envPaths('kuai')
