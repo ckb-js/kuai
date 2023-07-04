@@ -6,7 +6,7 @@ import { key } from '@ckb-lumos/hd'
 import { CKBCLIDownloader } from './download'
 import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from './errors-list'
-import { DEFAULT_NETWORKDS, DEFAULT_CKB_CLI_VERSION, DEFAULT_DEVNET_ACCOUNT_PKS, PATH } from './constants'
+import { DEFAULT_NETWORKDS, DEFAULT_CKB_CLI_VERSION, PATH } from './constants'
 import { AccountCommands, CKBCLIAccount, UtilCommands, TxCommands } from './type/ckb-cli'
 import { kebabCaseKeys } from './util/case'
 import { extractJsonFromString } from './util/json'
@@ -33,7 +33,7 @@ export class CKBCLI {
     dir,
     version = DEFAULT_CKB_CLI_VERSION,
     download = true,
-    initialAccountPks = DEFAULT_DEVNET_ACCOUNT_PKS,
+    initialAccountPks = [],
   }: {
     dir: string
     version?: string
