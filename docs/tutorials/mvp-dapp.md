@@ -159,7 +159,7 @@ Fill the [kuai-mvp-contract](https://github.com/ckb-js/kuai/tree/962d503e75dc808
 <details>
 <summary>Contract Libs</summary>
 
-One unwritten norm is to abstract business logic into a lib([types](https://github.com/ckb-js/kuai/tree/c1a25782234c95ea2ddd86449f07ca38e15559dc/packages/samples/mvp-dapp/contract/types)in our case), which relates to the skills of contract development and will not be elaborated here.
+One unwritten norm is to abstract business logic into a lib([types](https://github.com/ckb-js/kuai/tree/c1a25782234c95ea2ddd86449f07ca38e15559dc/packages/samples/mvp-dapp/contract/types) in our case), which relates to the skills of contract development and will not be elaborated here.
 
 </details>
 
@@ -365,7 +365,7 @@ In conclusion, the modules introduced above are the critical components of the e
 
 ### Ref:
 
-[^1]: Kuai Installation: https://github.com/ckb-js/kuai/blob/c2845169de81817fd2fd397032672f79bf73aebd/README.md#kuai-installation
+[^1]: Kuai Installation: https://github.com/ckb-js/kuai#kuai-installation
 [^2]: Capsule and its prerequisites: https://github.com/nervosnetwork/capsule#prerequisites
 [^3]: CKB CLI: https://github.com/nervosnetwork/ckb-cli
 [^4]: CKB Testnet Faucet: https://faucet.nervos.org/
