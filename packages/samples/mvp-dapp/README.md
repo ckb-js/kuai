@@ -6,7 +6,11 @@ The Kuai MVP DApp is a partially implemented [data.did.id](https://data.did.id/)
 
 You can find an online preview of the Kuai MVP DApp at https://kuai-mvp-dapp-ui.vercel.app/.
 
-[![kuai mvp dapp cover](https://i.imgur.com/romOKAF.png)](https://drive.google.com/file/d/15qYCk1-UMZEUSn2_-gpTv4sSO4-ZJWAa/view?usp=sharing)
+[![kuai mvp dapp cover](https://i.imgur.com/romOKAF.png)](https://youtu.be/-R3EQxcWJVU)
+
+## Development Guide
+
+A comprehensive guide is available at [docs/tutorials/mvp-dapp.md](../../../docs/tutorials/mvp-dapp.md)
 
 ## Code snippets
 

@@ -557,9 +557,11 @@ Defined JSONStore and MoleculeStore to handle JSON data or molecule data.
 
 # Tutorials & Demos
 
-[Link to tutorial]
-[MVP Dapp](https://github.com/ckb-js/kuai/tree/develop/packages/samples/mvp-dapp)
-This is a sample Minimum Viable Product (MVP) decentralized application(dAppp) built using Kuai framework. It aims to demonstrate how easy and fast it is to build a simple dApp specific to cell model, and showcase the abstract ability to easily read and write data to cells.
+- [MVP DApp](./packages/samples/mvp-dapp)
+  This is a sample Minimum Viable Product (MVP) decentralized application(dAppp) built using Kuai framework. It aims to demonstrate how easy and fast it is to build a simple dApp specific to cell model, and showcase the abstract ability to easily read and write data to cells.
+
+- [Development Guide](./docs/tutorials/mvp-dapp.md)
+  This is a comprehensive guide that lists the fundamental steps to build the [MVP DApp](./packages/samples/mvp-dapp);
 
 # Quick start
 
