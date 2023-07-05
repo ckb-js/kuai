@@ -116,7 +116,7 @@ profile
 
 <sidenote>
 
-The complete source code of demo can be found at https://github.com/yanguoyu/kuai/tree/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/contract
+The complete source code of demo can be found at https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp/contract
 
 Go through contract development on [YouTube](https://youtu.be/zoqJiafd_CE)
 
@@ -154,12 +154,12 @@ $ kuai contract new --name kuai-mvp-contract
 
 Contract template named **kuai-mvp-contract** will be generated in **profile/contract/contracts**
 
-Fill the [kuai-mvp-contract](https://github.com/yanguoyu/kuai/tree/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/contract/contracts/kuai-mvp-contract/src) we've implemented into **profile/contract/contracts/kuai-mvp-contract/src**.
+Fill the [kuai-mvp-contract](https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/contract/contracts/kuai-mvp-contract/src) we've implemented into **profile/contract/contracts/kuai-mvp-contract/src**.
 
 <details>
 <summary>Contract Libs</summary>
 
-One unwritten norm is to abstract business logic into a lib([types](https://github.com/yanguoyu/kuai/tree/c1a25782234c95ea2ddd86449f07ca38e15559dc/packages/samples/mvp-dapp/contract/types)in our case), which relates to the skills of contract development and will not be elaborated here.
+One unwritten norm is to abstract business logic into a lib([types](https://github.com/ckb-js/kuai/tree/c1a25782234c95ea2ddd86449f07ca38e15559dc/packages/samples/mvp-dapp/contract/types)in our case), which relates to the skills of contract development and will not be elaborated here.
 
 </details>
 
@@ -219,7 +219,7 @@ The deployment information should be generated automatically as a facility for t
 
 <sidenote>
 
-The deployment information of the online demo can be found at https://github.com/ckb-js/kuai/tree/ebffba1bc73255fa3ccf6d85300129c70bf88f47/packages/samples/mvp-dapp/contract/deployed_demo
+The deployment information of the online demo can be found at https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp/contract/deployed_demo
 
 </sidenote>
 
@@ -227,7 +227,7 @@ The deployment information of the online demo can be found at https://github.com
 
 <sidenote>
 
-The backend source code of demo can be found at [samples/mvp-dapp](https://github.com/yanguoyu/kuai/tree/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp)
+The backend source code of demo can be found at [samples/mvp-dapp](https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp)
 
 </sidenote>
 
@@ -246,7 +246,7 @@ These two models are the core of the entire backend application, and they are de
 
 <sidenote>
 
-The source code of omnilock model can be found at [samples/mvp-dapp/src/actors/omnilock.model.ts](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/actors/omnilock.model.ts)
+The source code of omnilock model can be found at [samples/mvp-dapp/src/actors/omnilock.model.ts](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp/src/actors/omnilock.model.ts)
 
 </sidenote>
 
@@ -275,20 +275,20 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
 
 Pay attention to the decorators above **OmnilockModel**
 
-1. [ActorProvider](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/models/src/utils/decorator/provider.ts#L20) defines how the model instance should be indexed. It works with the constructor parameter **args** to construct a unique index;
-2. [LockPattern](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/models/src/utils/decorator/provider.ts#L82) indicates that OmnilockModel follows a pattern of lock script;
-3. [DataPattern](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/models/src/utils/decorator/provider.ts#L98) make sure all cells collected are plain cells;
-4. [Omnilock](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/models/src/utils/decorator/provider.ts#L142) injects a well-known cell pattern for **LockPattern**.
+1. [ActorProvider](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/models/src/utils/decorator/provider.ts#L20) defines how the model instance should be indexed. It works with the constructor parameter **args** to construct a unique index;
+2. [LockPattern](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/models/src/utils/decorator/provider.ts#L82) indicates that OmnilockModel follows a pattern of lock script;
+3. [DataPattern](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/models/src/utils/decorator/provider.ts#L98) make sure all cells collected are plain cells;
+4. [Omnilock](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/models/src/utils/decorator/provider.ts#L142) injects a well-known cell pattern for **LockPattern**.
 
 By prepending all these decorators, an OmnilockModel instance represents cells owned by `OmniLockAddress(args)` as an entire object during runtime.
 
-After then, we can add custom methods according to the business logic. Here we add [`meta`](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/actors/omnilock.model.ts#L56) to get capacity of the model and [`claim`](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/actors/omnilock.model.ts#L64) to transform plain omnilock cells into a profile-hold cell.
+After then, we can add custom methods according to the business logic. Here we add [`meta`](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/actors/omnilock.model.ts#L56) to get capacity of the model and [`claim`](https://github.com/ckb-js/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/actors/omnilock.model.ts#L64) to transform plain omnilock cells into a profile-hold cell.
 
 ##### Record Model
 
 <sidenote>
 
-The source code of record model can be found at [samples/mvp-dapp/src/actors/record.model.ts](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/actors/record.model.ts)
+The source code of record model can be found at [samples/mvp-dapp/src/actors/record.model.ts](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/actors/record.model.ts)
 
 </sidenote>
 
@@ -326,15 +326,15 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
 }
 ```
 
-Define [`update`](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/actors/record.model.ts#L81) to change profile, and [`clear`](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/actors/record.model.ts#LL110C3-L110C8) to wipe profile out
+Define [`update`](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/actors/record.model.ts#L81) to change profile, and [`clear`](https://github.com/ckb-js/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/actors/record.model.ts#LL110C3-L110C8) to wipe profile out
 
 #### View
 
-Notice that the responses of OmnilockModel and RecordModel consist of **inputs**, **outputs**, and **cellDeps**. A wrapper is required to transform them into a valid transaction. This step can be done anywhere. In this case, a [**view**](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/views/tx.view.ts) module is introduced to wrap them into a transaction.
+Notice that the responses of OmnilockModel and RecordModel consist of **inputs**, **outputs**, and **cellDeps**. A wrapper is required to transform them into a valid transaction. This step can be done anywhere. In this case, a [**view**](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/views/tx.view.ts) module is introduced to wrap them into a transaction.
 
 #### Controller
 
-Finally, requests from a client should be routed to the correct models; routes are defined in the generated [**app.controller.ts**](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/app.controller.ts) file. For instance,
+Finally, requests from a client should be routed to the correct models; routes are defined in the generated [**app.controller.ts**](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/app.controller.ts) file. For instance,
 
 ```typescript
 // define a claim method to generate a transaction to transform blank omnilock cells into a profile-hold cell
@@ -357,11 +357,11 @@ router.post<never, { address: string }, { capacity: HexString }>('/claim/:addres
 
 <sidenote>
 
-The [**Chain Source**](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/src/chain-source.ts) module synchronizes data from CKB Node to Actor Models. It will be supported internally in the future and can be skipped in the code tour now.
+The [**Chain Source**](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/chain-source.ts) module synchronizes data from CKB Node to Actor Models. It will be supported internally in the future and can be skipped in the code tour now.
 
 </sidenote>
 
-In conclusion, the modules introduced above are the critical components of the entire backend application, as they constitute the overall logic of the entire application. Please visit [samples/mvp-dapp](https://github.com/yanguoyu/kuai/blob/b988eedbb224e15f5bb1d374e8d0345b8a558dc7/packages/samples/mvp-dapp/) to learn all the details.
+In conclusion, the modules introduced above are the critical components of the entire backend application, as they constitute the overall logic of the entire application. Please visit [samples/mvp-dapp](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/) to learn all the details.
 
 ### Ref:
 
