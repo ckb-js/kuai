@@ -574,6 +574,11 @@ Defined JSONStore and MoleculeStore to handle JSON data or molecule data.
 First, install `kuai` globally by `npm link`:
 
 ```bash
+$ git clone git@github.com:ckb-js/kuai.git
+
+$ cd kuai
+
+$ npm install
 
 $ npm run build
 
