@@ -2,13 +2,10 @@
 
 This tutorial presents the fundamental steps to construct an MVP DApp utilizing the Kuai Framework. The codebase for the DApp is available at https://github.com/ckb-js/kuai/tree/develop/packages/samples/mvp-dapp.
 
-<sidenote>
 This tutorial is specific to commits
 
-1. Contract and Backend: https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109
-2. Frontend: https://github.com/Magickbase/kuai-mvp-dapp-ui/tree/97254673b545d3f2dc8edcd376f21c13d727c267
-
-</sidenote>
+<sub>1. Contract and Backend: https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109<br /> 2. Frontend: https://github.com/Magickbase/kuai-mvp-dapp-ui/tree/97254673b545d3f2dc8edcd376f21c13d727c267</sub>
+<br />
 
 A user-oriented DApp typically requires the development of front-end, backend, and smart contracts. As Kuai is a contract and server development framework specific for Nervos CKB, this article will not cover tutorials on front-end development.
 
@@ -107,45 +104,25 @@ profile
 └── typedoc.json
 ```
 
-**src/main.ts** is the entry point of profile application. It registers services before the application starts;
-**src/app.controller.ts** is the router, which defines APIs exposed to users;
-**src/actors/** is the directory to define actor models based on specific patterns. Learn more about [actor models](https://github.com/ckb-js/topics/blob/add-draft-of-kuai-proposal/README.md) in Kuai;
-**contract/** is the workspace for contract development.
+- **src/main.ts** is the entry point of profile application. It registers services before the application starts;
+- **src/app.controller.ts** is the router, which defines APIs exposed to users;
+- **src/actors/** is the directory to define actor models based on specific patterns. Learn more about [actor models](https://github.com/ckb-js/topics/blob/add-draft-of-kuai-proposal/README.md) in Kuai;
+- **contract/** is the workspace for contract development.
 
 ### Contract
 
-<sidenote>
-
-The complete source code of demo can be found at https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp/contract
-
-Go through contract development on [YouTube](https://youtu.be/zoqJiafd_CE)
-
-</sidenote>
+<sub>\* The complete source code of demo can be found at https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp/contract<br /> \* Go through contract development on [YouTube](https://youtu.be/zoqJiafd_CE)</sub>
 
 #### Contract workspace
 
 The contract workspace locates at **profile/contract**, where the development, testing, and deployment will take place.
 
-<sidenote>
-
-The contract workspace will be polished in the future once the best practice of contract module structure is confirmed.(https://github.com/nervosnetwork/capsule/discussions/124)
-
-</sidenote>
-
-<sidenote>
-
-[capsule](https://github.com/nervosnetwork/capsule)[^2] is required for contract development. It will be installed on-demand automatically in the future.
-Now it should be installed manually by `cargo install ckb-capsule` if [rust](https://www.rust-lang.org/) is ready on your machine.
-
-</sidenote>
+<sub>\* The contract workspace will be polished in the future once the best practice of contract module structure is confirmed.(https://github.com/nervosnetwork/capsule/discussions/124)<br /> \* [capsule](https://github.com/nervosnetwork/capsule)[^2] is required for contract development. It will be installed on-demand automatically in the future. Now it should be installed manually by `cargo install ckb-capsule` if [rust](https://www.rust-lang.org/) is ready on your machine.</sub>
 
 #### Add contract source code
 
-<sidenote>
-
-This step requires [docker](https://www.docker.com/)
-
-</sidenote>
+<sub>\* This step requires [docker](https://www.docker.com/)</sub>
+<br />
 
 ```bash
 # kuai contract new --name <contract name>
@@ -174,9 +151,8 @@ Contract artifacts will be generated in **profile/contract/build/release/** for 
 
 The contract will be deployed by the default signer, [ckb-cli](https://github.com/nervosnetwork/ckb-cli)[^3], in this case, so we need to create an account for signing transactions.
 
-<sidenote>
-Creating an account in ckb-cli will be supported by kuai-cli in the future
-</sidenote>
+<sub>\* Creating an account in ckb-cli will be supported by kuai-cli in the future</sub>
+<br />
 
 ```bash
 # create an account in ckb-cli
@@ -217,19 +193,11 @@ So far, we've completed the development&deployment of contracts.
 
 The deployment information should be generated automatically as a facility for the backend. It will be implemented soon, now we have to set it manually at `profile/contract/deployed/contracts.json`.
 
-<sidenote>
-
-The deployment information of the online demo can be found at https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp/contract/deployed_demo
-
-</sidenote>
+<sub>\* The deployment information of the online demo can be found at https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp/contract/deployed_demo</sub>
 
 ### Backend
 
-<sidenote>
-
-The backend source code of demo can be found at [samples/mvp-dapp](https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp)
-
-</sidenote>
+<sub>\* The backend source code of demo can be found at [samples/mvp-dapp](https://github.com/ckb-js/kuai/tree/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp)</sub>
 
 #### Actor Models
 
@@ -244,11 +212,7 @@ These two models are the core of the entire backend application, and they are de
 
 ##### Omnilock Model
 
-<sidenote>
-
-The source code of omnilock model can be found at [samples/mvp-dapp/src/actors/omnilock.model.ts](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp/src/actors/omnilock.model.ts)
-
-</sidenote>
+<sub>\* The source code of omnilock model can be found at [samples/mvp-dapp/src/actors/omnilock.model.ts](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109/packages/samples/mvp-dapp/src/actors/omnilock.model.ts)</sub>
 
 At first, the built-in model named **JSONStore** should be imported as the basic model, and decorated by patterns as follows
 
@@ -286,11 +250,7 @@ After then, we can add custom methods according to the business logic. Here we a
 
 ##### Record Model
 
-<sidenote>
-
-The source code of record model can be found at [samples/mvp-dapp/src/actors/record.model.ts](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/actors/record.model.ts)
-
-</sidenote>
+<sub>\* The source code of record model can be found at [samples/mvp-dapp/src/actors/record.model.ts](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/actors/record.model.ts)</sub>
 
 Similarly, the RecordModel can be decorated to limit its cells by `omnilock` and `type script of profile contract`
 
@@ -355,11 +315,7 @@ router.post<never, { address: string }, { capacity: HexString }>('/claim/:addres
 
 #### Chain Source
 
-<sidenote>
-
-The [**Chain Source**](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/chain-source.ts) module synchronizes data from CKB Node to Actor Models. It will be supported internally in the future and can be skipped in the code tour now.
-
-</sidenote>
+<sub>\* The [**Chain Source**](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/src/chain-source.ts) module synchronizes data from CKB Node to Actor Models. It will be supported internally in the future and can be skipped in the code tour now.</sub>
 
 In conclusion, the modules introduced above are the critical components of the entire backend application, as they constitute the overall logic of the entire application. Please visit [samples/mvp-dapp](https://github.com/ckb-js/kuai/blob/962d503e75dc808812ec216409877ddc8545c109g/packages/samples/mvp-dapp/) to learn all the details.
 
