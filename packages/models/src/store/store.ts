@@ -33,7 +33,7 @@ import {
 } from '../exceptions'
 import { ProviderKey, CellPattern, SchemaPattern, isStringList } from '../utils'
 import { outPointToOutPointString } from '../resource-binding'
-import { MoleculeStorage, DynamicParam, GetCodecConfig, isCodecConfig, GetMoleculeOffChain } from './molecule-storage'
+import { MoleculeStorage, DynamicParam, isCodecConfig, GetMoleculeOffChain } from './molecule-storage'
 import { computeScriptHash } from '@ckb-lumos/base/lib/utils'
 import { DefaultMergeStrategy, MergeStrategy } from './merge-strategy'
 
@@ -603,11 +603,7 @@ export class JSONStore<R extends StorageSchema<JSONStorageOffChain>> extends Sto
   }
 }
 
-type GetFieldConfig<T> = T extends DynamicParam
-  ? GetCodecConfig<T>
-  : T extends { schema: DynamicParam }
-  ? GetCodecConfig<T['schema']>
-  : never
+type GetFieldConfig<T> = T extends DynamicParam ? T : T extends { schema: DynamicParam } ? T['schema'] : never
 
 type GetMoleculeConfig<T extends StorageSchema<DynamicParam>> = GetStorageStructByTemplate<{
   data: GetFieldConfig<T['data']>

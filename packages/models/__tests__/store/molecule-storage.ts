@@ -52,7 +52,7 @@ describe('test json storage', () => {
     it('array with basic', () => {
       const moleculeStorage = new MoleculeStorage<{ type: 'array'; value: ['Uint8', 2] }>({
         type: 'array',
-        value: ['Uint8', 'Uint8'],
+        value: ['Uint8', 2],
       })
       const moleculeFunc = molecule.array(number.Uint8, 2)
       const res = moleculeStorage.serialize([1, 2])
@@ -65,10 +65,7 @@ describe('test json storage', () => {
         value: [{ type: 'array'; value: ['Uint8', 2] }, 2]
       }>({
         type: 'array',
-        value: [
-          { type: 'array', value: ['Uint8', 'Uint8'] },
-          { type: 'array', value: ['Uint8', 'Uint8'] },
-        ],
+        value: [{ type: 'array', value: ['Uint8', 2] }, 2],
       })
       const moleculeFunc = molecule.array(molecule.array(number.Uint8, 2), 2)
       const res = moleculeStorage.serialize([
@@ -92,10 +89,7 @@ describe('test json storage', () => {
         value: [{ type: 'struct'; value: { a: 'Uint8' } }, 2]
       }>({
         type: 'array',
-        value: [
-          { type: 'struct', value: { a: 'Uint8' } },
-          { type: 'struct', value: { a: 'Uint8' } },
-        ],
+        value: [{ type: 'struct', value: { a: 'Uint8' } }, 2],
       })
       const moleculeFunc = molecule.array(molecule.struct({ a: number.Uint8 }, ['a']), 2)
       const res = moleculeStorage.serialize([{ a: 10 }, { a: 20 }])
@@ -122,8 +116,8 @@ describe('test json storage', () => {
       }>({
         type: 'struct',
         value: {
-          a: { type: 'array', value: ['Uint8', 'Uint8'] },
-          b: { type: 'array', value: ['Uint16'] },
+          a: { type: 'array', value: ['Uint8', 2] },
+          b: { type: 'array', value: ['Uint16', 1] },
         },
       })
       const moleculeFunc = molecule.struct(
@@ -171,7 +165,7 @@ describe('test json storage', () => {
     it('vec with array', () => {
       const moleculeStorage = new MoleculeStorage<{ type: 'vec'; value: { type: 'array'; value: ['Uint8', 2] } }>({
         type: 'vec',
-        value: { type: 'array', value: ['Uint8', 'Uint8'] },
+        value: { type: 'array', value: ['Uint8', 2] },
       })
       const moleculeFunc = molecule.vector(molecule.array(number.Uint8, 2))
       const res = moleculeStorage.serialize([
@@ -281,7 +275,7 @@ describe('test json storage', () => {
     it('option with array', () => {
       const moleculeStorage = new MoleculeStorage<{ type: 'option'; value: { type: 'array'; value: ['Uint8', 2] } }>({
         type: 'option',
-        value: { type: 'array', value: ['Uint8', 'Uint8'] },
+        value: { type: 'array', value: ['Uint8', 2] },
       })
       const moleculeFunc = molecule.option(molecule.array(number.Uint8, 2))
       const res = moleculeStorage.serialize([1, 2])
@@ -310,7 +304,7 @@ describe('test json storage', () => {
         }
       }>({
         type: 'union',
-        value: { a: { type: 'array', value: ['Uint8', 'Uint8'] }, b: { type: 'array', value: ['Uint64', 'Uint64'] } },
+        value: { a: { type: 'array', value: ['Uint8', 2] }, b: { type: 'array', value: ['Uint64', 2] } },
       })
       const moleculeFunc = molecule.union({ a: molecule.array(number.Uint8, 2), b: molecule.array(number.Uint64, 2) }, [
         'a',
@@ -370,7 +364,7 @@ describe('test json storage', () => {
       }>({
         type: 'table',
         value: {
-          a: { type: 'array', value: ['Uint8', 'Uint8'] },
+          a: { type: 'array', value: ['Uint8', 2] },
           b: { type: 'struct', value: { a: 'Uint8', b: 'Uint16' } },
         },
       })
@@ -448,9 +442,9 @@ describe('test json storage', () => {
       expect(isCodecConfig('string')).toBeTruthy()
     })
     it('test array', () => {
-      expect(isCodecConfig({ type: 'array', value: ['Uint8', 'Uint8'] })).toBeTruthy()
+      expect(isCodecConfig({ type: 'array', value: ['Uint8', 2] })).toBeTruthy()
       expect(isCodecConfig({ type: 'array', value: ['Uint8', 'Uint16'] })).toBeFalsy()
-      expect(isCodecConfig({ type: 'array', value: ['Uint8', 'unknow'] })).toBeFalsy()
+      expect(isCodecConfig({ type: 'array', value: ['Uint8'] })).toBeFalsy()
     })
     it('test struct', () => {
       expect(isCodecConfig({ type: 'struct', value: { a: 'Uint8', b: 'Uint8' } })).toBeTruthy()
