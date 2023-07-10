@@ -56,6 +56,10 @@ Please run: npm install --save-dev typescript`,
       code: 'UNSUPPORTED_NETWORK',
       message: 'Unsupported network %var%.',
     },
+    INVALID_CKB_VERSION: {
+      code: 'UNSUPPORTED_NETWORK',
+      message: 'Unsupported network %var%.',
+    },
     UNSUPPORTED_SIGNER: {
       code: 'UNSUPPORTED_SIGNER',
       message: 'Unsupported signer %var%.',

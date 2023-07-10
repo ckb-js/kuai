@@ -21,7 +21,6 @@ const TERMINATION_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGQUIT']
 const BUILTIN_SCRIPTS = ['anyone_can_pay', 'omni_lock', 'simple_udt']
 const DEFAULT_BUILTIN_CONTRACT_DOWNLOAD_BASE_URL =
   'https://github.com/ckb-js/ckb-production-scripts/releases/download/scripts'
-const DEFAULT_CKB_BIN_VERSION = 'v0.110.0'
 
 const startBinNode = async (version: string, port: number, genesisArgs: string[]): Promise<CKBNode> => {
   const network = new CKBBinNetwork()
@@ -51,16 +50,16 @@ subtask('node:start', 'start a ckb node')
   .addParam('detached', 'Run the node in detached mode', false, paramTypes.boolean)
   .addParam('genesisArgs', 'The genesis args', undefined, paramTypes.string, true, true)
   .setAction(async ({ port, detached, genesisArgs = [] }: Args, env) => {
+    const version = env.config.devNode?.ckb.version ?? (await CKBLatestBinVersion())
+    if (!version) {
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.INVALID_CKB_VERSION)
+    }
     const node = await (async () => {
       switch (env.config.kuaiArguments?.network) {
         case 'docker-node':
           return await startDockerNode(port, detached, genesisArgs)
         case 'bin-node':
-          return await startBinNode(
-            env.config.devNode?.ckb.version ?? (await CKBLatestBinVersion()) ?? DEFAULT_CKB_BIN_VERSION,
-            port,
-            genesisArgs,
-          )
+          return await startBinNode(version, port, genesisArgs)
         default:
           throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_NETWORK, {
             var: env.config.kuaiArguments?.network,
@@ -108,14 +107,15 @@ const stopDockerNode = async (): Promise<void> => {
 subtask('node:stop', 'stop ckb node')
   .addParam('clear', 'clear data when using binary node', false, paramTypes.boolean)
   .setAction(async ({ clear }: { clear: boolean }, env) => {
+    const version = env.config.devNode?.ckb.version ?? (await CKBLatestBinVersion())
+    if (!version) {
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.INVALID_CKB_VERSION)
+    }
     switch (env.config.kuaiArguments?.network) {
       case 'docker-node':
         return await stopDockerNode()
       case 'bin-node':
-        return await stopBinNode(
-          env.config.devNode?.ckb.version ?? (await CKBLatestBinVersion()) ?? DEFAULT_CKB_BIN_VERSION,
-          clear,
-        )
+        return await stopBinNode(version, clear)
       default:
         throw new KuaiError(ERRORS.BUILTIN_TASKS.UNSUPPORTED_NETWORK, {
           var: env.config.kuaiArguments?.network,
