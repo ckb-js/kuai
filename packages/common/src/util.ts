@@ -3,8 +3,11 @@ import type { RPC } from '@ckb-lumos/lumos'
 import { scheduler } from 'node:timers/promises'
 import path from 'node:path'
 import fs from 'fs'
-import { request } from 'undici'
+import type { URL, UrlObject } from 'url'
 import { PATH } from './constant'
+import undici from 'undici'
+
+const MAX_REDIRECTS = 5
 
 export const waitUntilCommitted = async (rpc: RPC, txHash: string, timeout = 120): Promise<TransactionWithStatus> => {
   let waitTime = 0
@@ -37,24 +40,24 @@ export const cachePath = (...paths: string[]) => createPath(path.resolve(PATH.ca
 
 export const configPath = (...paths: string[]) => createPath(path.resolve(PATH.config, ...paths))
 
-// TODO: use https://github.com/ckb-js/kuai/pull/301/files#diff-da43545226f71917e5fefffc9bdffb47fa72d32931412964b3b9ccc8b834e1aeR7 when merged
-export const download = async (url: string, filePath: string) => {
-  const { body } = await request(url, {
-    maxRedirections: 5,
-    method: 'GET',
-  })
+export async function downloadFile(url: string | URL | UrlObject, filePath: string) {
+  try {
+    const { body } = await undici.request(url, { method: 'GET', maxRedirections: MAX_REDIRECTS })
 
-  await new Promise<void>((resolve, reject) => {
     const fileStream = fs.createWriteStream(filePath)
 
-    body.on('error', (error: Error) => {
-      reject(error)
+    await new Promise((res, rej) => {
+      body
+        .pipe(fileStream)
+        .on('finish', () => {
+          fileStream.close()
+          res(0)
+        })
+        .on('error', (error) => {
+          rej(error)
+        })
     })
-
-    fileStream.on('finish', () => {
-      resolve()
-    })
-
-    body.pipe(fileStream)
-  })
+  } catch (error) {
+    console.error('Error downloading file:', error)
+  }
 }

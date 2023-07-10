@@ -6,7 +6,7 @@ import { generateDevConfig } from './helper'
 import fs from 'fs'
 import path from 'node:path'
 import { CKBNodeBase } from './base'
-import { cachePath, download } from '@ckb-js/kuai-common'
+import { cachePath, downloadFile } from '@ckb-js/kuai-common'
 import os from 'node:os'
 
 export class CKBBinNetwork extends CKBNodeBase implements CKBNode {
@@ -119,7 +119,7 @@ export class CKBBinNetwork extends CKBNodeBase implements CKBNode {
 
     if (!fs.existsSync(ckbPath)) {
       if (!fs.existsSync(packagePath)) {
-        await download(
+        await downloadFile(
           `https://github.com/nervosnetwork/ckb/releases/download/${version}/${packageFileName}`,
           packagePath,
         )

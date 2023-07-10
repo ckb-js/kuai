@@ -1,7 +1,7 @@
 import { task, subtask } from '../config/config-env'
 import { paramTypes } from '../params'
 import { CKBBinNetwork, CkbDockerNetwork, CKBLatestBinVersion, CKBNode } from '@ckb-js/kuai-docker-node'
-import { KuaiError, cachePath, configPath, download } from '@ckb-js/kuai-common'
+import { KuaiError, cachePath, configPath, downloadFile } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import '../type/runtime'
 import { Indexer, RPC, config } from '@ckb-lumos/lumos'
@@ -72,7 +72,7 @@ subtask('node:start', 'start a ckb node')
     const builtInDirPath = cachePath('built-in')
     for (const script of BUILTIN_SCRIPTS) {
       if (!fs.existsSync(path.join(builtInDirPath, script))) {
-        download(
+        downloadFile(
           `${
             env.config.devNode?.builtInContractDownloadBaseUrl ?? DEFAULT_BUILTIN_CONTRACT_DOWNLOAD_BASE_URL
           }/${script}}`,
