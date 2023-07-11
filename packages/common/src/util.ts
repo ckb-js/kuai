@@ -1,9 +1,9 @@
 import type { TransactionWithStatus } from '@ckb-lumos/base'
 import type { RPC } from '@ckb-lumos/lumos'
+import type { URL, UrlObject } from 'node:url'
 import { scheduler } from 'node:timers/promises'
 import path from 'node:path'
-import fs from 'fs'
-import type { URL, UrlObject } from 'url'
+import fs from 'node:fs'
 import { PATH } from './constant'
 import undici from 'undici'
 
