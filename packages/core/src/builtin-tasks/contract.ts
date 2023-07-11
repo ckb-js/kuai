@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process'
 import read from 'read'
-import { existsSync, writeFileSync, cpSync, rmSync } from 'node:fs'
+import { existsSync, writeFileSync, cpSync, rmSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { KuaiError } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
@@ -16,6 +16,7 @@ import { task, subtask } from '../config/config-env'
 import { paramTypes } from '../params'
 import { getUserConfigPath } from '../project-structure'
 import { getGenesisScriptsConfig } from '../util/chain'
+import { generateMigrationFileName, findMigrationByDir } from '../util/contract-migration'
 
 task('contract').setAction(async () => {
   execSync('kuai contract --help', { stdio: 'inherit' })
@@ -28,6 +29,7 @@ interface ContractDeployArgs {
   signer?: 'ckb-cli' | 'ckb-cli-multisig'
   feeRate?: number
   export?: string
+  migrationDir?: string
   noTypeId: boolean
   send: boolean
 }
@@ -78,14 +80,8 @@ function parseFromInfoByCli(info: string[]): FromInfo[] {
 subtask('contract:deploy')
   .addParam('name', 'name of the contract to be deployed', '', paramTypes.string, true)
   .addParam('bin-path', 'path of contract bin file', '', paramTypes.path, true)
-  .addParam('from', 'address or multisig config of the contract deployer', '', paramTypes.string, false, true)
-  .addParam(
-    'signer',
-    'signer provider [default: ckb-cli] [possible values: ckb-cli, ckb-cli-multisig]',
-    '',
-    paramTypes.string,
-    true,
-  )
+  .addParam('from', 'address or multisig config of the contract deployer', undefined, paramTypes.string, false, true)
+  .addParam('signer', 'signer provider [possible values: ckb-cli, ckb-cli-multisig]', '', paramTypes.string, true)
   .addParam(
     'fee-rate',
     "per transaction's fee, deployment may involve more than one transaction. default: [1000] shannons/Byte",
@@ -96,8 +92,9 @@ subtask('contract:deploy')
   .addParam('export', 'export transaction to file', '', paramTypes.path, true)
   .addParam('send', 'send transaction directly', false, paramTypes.boolean, true)
   .addParam('no-type-id', 'not use type id deploy', false, paramTypes.boolean, true)
+  .addParam('migration-dir', 'migration directory for saving json format migration files', '', paramTypes.path, true)
   .setAction(async (args: ContractDeployArgs, { config, run }) => {
-    const { name, from, feeRate, signer, binPath, noTypeId = false, send = false } = args
+    const { name, from, feeRate, signer, binPath, noTypeId = false, send = false, migrationDir } = args
     const { ckbChain } = config
 
     const fromInfos = parseFromInfoByCli(from)
@@ -152,8 +149,13 @@ subtask('contract:deploy')
       signer ? messageSigner : undefined,
     )
 
-    const deployTx = await deployer.deploy(conrtactBinPath, fromInfos[0], { feeRate, enableTypeId: !noTypeId })
-    const { tx } = deployTx
+    const {
+      tx,
+      index,
+      dataHash,
+      typeId,
+      send: sendTx,
+    } = await deployer.deploy(conrtactBinPath, fromInfos[0], { feeRate, enableTypeId: !noTypeId })
 
     if (args.export) {
       const exportPath = path.isAbsolute(args.export) ? args.export : path.join(process.cwd(), args.export)
@@ -191,8 +193,222 @@ subtask('contract:deploy')
     }
 
     if (send) {
-      const txHash = await deployTx.send()
+      const txHash = await sendTx()
       console.info('deploy success, txHash: ', txHash)
+      if (migrationDir) {
+        const _migrationPath = path.isAbsolute(migrationDir) ? migrationDir : path.join(process.cwd(), migrationDir)
+
+        if (!existsSync(_migrationPath)) {
+          mkdirSync(_migrationPath)
+        }
+
+        const migrationFileName = generateMigrationFileName()
+        const migrationData = {
+          cell_recipes: [
+            {
+              name: name || binPath,
+              tx_hash: txHash,
+              index: index,
+              data_hash: dataHash,
+              type_id: typeId,
+            },
+          ],
+        }
+
+        writeFileSync(path.join(_migrationPath, migrationFileName), JSON.stringify(migrationData, null, 2))
+      }
+    }
+
+    return tx
+  })
+
+interface ContractUpgradeArgs {
+  name?: string
+  binPath?: string
+  migrationDir: string
+  signer?: 'ckb-cli' | 'ckb-cli-multisig'
+  feePayer?: string[]
+  deployer?: string[]
+  feeRate?: number
+  export?: string
+  send: boolean
+}
+subtask('contract:upgrade')
+  .addParam('name', 'name of the contract to upgrade', '', paramTypes.string, true)
+  .addParam('bin-path', 'path of contract bin file', '', paramTypes.path, true)
+  .addParam('migration-dir', 'path of migration file')
+  .addParam(
+    'fee-payer',
+    'address or multisig config of the transaction fee payer',
+    undefined,
+    paramTypes.string,
+    true,
+    true,
+  )
+  .addParam(
+    'deployer',
+    'address or multisig config of the contract deployer',
+    undefined,
+    paramTypes.string,
+    false,
+    true,
+  )
+  .addParam('signer', 'signer provider [possible values: ckb-cli, ckb-cli-multisig]', '', paramTypes.string, true)
+  .addParam(
+    'fee-rate',
+    "per transaction's fee, deployment may involve more than one transaction. default: [1000] shannons/Byte",
+    1000,
+    paramTypes.number,
+    true,
+  )
+  .addParam('export', 'export transaction to file', '', paramTypes.path, true)
+  .addParam('send', 'send transaction directly', false, paramTypes.boolean, true)
+  .setAction(async (args: ContractUpgradeArgs, { config, run }) => {
+    const { name, feePayer, deployer, feeRate, signer, binPath, send = false, migrationDir } = args
+    const { ckbChain } = config
+
+    const deployerInfos = deployer ? parseFromInfoByCli(deployer) : []
+    const feePayerInfos = feePayer ? parseFromInfoByCli(feePayer) : deployerInfos
+
+    const targetContractName = name || binPath
+
+    if (!targetContractName) {
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.NOT_SPECIFY_CONTRACT)
+    }
+
+    const _migrationPath = path.isAbsolute(migrationDir) ? migrationDir : path.join(process.cwd(), migrationDir)
+    if (!existsSync(_migrationPath)) {
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.CONTRACT_MIGRATION_DIRECTORY_NOT_FOUND, {
+        var: name,
+      })
+    }
+
+    const migration = findMigrationByDir(_migrationPath, targetContractName)
+    if (!migration) {
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.INVALID_CONTRACT_MIGRATION_FILE, {
+        var: name,
+      })
+    }
+
+    const conrtactBinPath = await (async () => {
+      // check bin path is absolute path
+      if (binPath && path.isAbsolute(binPath)) {
+        return binPath
+      }
+
+      if (binPath) {
+        return path.join(process.cwd(), binPath)
+      }
+
+      const workspace = (await run('contract:get-workspace')) as string
+
+      return path.join(workspace, `build/release/${name}`)
+    })()
+
+    if (!existsSync(conrtactBinPath)) {
+      throw new KuaiError(ERRORS.BUILTIN_TASKS.CONTRACT_RELEASE_FILE_NOT_FOUND, {
+        var: name,
+      })
+    }
+
+    const lumosConfig: Config = {
+      PREFIX: ckbChain.prefix,
+      SCRIPTS: ckbChain.scripts || {
+        ...(await getGenesisScriptsConfig(ckbChain.rpcUrl)),
+      },
+    }
+
+    const messageSigner: MessageSigner = (message, fromInfo) => {
+      const { multisigScript } = parseFromInfo(fromInfo, { config: lumosConfig })
+      return run('contract:sign-message', {
+        message,
+        address: encodeToAddress(parseFromInfo(fromInfo, { config: lumosConfig }).fromScript, { config: lumosConfig }),
+        signer,
+        prefix: multisigScript,
+      }) as Promise<string>
+    }
+
+    const contractDeployer = new ContractDeployer(
+      {
+        rpcUrl: config.ckbChain.rpcUrl,
+        config: lumosConfig,
+      },
+      signer ? messageSigner : undefined,
+    )
+
+    const {
+      tx,
+      index,
+      dataHash,
+      typeId,
+      send: sendTx,
+    } = await contractDeployer.upgrade(
+      conrtactBinPath,
+      deployerInfos[0],
+      feePayerInfos[0],
+      {
+        txHash: migration.tx_hash,
+        index: migration.index,
+        dataHash: migration.data_hash,
+      },
+      { feeRate },
+    )
+
+    if (args.export) {
+      const exportPath = path.isAbsolute(args.export) ? args.export : path.join(process.cwd(), args.export)
+
+      const exportData = {
+        transaction: ParamsFormatter.toRawTransaction(tx),
+        multisig_configs: {},
+        signatures: {},
+      }
+
+      const infos = [...feePayerInfos, ...deployerInfos]
+      infos.forEach((fromInfo) => {
+        if (isMultisigFromInfo(fromInfo)) {
+          const { fromScript } = parseFromInfo(fromInfo, { config: lumosConfig })
+          const template = lumosConfig.SCRIPTS['SECP256K1_BLAKE160']!
+          Object.assign(exportData.multisig_configs, {
+            [fromScript.args]: {
+              sighash_addresses: fromInfo.publicKeyHashes.map((args) =>
+                scriptToAddress(
+                  {
+                    codeHash: template.CODE_HASH,
+                    hashType: template.HASH_TYPE,
+                    args: args,
+                  },
+                  { config: lumosConfig },
+                ),
+              ),
+              require_first_n: fromInfo.R,
+              threshold: fromInfo.M,
+            },
+          })
+        }
+      })
+
+      writeFileSync(exportPath, JSON.stringify(exportData, null, 2))
+    }
+
+    if (send) {
+      const txHash = await sendTx()
+      console.info('deploy success, txHash: ', txHash)
+
+      // generate migration file
+      const migrationFileName = generateMigrationFileName()
+      const migrationData = {
+        cell_recipes: [
+          {
+            name: name || binPath,
+            tx_hash: txHash,
+            index: index,
+            data_hash: dataHash,
+            type_id: typeId,
+          },
+        ],
+      }
+
+      writeFileSync(path.join(_migrationPath, migrationFileName), JSON.stringify(migrationData, null, 2))
     }
 
     return tx

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { Hash, Transaction, blockchain } from '@ckb-lumos/base'
-import { generateDeployWithTypeIdTx } from '@ckb-lumos/common-scripts/lib/deploy'
-import { sealTransaction, createTransactionFromSkeleton } from '@ckb-lumos/helpers'
+import { generateDeployWithTypeIdTx, generateUpgradeTypeIdDataTx } from '@ckb-lumos/common-scripts/lib/deploy'
+import { sealTransaction, createTransactionFromSkeleton, scriptToAddress } from '@ckb-lumos/helpers'
 import { Indexer, commons, config, RPC, utils } from '@ckb-lumos/lumos'
 import type { FromInfo } from '@ckb-lumos/common-scripts'
 
@@ -65,9 +65,13 @@ export class ContractDeployer {
     const tx = await (async () => {
       if (this.#signer) {
         const signerProvider = this.#signer
-        const signatures = await Promise.all(
-          txSkeleton.signingEntries.map(({ message }) => signerProvider(message, fromInfo)),
-        )
+        const signatures: string[] = []
+        for (const { message, index } of txSkeleton.signingEntries) {
+          const signer = scriptToAddress(txSkeleton.inputs.get(index)!.cellOutput.lock, {
+            config: this.#network.config,
+          })
+          signatures.push(await signerProvider(message, signer))
+        }
 
         return sealTransaction(txSkeleton, signatures)
       }
@@ -80,6 +84,73 @@ export class ContractDeployer {
       index: parseInt(scriptConfig.INDEX),
       dataHash: scriptConfig.CODE_HASH,
       typeId: utils.ckbHash(blockchain.Script.pack(typeId)),
+      send: () => this.#rpc.sendTransaction(tx),
+    }
+  }
+
+  async upgrade(
+    contractBinPath: string,
+    deployer: FromInfo,
+    feePayer: FromInfo,
+    contract: {
+      txHash: Hash
+      index: number
+      dataHash: Hash
+    },
+    options?: {
+      feeRate?: number
+    },
+  ): Promise<{
+    tx: Transaction
+    index: number
+    dataHash: string
+    typeId?: string
+    send: () => Promise<Hash>
+  }> {
+    const { feeRate = 1000 } = options || {}
+    const contractBin = readFileSync(contractBinPath)
+
+    const contractTx = await this.#rpc.getTransaction(contract.txHash)
+    const typeIdScript = contractTx.transaction.outputs[contract.index].type!
+
+    const result = await generateUpgradeTypeIdDataTx({
+      cellProvider: this.#index,
+      typeId: typeIdScript,
+      fromInfo: deployer,
+      scriptBinary: contractBin,
+      config: this.#network.config,
+    })
+
+    let { txSkeleton } = result
+    const { scriptConfig } = result
+
+    txSkeleton = await commons.common.payFee(txSkeleton, [feePayer], feeRate, undefined, {
+      config: this.#network.config,
+    })
+    txSkeleton = commons.common.prepareSigningEntries(txSkeleton)
+
+    const tx = await (async () => {
+      if (this.#signer) {
+        const signerProvider = this.#signer
+        const signatures: string[] = []
+        for (const { message, index } of txSkeleton.signingEntries) {
+          const signer = scriptToAddress(txSkeleton.inputs.get(index)!.cellOutput.lock, {
+            config: this.#network.config,
+          })
+          signatures.push(await signerProvider(message, signer))
+        }
+
+        return sealTransaction(txSkeleton, signatures)
+      }
+
+      return createTransactionFromSkeleton(txSkeleton)
+    })()
+
+    return {
+      tx,
+      index: parseInt(scriptConfig.INDEX),
+      dataHash: scriptConfig.CODE_HASH,
+      typeId: utils.ckbHash(blockchain.Script.pack(typeIdScript)),
       send: () => this.#rpc.sendTransaction(tx),
     }
   }
