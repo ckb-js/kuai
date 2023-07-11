@@ -18,6 +18,8 @@ lock.hash_type = "type"\n`
 export const CKBLatestBinVersion = async (): Promise<string | undefined> => {
   const { body } = await request('https://api.github.com/repos/nervosnetwork/ckb/releases/latest', {
     method: 'GET',
+    // Here is why we need to set User-Agent:
+    // https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#user-agent-required
     headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'CKB-Js-Kuai-DApp' },
   })
   const json = await body.json()
