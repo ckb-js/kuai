@@ -16,15 +16,21 @@ const extMap: Record<Args['language'], string> = {
   ts: '.ts',
 }
 
-const uintLength = [1, 2, 4, 6, 16, 32, 64]
+enum UInts {
+  Uint8 = 1,
+  Uint16 = 2,
+  Uint32 = 4,
+  Uint64 = 8,
+  Uint128 = 16,
+  Uint256 = 32,
+  Uint512 = 64,
+}
 
 const basicMoleculeType = 'byte' as const
 
-const uintTypes = ['Uint8', 'Uint16', 'Uint32', 'Uint64', 'Uint128', 'Uint256', 'Uint512'] as const
+type SimpleMoleculeType = keyof typeof UInts
 
-const tsMolecuelType = uintTypes[0]
-
-type SimpleMoleculeType = (typeof uintTypes)[number]
+const tsBasicMolecuelType: SimpleMoleculeType = 'Uint8'
 
 type MoleculeInterface =
   | SimpleMoleculeType
@@ -116,14 +122,13 @@ interface Schema {
 }
 
 function generateFixBytes(itemCount: number) {
-  const uintIdx = uintLength.indexOf(itemCount)
-  if (uintIdx !== -1 && uintTypes[uintIdx]) {
-    return uintTypes[uintIdx]
-  }
-  return {
-    type: 'array',
-    value: [tsMolecuelType, itemCount],
-  } as ArrayInterface
+  return (
+    (UInts[itemCount] as SimpleMoleculeType) ??
+    ({
+      type: 'array',
+      value: [tsBasicMolecuelType, itemCount],
+    } as ArrayInterface)
+  )
 }
 
 function generateSchemaToInterface(
