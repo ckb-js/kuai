@@ -736,7 +736,7 @@ describe('test store', () => {
     describe('test with lockArgs', () => {
       const store = new MoleculeStore<{ lockArgs: { type: 'array'; value: ['Uint8', 2] } }>(
         { lockArgs: true },
-        { options: { lockArgs: { type: 'array', value: ['Uint8', 'Uint8'] } } },
+        { options: { lockArgs: { type: 'array', value: ['Uint8', 2] } } },
       )
       const initValue: { lockArgs: [number, number] } = { lockArgs: [10, 20] }
       const chainData = store.initOnChain(initValue)
