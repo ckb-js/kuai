@@ -6,6 +6,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { PATH } from './constant'
 import undici from 'undici'
+import { pipeline } from 'node:stream/promises'
 
 const MAX_REDIRECTS = 5
 
@@ -40,24 +41,10 @@ export const cachePath = (...paths: string[]) => createPath(path.resolve(PATH.ca
 
 export const configPath = (...paths: string[]) => createPath(path.resolve(PATH.config, ...paths))
 
-export async function downloadFile(url: string | URL | UrlObject, filePath: string) {
-  try {
-    const { body } = await undici.request(url, { method: 'GET', maxRedirections: MAX_REDIRECTS })
-
-    const fileStream = fs.createWriteStream(filePath)
-
-    await new Promise((res, rej) => {
-      body
-        .pipe(fileStream)
-        .on('finish', () => {
-          fileStream.close()
-          res(0)
-        })
-        .on('error', (error) => {
-          rej(error)
-        })
-    })
-  } catch (error) {
-    console.error('Error downloading file:', error)
-  }
-}
+export const downloadFile = async (url: string | URL | UrlObject, filePath: string) =>
+  await pipeline(
+    await undici.request(url, { method: 'GET', maxRedirections: MAX_REDIRECTS }).then((res) => res.body),
+    fs.createWriteStream(filePath),
+  ).catch((e) => {
+    console.error('Error downloading file:', e)
+  })
