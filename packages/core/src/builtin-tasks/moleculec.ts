@@ -194,6 +194,31 @@ function checkMoleculecExist() {
   }
 }
 
+function generateTsInterface(schemaFile: string, outputPath: string) {
+  const schemaStructJSON = execSync(`moleculec --schema-file ${schemaFile} --language - --format json`).toString()
+  const { declarations } = JSON.parse(schemaStructJSON) as Schema
+  const declarationsMaps: Record<string, Declaration> = {}
+  declarations.forEach((v) => {
+    declarationsMaps[v.name] = v
+  })
+  const outputStream = fs.createWriteStream(outputPath)
+  declarations.map((v) => {
+    outputStream.write(
+      `export type ${v.name}Type = ${JSON.stringify(generateSchemaToInterface(v, declarationsMaps), undefined, 2)}`,
+    )
+    outputStream.write('\r\n')
+    outputStream.write(
+      `export const ${v.name}: ${v.name}Type = ${JSON.stringify(
+        generateSchemaToInterface(v, declarationsMaps),
+        undefined,
+        2,
+      )}`,
+    )
+    outputStream.write('\r\n\r\n')
+  })
+  outputStream.close()
+}
+
 task('moleculec', 'Create molecule interface with schema file')
   .addParam('schema-file', 'Provide a schema file to compile.', '', paramTypes.string)
   .addParam(
@@ -233,38 +258,12 @@ task('moleculec', 'Create molecule interface with schema file')
         name: path.basename(schemaFile, '.mol'),
         ext: extMap[language],
       })
-    if (language !== 'ts') {
-      try {
-        execSync(`moleculec --schema-file ${schemaFile} --language ${language} > ${outputPath}`)
-        console.info('generate success...')
-      } catch (error) {
-        console.error(error)
-      }
-      return
-    }
     try {
-      const schemaStructJSON = execSync(`moleculec --schema-file ${schemaFile} --language - --format json`).toString()
-      const { declarations } = JSON.parse(schemaStructJSON) as Schema
-      const declarationsMaps: Record<string, Declaration> = {}
-      declarations.forEach((v) => {
-        declarationsMaps[v.name] = v
-      })
-      const outputStream = fs.createWriteStream(outputPath)
-      declarations.map((v) => {
-        outputStream.write(
-          `export type ${v.name}Type = ${JSON.stringify(generateSchemaToInterface(v, declarationsMaps), undefined, 2)}`,
-        )
-        outputStream.write('\r\n')
-        outputStream.write(
-          `export const ${v.name}: ${v.name}Type = ${JSON.stringify(
-            generateSchemaToInterface(v, declarationsMaps),
-            undefined,
-            2,
-          )}`,
-        )
-        outputStream.write('\r\n\r\n')
-      })
-      outputStream.close()
+      if (language !== 'ts') {
+        execSync(`moleculec --schema-file ${schemaFile} --language ${language} > ${outputPath}`, { stdio: 'inherit' })
+      } else {
+        generateTsInterface(schemaFile, outputPath)
+      }
       console.info('generate success...')
     } catch (error) {
       console.error(
