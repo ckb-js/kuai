@@ -2,7 +2,7 @@ import os from 'node:os'
 import path from 'node:path'
 import decompress from 'decompress'
 import fs from 'node:fs'
-import { downloadFile } from './util/file'
+import { downloadFile } from '@ckb-js/kuai-common'
 import { CKB_CLI_RELEASE_URL, DEFAULT_CKB_CLI_VERSION, DEFAULT_BIN_PATH } from './constants'
 
 export interface CKBCLIDownloadOptions {
