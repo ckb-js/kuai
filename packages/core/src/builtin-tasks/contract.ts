@@ -31,7 +31,6 @@ interface ContractDeployArgs {
   export?: string
   migrationDir?: string
   noTypeId: boolean
-  send: boolean
 }
 
 function isMultisigFromInfo(fromInfo: FromInfo): fromInfo is MultisigScript {
@@ -90,11 +89,10 @@ subtask('contract:deploy')
     true,
   )
   .addParam('export', 'export transaction to file', '', paramTypes.path, true)
-  .addParam('send', 'send transaction directly', false, paramTypes.boolean, true)
   .addParam('no-type-id', 'not use type id deploy', false, paramTypes.boolean, true)
   .addParam('migration-dir', 'migration directory for saving json format migration files', '', paramTypes.path, true)
   .setAction(async (args: ContractDeployArgs, { config, run }) => {
-    const { name, from, feeRate, signer, binPath, noTypeId = false, send = false, migrationDir } = args
+    const { name, from, feeRate, signer, binPath, noTypeId = false, migrationDir } = args
     const { ckbChain } = config
 
     const fromInfos = parseFromInfoByCli(from)
@@ -190,9 +188,7 @@ subtask('contract:deploy')
       })
 
       writeFileSync(exportPath, JSON.stringify(exportData, null, 2))
-    }
-
-    if (send) {
+    } else {
       const txHash = await sendTx()
       console.info('deploy success, txHash: ', txHash)
       if (migrationDir) {
@@ -231,7 +227,6 @@ interface ContractUpgradeArgs {
   deployer?: string[]
   feeRate?: number
   export?: string
-  send: boolean
 }
 subtask('contract:upgrade')
   .addParam('name', 'name of the contract to upgrade', '', paramTypes.string, true)
@@ -262,9 +257,8 @@ subtask('contract:upgrade')
     true,
   )
   .addParam('export', 'export transaction to file', '', paramTypes.path, true)
-  .addParam('send', 'send transaction directly', false, paramTypes.boolean, true)
   .setAction(async (args: ContractUpgradeArgs, { config, run }) => {
-    const { name, feePayer, deployer, feeRate, signer, binPath, send = false, migrationDir } = args
+    const { name, feePayer, deployer, feeRate, signer, binPath, migrationDir } = args
     const { ckbChain } = config
 
     const deployerInfos = deployer ? parseFromInfoByCli(deployer) : []
@@ -388,9 +382,7 @@ subtask('contract:upgrade')
       })
 
       writeFileSync(exportPath, JSON.stringify(exportData, null, 2))
-    }
-
-    if (send) {
+    } else {
       const txHash = await sendTx()
       console.info('deploy success, txHash: ', txHash)
 
