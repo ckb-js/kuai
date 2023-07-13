@@ -1,0 +1,267 @@
+{
+  "namespace": "moleculec-with-import",
+  "imports": [
+    {
+      "name": "attributes",
+      "paths": [],
+      "path_supers": 0
+    },
+    {
+      "name": "skills",
+      "paths": [],
+      "path_supers": 0
+    },
+    {
+      "name": "basic_types",
+      "paths": ["common"],
+      "path_supers": 0
+    }
+  ],
+  "declarations": [
+    {
+      "type": "array",
+      "name": "Class",
+      "item": "byte",
+      "item_count": 1
+    },
+    {
+      "type": "table",
+      "name": "Hero",
+      "fields": [
+        {
+          "name": "class",
+          "type": "Class"
+        },
+        {
+          "name": "level",
+          "type": "Uint8"
+        },
+        {
+          "name": "experiences",
+          "type": "Uint32"
+        },
+        {
+          "name": "hp",
+          "type": "Uint16"
+        },
+        {
+          "name": "mp",
+          "type": "Uint16"
+        },
+        {
+          "name": "base_damage",
+          "type": "Uint16"
+        },
+        {
+          "name": "attrs",
+          "type": "Attributes"
+        },
+        {
+          "name": "skills",
+          "type": "Skills"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "name": "Monster",
+      "fields": [
+        {
+          "name": "hp",
+          "type": "Uint16"
+        },
+        {
+          "name": "damage",
+          "type": "Uint16"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "Attributes",
+      "fields": [
+        {
+          "name": "strength",
+          "type": "AttrValue"
+        },
+        {
+          "name": "dexterity",
+          "type": "AttrValue"
+        },
+        {
+          "name": "endurance",
+          "type": "AttrValue"
+        },
+        {
+          "name": "speed",
+          "type": "AttrValue"
+        },
+        {
+          "name": "intelligence",
+          "type": "AttrValue"
+        },
+        {
+          "name": "wisdom",
+          "type": "AttrValue"
+        },
+        {
+          "name": "perception",
+          "type": "AttrValue"
+        },
+        {
+          "name": "concentration",
+          "type": "AttrValue"
+        }
+      ],
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "ArmorLight",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "ArmorHeavy",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "ArmorShields",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "WeaponSwords",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "WeaponBows",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "WeaponBlunt",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "Dodge",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "PickLocks",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "Mercantile",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "option",
+      "name": "Survival",
+      "item": "SkillLevel",
+      "imported_depth": 1
+    },
+    {
+      "type": "union",
+      "name": "Skill",
+      "items": [
+        {
+          "typ": "ArmorLight",
+          "id": 0
+        },
+        {
+          "typ": "ArmorHeavy",
+          "id": 1
+        },
+        {
+          "typ": "ArmorShields",
+          "id": 2
+        },
+        {
+          "typ": "WeaponSwords",
+          "id": 3
+        },
+        {
+          "typ": "WeaponBows",
+          "id": 4
+        },
+        {
+          "typ": "WeaponBlunt",
+          "id": 5
+        },
+        {
+          "typ": "Dodge",
+          "id": 6
+        },
+        {
+          "typ": "PickLocks",
+          "id": 7
+        },
+        {
+          "typ": "Mercantile",
+          "id": 8
+        },
+        {
+          "typ": "Survival",
+          "id": 9
+        }
+      ],
+      "imported_depth": 1
+    },
+    {
+      "type": "dynvec",
+      "name": "Skills",
+      "item": "Skill",
+      "imported_depth": 1
+    },
+    {
+      "type": "array",
+      "name": "AttrValue",
+      "item": "byte",
+      "item_count": 1,
+      "imported_depth": 1
+    },
+    {
+      "type": "array",
+      "name": "SkillLevel",
+      "item": "byte",
+      "item_count": 1,
+      "imported_depth": 1
+    },
+    {
+      "type": "array",
+      "name": "Uint8",
+      "item": "byte",
+      "item_count": 1,
+      "imported_depth": 1
+    },
+    {
+      "type": "array",
+      "name": "Uint16",
+      "item": "byte",
+      "item_count": 2,
+      "imported_depth": 1
+    },
+    {
+      "type": "array",
+      "name": "Uint32",
+      "item": "byte",
+      "item_count": 4,
+      "imported_depth": 1
+    }
+  ]
+}

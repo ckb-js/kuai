@@ -1,0 +1,42 @@
+{
+  "namespace": "union",
+  "imports": [],
+  "declarations": [
+    {
+      "type": "array",
+      "name": "ArmorLight",
+      "item": "byte",
+      "item_count": 2
+    },
+    {
+      "type": "array",
+      "name": "ArmorHeavy",
+      "item": "byte",
+      "item_count": 4
+    },
+    {
+      "type": "array",
+      "name": "ArmorShields",
+      "item": "byte",
+      "item_count": 8
+    },
+    {
+      "type": "union",
+      "name": "Skill",
+      "items": [
+        {
+          "typ": "ArmorLight",
+          "id": 0
+        },
+        {
+          "typ": "ArmorHeavy",
+          "id": 1
+        },
+        {
+          "typ": "ArmorShields",
+          "id": 2
+        }
+      ]
+    }
+  ]
+}

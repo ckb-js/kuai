@@ -174,7 +174,7 @@ function generateSchemaToInterface(
         value: declaration.items.reduce(
           (pre, v) => ({
             ...pre,
-            [v.id.toString()]: generateSchemaToInterface(declrationMap[v.typ] ?? v.typ, declrationMap),
+            [v.typ.toString()]: generateSchemaToInterface(declrationMap[v.typ] ?? v.typ, declrationMap),
           }),
           {},
         ),
@@ -199,7 +199,7 @@ function checkMoleculecExist() {
   }
 }
 
-function generateTsInterface(schemaFile: string, outputPath: string) {
+export function generateTsInterface(schemaFile: string, outputPath: string) {
   const schemaStructJSON = execSync(`moleculec --schema-file ${schemaFile} --language - --format json`).toString()
   const { declarations } = JSON.parse(schemaStructJSON) as Schema
   const declarationsMaps: Record<string, Declaration> = {}

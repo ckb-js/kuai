@@ -1,0 +1,7 @@
+array Uint16 [byte; 2];
+array Uint16Array [Uint16; 2];
+struct Attributes {
+    dexterity:      byte,
+    speed:          Uint16,
+    test:           Uint16Array,
+}

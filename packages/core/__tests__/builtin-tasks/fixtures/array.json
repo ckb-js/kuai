@@ -1,0 +1,24 @@
+{
+  "namespace": "array",
+  "imports": [],
+  "declarations": [
+    {
+      "type": "array",
+      "name": "Uint8",
+      "item": "byte",
+      "item_count": 1
+    },
+    {
+      "type": "array",
+      "name": "Test",
+      "item": "Uint8",
+      "item_count": 2
+    },
+    {
+      "type": "array",
+      "name": "TestArray",
+      "item": "Test",
+      "item_count": 2
+    }
+  ]
+}
