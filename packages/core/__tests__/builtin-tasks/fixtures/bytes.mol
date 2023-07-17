@@ -1,0 +1,7 @@
+array Uint8 [byte; 1];
+array Uint16 [byte; 2];
+array Uint32 [byte; 4];
+array Uint64 [byte; 8];
+array Uint128 [byte; 16];
+array Uint512 [byte; 32];
+array Uint48 [byte; 6];

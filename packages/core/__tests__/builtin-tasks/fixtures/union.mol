@@ -1,0 +1,9 @@
+array ArmorLight [byte; 2];
+array ArmorHeavy [byte; 4];
+array ArmorShields [byte; 8];
+
+union Skill {
+    ArmorLight,
+    ArmorHeavy,
+    ArmorShields,
+}

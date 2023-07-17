@@ -1,0 +1,11 @@
+array Uint16 [byte; 2];
+
+table Org {
+  name: Uint16,
+  url: Uint16,
+}
+
+table Attrs {
+  name: byte,
+  org: Org,
+}
