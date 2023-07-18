@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "command": {
     "version": {
+      "message": "chore: update versions and changelogs",
       "conventionalCommits": true,
       "exact": true
     }
