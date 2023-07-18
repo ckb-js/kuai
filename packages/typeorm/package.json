@@ -4,6 +4,7 @@
   "description": "Inject TypeOrm by InversifyJs",
   "author": "felicityin <yinjingping2022@gmail.com>",
   "homepage": "https://github.com/ckb-js/kuai#readme",
+  "private": true,
   "license": "MIT",
   "main": "lib/index.js",
   "directories": {
