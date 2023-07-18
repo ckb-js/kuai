@@ -9,28 +9,6 @@ Second demo of Kuai is a sudt dapp which allows a Token Minter to create/mint/ma
 - The account selected in MetaMask is used to generate the SUDT Token ID.
 - This account is also the "owner" or "issuer" of the token, and the only account that can mint more tokens. 
 
-## Roles
-
-- Token Minter: The one who mint the SUDT and are able to manage tokens he minted
-- Token Holder: Users who have access to the Token, he can transfer
-- Normal Users: Users who many just want to view some info of token
-
-## User story
-
-- Token Minter: As a Token Minter, I minted the Token, so I can manage them, so
-
-  - I can mint the token to an CKB address no matter when and how many I want.
-  - I can update token info, they're name,symbol,icon,description and website
-
-- Token Holder: As a Token Holder , some Token are in posession of me, so
-
-  - I can transfer the Tokens I have
-
-- Normal Users: As a normal user, I may be just interested in sudt, still,
-  - I can view the token info
-  - I can view the token distribution, like the holder list and Total minted Amount.
-  - I can view the token transfer history.
-
 ## Flow
 
 ### Login
@@ -103,6 +81,22 @@ The historu tab show all transaction of current address including the pending tr
 
 ![picture 24](pic/HistoryTab.png)  
 
+- TXID
+
+  The theme color highlights the TXID (transaction hash), which can be clicked to navigate to the transaction details page on the blockchain explorer.
+- From/To
+
+  For the user's address in this transaction, the SUDT balance will be displayed as increased under "From" and decreased under "To".
+- From/To Address*
+
+  The To address is marked with an underline, and clicking on it will navigate to the address details page on the blockchain explorer.
+
+  [Note] In a typical CKB UTXO transaction, there may be more than one From address and To address. However, in this demo, the input/output address count is limited (with the change address being the same as the To address), so there is only one From address and a single output address other than the From address.
+
+  [Enhanced Compatibility] If the transaction has two or more From addresses or three or more To addresses, an asterisk (*) can be added after From/To.
+- SUDT Amount Change
+
+  The SUDT balance for the user address changes after this transaction.
 
 > If possible, the mint transaction and the modification transaction should be also tag or in the hover bubble.
 
@@ -120,8 +114,9 @@ Thus user can create his own SUDT here. And distribute the SUDT to a list of add
 
 > *While creating the SUDT, Users can mint the token to several address
 
-### Send a Token
+### Send tokens
 
+![pic 0](pic/SendTokens.png)  
 
 
 There are two ways to get into the SUDT Transfer page.
@@ -131,7 +126,7 @@ There are two ways to get into the SUDT Transfer page.
 
 > Bulk sending tokens could also be a useful function if possible.
 
-### Receive a Token
+### Receive tokens
 
 Click the receive button on Root Page or any token page will lead to the receiving Page.
 Copy the CKB address , and send it to Sender to promote the transaction.
@@ -160,5 +155,5 @@ Token creater could manage the SUDT created by him/her for 2 ways:
 ![picture 15](pic/2876104ae922f45c28745157c463468292a2003b77971701dfa57c928ec20288.png)  
 
 The Manage Page consists of 2 part: 
-- SUDT pannel
-- Token history: shows all confirmed Transaction of this token.
+- SUDT pannel: User could view/modify/mint his SUDT
+- SUDT Token history: shows all confirmed Transaction of this SUDT.
