@@ -1,4 +1,6 @@
-[Kuai Logo]
+<p align="center">
+  <img src="https://github.com/ckb-js/kuai/assets/7271329/f128229c-950d-45e8-85f5-c937c04aee9b" alt="Kuai Logo" width="120" />
+</p>
 
 # Overview
 
