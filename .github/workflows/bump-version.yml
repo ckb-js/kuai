@@ -1,0 +1,43 @@
+name: Update versions and changelogs
+
+on:
+  create:
+    branches:
+      - rc/*
+
+jobs:
+  default:
+    name: Update versions and changelogs
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Create Branch
+      #   uses: peterjgrainger/action-create-branch@v2.2.0
+      #   with:
+      #     branch: chore-update-version-for-${{ github.ref_name }}
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: chore-update-version-for-${{ github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+
+      - name: Update versions and changelogs
+        run: npm run version minor
+
+      - name: Commit
+        uses: EndBug/add-and-commit@v9
+        with:
+          commit: --signoff
+          message: 'chore: update versions and changelogs'
+          new_branch: chore-update-version-for-${{ github.ref_name }}
+
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: Update versions and changelogs
