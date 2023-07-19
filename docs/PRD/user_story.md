@@ -1,13 +1,13 @@
 # User Stories of the Second demo
 
-> Notes: The requirements mentioned here is for some specific requirement which is considerred general and easy to understand. Developers can adjust/modify/rewrite the whole implement once he understand the framework of kuai.
+> Notes: The requirements mentioned here are for some specific requirements general and easy to understand. Developers can adjust/modify/rewrite the whole implementation once they understand the framework of kuai.
 
-Second demo of Kuai is a sudt dapp which allows a Token Minter to create/mint/manage token and Holders to transfer token.
+The second demo of Kuai is a sudt dapp which allows a Token Minter to mint/manage token and Holders to transfer token.
 
 ## Rules
 - The SUDT tool allows users create SUDT tokens using just MetaMask.
 - The account selected in MetaMask is used to generate the SUDT Token ID.
-- This account is also the "owner" or "issuer" of the token, and the only account that can mint more tokens. 
+- This account is also the MINTER of the token, and the only account that can mint more tokens. 
 
 ## Flow
 
@@ -58,7 +58,7 @@ Asset Tab shows all the tokens and assets the address contain.
 - Click the token line, then the page jump to the Token details.
 #### Tokens Tab
 
-Tokens Tab shows almost all the SUDT tokens in this case.
+Tokens Tab shows almost all the SUDT tokens in this case.Tokens tab here are subject to a whitelist. Only SUDTs created through this demo will be displayed under the Token tab list.
 
 ![picture 22](pic/TokenTab.png)  
 
