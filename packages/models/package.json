@@ -31,9 +31,9 @@
   "dependencies": {
     "@ckb-js/kuai-common": "^0.0.1",
     "@ckb-js/kuai-io": "^0.0.1",
-    "@ckb-lumos/base": "0.19.0",
-    "@ckb-lumos/codec": "0.19.0",
-    "@ckb-lumos/experiment-tx-assembler": "0.19.0",
+    "@ckb-lumos/base": "0.20.0",
+    "@ckb-lumos/codec": "0.20.0",
+    "@ckb-lumos/experiment-tx-assembler": "0.20.0",
     "inversify": "6.0.1",
     "ioredis": "5.3.2",
     "lodash": "4.17.21",
