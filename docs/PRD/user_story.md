@@ -32,6 +32,8 @@ After logging in, the user can check his assets.
 
 There are several parts in this page:
 
+<!-- 水龙头低于阈值,弹窗自动提示,facuet icon 可以考虑隐藏/换位置  -->
+
 1. Metamask Account display: This shows the account that user has connected to this site.
 2. Disconnect button: Click to disconnect current account, and back to home page.
 3. CKB balance: show the CKB balance of the corresponding ckb address of the ethereum format address. This value should update as quick as it can be.
@@ -142,7 +144,7 @@ Token creater could manage the SUDT created by him/her for 2 ways:
 
 ![picture 14](pic/2f493675c909782581e2c5d295be06b53ecb143325ac40da9d43f91786981a06.png)  
 
-
+<!-- CKBxxxx1 -> CKBxxxx2 Amount:1000 , Amount means the diff of this account in this tx.-->
 - Modify the token information
   
   Clicking Modify Info button on Manage Page or Tokens Tab on Root Page will lead to the information page. Modify the information and then click Confirm button.
