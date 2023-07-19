@@ -14,7 +14,7 @@ The second demo of Kuai is a sudt dapp which allows a Token Minter to mint/manag
 ### Login
 Users need to connect to the site by Metamask in order to log in and use this SUDT management tool.
 
-![picture 18](pic/LogInFlowChart.png)  
+![pic 1](pic/LogInFlowChart.png)  
 
 
 1. Click the "Connect to Metamask" button on the login page;
@@ -22,6 +22,11 @@ Users need to connect to the site by Metamask in order to log in and use this SU
 3. The current metamask account will be connected to this site automatically.
 
 > By default, the users will be connected to testnet, so there will be a Faucet link for them. New users who never create SUDT will be provided with the Create method; on the other hand, users who created SUDT will be provided with the Manage method.
+
+> After connecting the testnet at firt time , for a new account, the CKB balance will mostly be 0. Then a window will pop up to help claim Test CKB.
+
+![pic 2](pic/AutoFaucetWindow.png)  
+
 
 ### Root Page
 
@@ -32,13 +37,12 @@ After logging in, the user can check his assets.
 
 There are several parts in this page:
 
-<!-- 水龙头低于阈值,弹窗自动提示,facuet icon 可以考虑隐藏/换位置  -->
 
 1. Metamask Account display: This shows the account that user has connected to this site.
 2. Disconnect button: Click to disconnect current account, and back to home page.
 3. CKB balance: show the CKB balance of the corresponding ckb address of the ethereum format address. This value should update as quick as it can be.
 4. CKB network & address: Show the network the user is going to work on and the corresponding address of the ethereum format address on this network.
-5. Function Part: Privide 4 different functions that user can do with SUDT. And the 3rd function will change based on to which kind of address current wallet connect.
+5. Function Part: Privide 3 different functions that user can do with SUDT. And the 3rd function will change based on to which kind of address current wallet connect.
 6. Asset Tab: The defaut tab where users can view his ckb and SUDT balance.
 7. Tokens Tab: A Token List where display all the SUDT creadted by all users and of course the token minted by current user will display on the top.
 8. History Tab: Users can check all their transaction history of the current account.
@@ -50,9 +54,14 @@ User Functions of these parts.
 ![picture 20](pic/Switch%20Network.png)  
 
 
+
 - Choose to send/receive/create/manage SUDT
 
 #### Asset Tab
+
+![pic 6](pic/AssetTab.png)  
+
+
 Asset Tab shows all the tokens and assets the address contain.
 - CKB balance will show on the top of this list.
 - Asset Tab automaticly find the specific SUDT if current address mint, and show it behind CKB.
@@ -62,7 +71,8 @@ Asset Tab shows all the tokens and assets the address contain.
 
 Tokens Tab shows almost all the SUDT tokens in this case.Tokens tab here are subject to a whitelist. Only SUDTs created through this demo will be displayed under the Token tab list.
 
-![picture 22](pic/TokenTab.png)  
+![pic 7](pic/TokenTab.png)  
+
 
 1. Users need to turn on the Token detector to abtain all the SUDT tokens in this case.
 2. User can turn off the Token detector as well.
@@ -83,12 +93,14 @@ The historu tab show all transaction of current address including the pending tr
 
 ![picture 24](pic/HistoryTab.png)  
 
+
+
 - TXID
 
   The theme color highlights the TXID (transaction hash), which can be clicked to navigate to the transaction details page on the blockchain explorer.
-- From/To
+- From/To/Mint
 
-  For the user's address in this transaction, the SUDT balance will be displayed as increased under "From" and decreased under "To".
+  For the user's address in this transaction, the SUDT balance will be displayed as increased under "From" and decreased under "To". Specially, If the transaction is a mint transaction which means the out put SUDT amount is bigger than the input SUDT.
 - From/To Address*
 
   The To address is marked with an underline, and clicking on it will navigate to the address details page on the blockchain explorer.
@@ -107,7 +119,11 @@ The historu tab show all transaction of current address including the pending tr
 A new account usually dont have any other assets beyond CKB.
 Thus user can create his own SUDT here. And distribute the SUDT to a list of addresses.
 
-![picture 25](pic/CreateToken.png)  
+
+
+![pic 11](pic/CreateToken.png)  
+
+
 
 
 1. Click the create button on homepage
@@ -118,7 +134,9 @@ Thus user can create his own SUDT here. And distribute the SUDT to a list of add
 
 ### Send tokens
 
-![pic 0](pic/SendTokens.png)  
+![pic 13](pic/SendTokens.png)  
+
+
 
 
 There are two ways to get into the SUDT Transfer page.
@@ -133,7 +151,8 @@ There are two ways to get into the SUDT Transfer page.
 Click the receive button on Root Page or any token page will lead to the receiving Page.
 Copy the CKB address , and send it to Sender to promote the transaction.
 
-![picture 26](pic/ReceiveSUDT.png)  
+
+![pic 14](pic/ReceiveSUDT.png)  
 
 
 ### Manage User created SUDT
@@ -142,9 +161,9 @@ Token creater could manage the SUDT created by him/her for 2 ways:
 1. Modify the token information
 2. Mint more token to an address
 
-![picture 14](pic/2f493675c909782581e2c5d295be06b53ecb143325ac40da9d43f91786981a06.png)  
+![pic 15](pic/ManageToken.png)  
+ 
 
-<!-- CKBxxxx1 -> CKBxxxx2 Amount:1000 , Amount means the diff of this account in this tx.-->
 - Modify the token information
   
   Clicking Modify Info button on Manage Page or Tokens Tab on Root Page will lead to the information page. Modify the information and then click Confirm button.
@@ -154,8 +173,14 @@ Token creater could manage the SUDT created by him/her for 2 ways:
   Clicking Mint Button lead to the mint page.
 
 #### About Manage Page
-![picture 15](pic/2876104ae922f45c28745157c463468292a2003b77971701dfa57c928ec20288.png)  
+
+![pic 17](pic/ManagePage.png)  
+
 
 The Manage Page consists of 2 part: 
 - SUDT pannel: User could view/modify/mint his SUDT
 - SUDT Token history: shows all confirmed Transaction of this SUDT.
+  1. Tx ID: The Transaction ID. Click to jump to explorer.
+  2. Address1 -> Address2: Means SUDT is sent from Address1 to Address2
+  3. Time zone: If this tx is finished, then it will be the onchain time, if it's still pending, then it just show "Pending"
+  4. Amount: the amount of SUDT Address1 sent to Address2.
