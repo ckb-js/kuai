@@ -40,7 +40,28 @@ type GetOneType<
   Left extends unknown[] = [...FixedBasicTypeArr, ...DynBasicTypeArr],
 > = IsOneType<T, Left> extends never ? never : T
 
-type GetFixedBasicOffChain<T extends FixedBasic> = T extends 'Uint8' | 'Uint16' | 'Uint32' ? number : BI
+// Add _?: never for Code hint
+type Uint8 = number & { _?: never }
+type Uint16 = number & { _?: never }
+type Uint32 = number & { _?: never }
+type Uint64 = BI & { _?: never }
+type Uint128 = BI & { _?: never }
+type Uint256 = BI & { _?: never }
+type Uint512 = BI & { _?: never }
+
+type GetFixedBasicOffChain<T extends FixedBasic> = T extends 'Uint8'
+  ? Uint8
+  : T extends 'Uint16'
+  ? Uint16
+  : T extends 'Uint32'
+  ? Uint32
+  : T extends 'Uint64'
+  ? Uint64
+  : T extends 'Uint128'
+  ? Uint128
+  : T extends 'Uint256'
+  ? Uint256
+  : Uint512
 type GetBasicOffChain<T extends FixedBasic | DynamicBasic> = IsOneType<T> extends never
   ? never
   : T extends FixedBasic
@@ -65,7 +86,7 @@ type GetMoleculeType<T extends keyof typeof moleculeTypes> = (typeof moleculeTyp
 type FixedParam = FixedBasic | ArrayParam | StructParam
 type FixedCodecConfig = FixedBasic | StructCodecConfig | ArrayCodecConfig
 
-type ArrayParam = { type: GetMoleculeType<'array'>; value: [FixedParam, number] }
+type ArrayParam = { type: GetMoleculeType<'array'>; value: readonly [FixedParam, number] }
 type ArrayCodecConfig = { type: GetMoleculeType<'array'>; value: FixedCodecConfig[] }
 
 type StructParam = { type: GetMoleculeType<'struct'>; value: Record<string, FixedParam> }
@@ -174,8 +195,9 @@ export function isFixedCodecConfig(value: unknown): value is GetCodecConfig<Fixe
       case 'array':
         return (
           Array.isArray(value.value) &&
-          value.value.every(isFixedCodecConfig) &&
-          new Set(value.value.map((v) => JSON.stringify(v))).size === 1
+          value.value.length === 2 &&
+          isFixedCodecConfig(value.value[0]) &&
+          typeof value.value[1] === 'number'
         )
       case 'struct':
         return (
@@ -222,12 +244,12 @@ export function isCodecConfig(value: unknown): value is GetCodecConfig<DynamicPa
 export class MoleculeStorage<T extends DynamicParam> extends ChainStorage<GetMoleculeOffChain<T>> {
   codec?: BytesCodec
 
-  constructor(moleculeType: GetCodecConfig<T>) {
+  constructor(moleculeType: T) {
     super()
     this.codec = this.getCodec(moleculeType)
   }
 
-  private getFixedCodec(codecConfig: FixedCodecConfig): FixedBytesCodec {
+  private getFixedCodec(codecConfig: FixedParam): FixedBytesCodec {
     if (typeof codecConfig === 'string') {
       switch (codecConfig) {
         case 'Uint8':
@@ -243,7 +265,7 @@ export class MoleculeStorage<T extends DynamicParam> extends ChainStorage<GetMol
       }
     }
     if (codecConfig.type === moleculeTypes.array) {
-      return molecule.array(this.getFixedCodec(codecConfig.value[0]), codecConfig.value.length)
+      return molecule.array(this.getFixedCodec(codecConfig.value[0]), codecConfig.value[1])
     }
     const keys = Object.keys(codecConfig.value)
     const structParams: Record<string, FixedBytesCodec> = {}
@@ -253,7 +275,7 @@ export class MoleculeStorage<T extends DynamicParam> extends ChainStorage<GetMol
     return molecule.struct(structParams, keys)
   }
 
-  private getCodec(codecConfig: CodecConfig): BytesCodec {
+  private getCodec(codecConfig: DynamicParam): BytesCodec {
     if (typeof codecConfig === 'string') {
       if (codecConfig === 'string') return UTF8String
       return this.getFixedCodec(codecConfig)

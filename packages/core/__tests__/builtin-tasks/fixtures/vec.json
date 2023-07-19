@@ -1,0 +1,36 @@
+{
+  "namespace": "vec",
+  "imports": [],
+  "declarations": [
+    {
+      "type": "array",
+      "name": "Skill",
+      "item": "byte",
+      "item_count": 2
+    },
+    {
+      "type": "fixvec",
+      "name": "Skills",
+      "item": "Skill"
+    },
+    {
+      "type": "table",
+      "name": "Attrs",
+      "fields": [
+        {
+          "name": "name",
+          "type": "byte"
+        },
+        {
+          "name": "role",
+          "type": "byte"
+        }
+      ]
+    },
+    {
+      "type": "dynvec",
+      "name": "Users",
+      "item": "Attrs"
+    }
+  ]
+}

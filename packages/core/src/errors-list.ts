@@ -56,6 +56,10 @@ Please run: npm install --save-dev typescript`,
       code: 'UNSUPPORTED_NETWORK',
       message: 'Unsupported network %var%.',
     },
+    INVALID_CKB_VERSION: {
+      code: 'UNSUPPORTED_NETWORK',
+      message: 'Unsupported network %var%.',
+    },
     UNSUPPORTED_SIGNER: {
       code: 'UNSUPPORTED_SIGNER',
       message: 'Unsupported signer %var%.',
@@ -63,6 +67,14 @@ Please run: npm install --save-dev typescript`,
     CONTRACT_RELEASE_FILE_NOT_FOUND: {
       code: 'CONTRACT_RELEASE_FILE_NOT_FOUND',
       message: '%var% contract release file not found, please check if conrtact exists or build it first',
+    },
+    CONTRACT_MIGRATION_DIRECTORY_NOT_FOUND: {
+      code: 'CONTRACT_MIGRATION_DIRECTORY_NOT_FOUND',
+      message: '%var% contract migration directory not found',
+    },
+    INVALID_CONTRACT_MIGRATION_FILE: {
+      code: 'INVALID_CONTRACT_MIGRATION_FILE',
+      message: '%var% contract migration file invalid',
     },
     NOT_SPECIFY_CONTRACT: {
       code: 'NOT_SPECIFY_CONTRACT',

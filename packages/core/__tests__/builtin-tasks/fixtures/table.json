@@ -1,0 +1,40 @@
+{
+  "namespace": "table",
+  "imports": [],
+  "declarations": [
+    {
+      "type": "array",
+      "name": "Uint16",
+      "item": "byte",
+      "item_count": 2
+    },
+    {
+      "type": "table",
+      "name": "Org",
+      "fields": [
+        {
+          "name": "name",
+          "type": "Uint16"
+        },
+        {
+          "name": "url",
+          "type": "Uint16"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "name": "Attrs",
+      "fields": [
+        {
+          "name": "name",
+          "type": "byte"
+        },
+        {
+          "name": "org",
+          "type": "Org"
+        }
+      ]
+    }
+  ]
+}

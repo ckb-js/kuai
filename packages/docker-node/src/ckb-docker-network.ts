@@ -1,40 +1,29 @@
 import Docker, { ContainerCreateOptions } from 'dockerode'
-import type { DockerNodeStartOptions, InfraScript } from './types'
+import type { StartOptions } from './types'
 import { join } from 'node:path'
 import fs from 'node:fs'
-import path from 'node:path'
-import { Address, Indexer, RPC, commons, helpers, hd, Transaction, config, CellDep } from '@ckb-lumos/lumos'
-import { waitUntilCommitted } from '@ckb-js/kuai-common'
+import { config } from '@ckb-lumos/lumos'
+import { generateDevConfig } from './helper'
+import { CKBNode } from './interface'
+import { CKBNodeBase } from './base'
 
 const CKB_NODE_IMAGE = 'kuai/ckb-dev'
 const DOCKER_SOCKET_PATH = process.env.DOCKER_SOCKET || '/var/run/docker.sock'
 
-export class CkbDockerNetwork {
+export class CkbDockerNetwork extends CKBNodeBase implements CKBNode {
   #docker: Docker
   #lumosConfig: config.Config = config.getConfig()
   #port = '8114'
   #host = 'localhost'
 
   constructor() {
+    super()
     this.#docker = new Docker({ socketPath: DOCKER_SOCKET_PATH })
   }
 
-  private generateDevConfig(genesisAccountArgs: string[] = []): string {
-    const generateGenesisAccount = (args: string) => `
-[[genesis.issued_cells]]
-capacity = 20_000_000_000_00000000
-lock.code_hash = "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
-lock.args = "${args}"
-lock.hash_type = "type"\n`
-    const extraConfig = genesisAccountArgs.reduce((a, b) => a + generateGenesisAccount(b), '')
-    const config = fs.readFileSync(join(__dirname, '../ckb', 'dev-template.toml'), 'utf-8')
-
-    return config + extraConfig
-  }
-
-  public async start({ port, detached = false, genesisAccountArgs = [] }: DockerNodeStartOptions): Promise<void> {
+  public async start({ port, detached = false, genesisAccountArgs = [] }: StartOptions): Promise<void> {
     this.#port = port
-    const devConfig = this.generateDevConfig(genesisAccountArgs)
+    const devConfig = generateDevConfig(genesisAccountArgs)
     fs.writeFileSync(join(__dirname, '../ckb', 'dev.toml'), devConfig)
 
     const config: ContainerCreateOptions = {
@@ -70,129 +59,6 @@ lock.hash_type = "type"\n`
     return container.start()
   }
 
-  private async doDeploy(
-    rpc: RPC,
-    indexer: Indexer,
-    from: Address,
-    privateKey: string,
-    script: string,
-    filePath: string,
-    cellDeps?: { name: string; cellDep: CellDep }[],
-  ): Promise<InfraScript> {
-    const scriptBinary = fs.readFileSync(filePath)
-    let txSkeleton = (
-      await commons.deploy.generateDeployWithDataTx({
-        cellProvider: indexer,
-        scriptBinary,
-        fromInfo: from,
-      })
-    ).txSkeleton
-    cellDeps?.forEach((dep) => {
-      txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => cellDeps.push(dep.cellDep))
-    })
-    const txHash = await rpc.sendTransaction(this.sign(txSkeleton, privateKey))
-
-    try {
-      await waitUntilCommitted(rpc, txHash)
-    } catch (e) {
-      console.error(e)
-    }
-
-    return {
-      name: script,
-      path: filePath,
-      depType: 'code',
-      cellDeps,
-      outPoint: {
-        txHash,
-        index: '0x0',
-      },
-    }
-  }
-
-  private async deployBuiltInScripts(
-    scriptName: string[],
-    builtInDirPath: string,
-    indexer: Indexer,
-    rpc: RPC,
-    from: Address,
-    privateKey: string,
-  ): Promise<InfraScript[]> {
-    const scripts: InfraScript[] = []
-    for (const script of scriptName) {
-      const filePath = path.join(builtInDirPath, script)
-      scripts.push(await this.doDeploy(rpc, indexer, from, privateKey, script, filePath))
-    }
-
-    return scripts
-  }
-
-  private sign(txSkeleton: helpers.TransactionSkeletonType, privateKey: string): Transaction {
-    txSkeleton = commons.common.prepareSigningEntries(txSkeleton)
-    const signature = hd.key.signRecoverable(txSkeleton.get('signingEntries').get(0)!.message, privateKey)
-    return helpers.sealTransaction(txSkeleton, [signature])
-  }
-
-  private async deployCustomScripts(
-    filePath: string,
-    indexer: Indexer,
-    rpc: RPC,
-    from: Address,
-    privateKey: string,
-  ): Promise<InfraScript[]> {
-    const scripts: InfraScript[] = []
-    if (fs.existsSync(filePath)) {
-      const configs = JSON.parse(fs.readFileSync(filePath).toString()) as { custom: InfraScript[] }
-      if (configs.custom && Array.isArray(configs.custom)) {
-        for (const script of configs.custom) {
-          const deployedScript = await this.doDeploy(
-            rpc,
-            indexer,
-            from,
-            privateKey,
-            script.name,
-            script.path,
-            script.cellDeps
-              ? scripts
-                  .filter((v) => script.cellDeps?.map((v) => v.name).includes(v.name))
-                  .map((v) => {
-                    return { name: v.name, cellDep: { depType: v.depType, outPoint: v.outPoint } }
-                  })
-              : undefined,
-          )
-          scripts.push(deployedScript)
-        }
-      }
-    }
-
-    return scripts
-  }
-
-  public async deployScripts({
-    builtInScriptName,
-    configFilePath,
-    builtInDirPath,
-    indexer,
-    rpc,
-    privateKey,
-  }: {
-    builtInScriptName: string[]
-    configFilePath: string
-    builtInDirPath: string
-    indexer: Indexer
-    rpc: RPC
-    privateKey: string
-  }): Promise<void> {
-    const from = helpers.encodeToConfigAddress(hd.key.privateKeyToBlake160(privateKey), 'SECP256K1_BLAKE160')
-    await indexer.waitForSync()
-    const config = {
-      builtIn: await this.deployBuiltInScripts(builtInScriptName, builtInDirPath, indexer, rpc, from, privateKey),
-      custom: await this.deployCustomScripts(configFilePath, indexer, rpc, from, privateKey),
-    }
-
-    fs.writeFileSync(configFilePath, Buffer.from(JSON.stringify(config)), { flag: 'w' })
-  }
-
   public async stop(): Promise<void> {
     const containers = await this.#docker.listContainers()
     await Promise.all(
@@ -202,37 +68,23 @@ lock.hash_type = "type"\n`
     )
   }
 
-  public async generateLumosConfig(): Promise<void> {
-    const rpc = new RPC(this.url)
-    const block = await rpc.getBlockByNumber('0x0')
-    this.#lumosConfig = {
-      PREFIX: 'ckt',
-      SCRIPTS: {
-        SECP256K1_BLAKE160: {
-          CODE_HASH: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
-          HASH_TYPE: 'type',
-          TX_HASH: block.transactions[1].hash!,
-          INDEX: '0x0',
-          DEP_TYPE: 'depGroup',
-          SHORT_ID: 0,
-        },
-        SECP256K1_BLAKE160_MULTISIG: {
-          CODE_HASH: '0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a8',
-          HASH_TYPE: 'type',
-          TX_HASH: block.transactions[1].hash!,
-          INDEX: '0x1',
-          DEP_TYPE: 'depGroup',
-          SHORT_ID: 1,
-        },
-      },
-    }
-  }
-
   get lumosConfig(): config.Config {
     return this.#lumosConfig
   }
 
+  protected set lumosConfig(config: config.Config) {
+    this.#lumosConfig = config
+  }
+
   get url(): string {
     return `http://${this.#host}:${this.#port}`
+  }
+
+  get host(): string {
+    return this.#host
+  }
+
+  get port(): string {
+    return this.#port
   }
 }

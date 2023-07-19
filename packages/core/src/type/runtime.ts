@@ -25,6 +25,9 @@ export interface KuaiConfig {
 export interface DevNodeConfig {
   builtInContractConfigPath?: string
   builtInContractDownloadBaseUrl?: string
+  ckb: {
+    version?: string
+  }
 }
 
 export type ContractConfig = {

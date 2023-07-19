@@ -1,9 +1,30 @@
-import type { CellDep } from '@ckb-lumos/lumos'
+import type { CellDep, Indexer, RPC } from '@ckb-lumos/lumos'
 
-export interface DockerNodeStartOptions {
+export interface StartOptions {
+  genesisAccountArgs?: string[]
   port: string
   detached?: boolean
-  genesisAccountArgs?: string[]
+}
+
+export interface DeployOptions {
+  builtInScriptName: string[]
+  configFilePath: string
+  builtInDirPath: string
+  indexer: Indexer
+  rpc: RPC
+  privateKey: string
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface StopOptions {}
+
+export interface BinNodeStartOptions extends StartOptions {
+  version: string
+}
+
+export interface BinNodeStopOptions extends StopOptions {
+  version: string
+  clear: boolean
 }
 
 export type InfraScript = {

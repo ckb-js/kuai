@@ -1,0 +1,36 @@
+{
+  "namespace": "struct",
+  "imports": [],
+  "declarations": [
+    {
+      "type": "array",
+      "name": "Uint16",
+      "item": "byte",
+      "item_count": 2
+    },
+    {
+      "type": "array",
+      "name": "Uint16Array",
+      "item": "Uint16",
+      "item_count": 2
+    },
+    {
+      "type": "struct",
+      "name": "Attributes",
+      "fields": [
+        {
+          "name": "dexterity",
+          "type": "byte"
+        },
+        {
+          "name": "speed",
+          "type": "Uint16"
+        },
+        {
+          "name": "test",
+          "type": "Uint16Array"
+        }
+      ]
+    }
+  ]
+}
