@@ -1,17 +1,16 @@
 name: Update versions and changelogs
 
-on:
-  create:
-    branches:
-      - rc/v*
+on: create
 
 jobs:
   default:
     name: Update versions and changelogs
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write # for opening PR
-      contents: write # for commit
+      pull-requests: write # for updating PR
+      contents: write # for opening PR
+    env:
+      IS_RC_BRANCH: ${{ startsWith(github.ref_name, 'rc/v') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -25,9 +24,11 @@ jobs:
 
         # this is a patch for incompatibility between lerna@7 and npm@9 https://github.com/lerna/lerna/issues/3418#issuecomment-1337756237
       - name: Remove lock file
+        if: env.IS_RC_BRANCH == 'true'
         run: rm package-lock.json
 
       - name: Get version number
+        if: env.IS_RC_BRANCH == 'true'
         id: version-number
         run: |
           branch_name=${{ github.ref_name }}
@@ -36,6 +37,7 @@ jobs:
           echo "version_number=${version_number}" >> $GITHUB_OUTPUT
 
       - name: Update versions and changelogs
+        if: env.IS_RC_BRANCH == 'true'
         id: changelog
         run: |
           npm run bump-version ${{ steps.version-number.outputs.version_number }}
@@ -45,6 +47,7 @@ jobs:
           echo -e "changelog<<EOF"$'\n'"$changelog"$'\n'EOF >> $GITHUB_OUTPUT
 
       - name: Set GPG
+        if: env.IS_RC_BRANCH == 'true'
         uses: crazy-max/ghaction-import-gpg@v5
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -53,6 +56,7 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Open PR to rc branch
+        if: env.IS_RC_BRANCH == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
           title: Update versions and changelogs for ${{ steps.version-number.outputs.version_number }}
