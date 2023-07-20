@@ -1,0 +1,41 @@
+name: Open PR from rc branch to main branch
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - rc/v*
+
+jobs:
+  default:
+    name: Open PR from rc branch to main branch
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # for updating PR
+      contents: write # for opening PR
+    env:
+      IS_VERSION_MERGED: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'chore-update-version-for-rc/') }}
+    steps:
+      - name: Debug
+        run: |
+          echo $IS_VERSION_MERGED
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Open PR to main branch
+        uses: actions/script@v6
+        with:
+          script: |
+            github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: context.ref,
+              base: 'main',
+              title: `Merge ${context.ref} to main branch`,
+              body: `Ready to release ${context.ref}`
+
+            })
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
