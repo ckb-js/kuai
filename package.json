@@ -19,7 +19,8 @@
     "lint": "eslint 'packages/*/{src,__tests__}/**/*.ts'",
     "prepare": "husky install",
     "format:check": "prettier -cu packages/**/src/*",
-    "format:write": "prettier -wu packages/**/src/*"
+    "format:write": "prettier -wu packages/**/src/*",
+    "publish:all": "npx lerna publish --no-private"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "6.1.0",
