@@ -10,9 +10,9 @@
     "test": "jest test"
   },
   "dependencies": {
-    "@ckb-js/kuai-core": "0.0.1",
-    "@ckb-js/kuai-io": "0.0.1",
-    "@ckb-js/kuai-models": "0.0.1",
+    "@ckb-js/kuai-core": "0.0.1-alpha",
+    "@ckb-js/kuai-io": "0.0.1-alpha",
+    "@ckb-js/kuai-models": "0.0.1-alpha",
     "@ckb-lumos/base": "0.20.0",
     "@ckb-lumos/bi": "0.20.0",
     "@ckb-lumos/codec": "0.20.0",
