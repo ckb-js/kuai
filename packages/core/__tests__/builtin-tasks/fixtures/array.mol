@@ -1,0 +1,3 @@
+array Uint8 [byte; 1];
+array Test [Uint8; 2];
+array TestArray [Test; 2];

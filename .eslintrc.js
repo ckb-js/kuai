@@ -8,9 +8,10 @@ module.exports = {
       'error',
       {
         varsIgnorePattern: '^_',
+        argsIgnorePattern: '^_',
       },
     ],
     '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/explicit-module-boundary-types': 'error',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
   },
-};
+}

@@ -17,10 +17,13 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install project dependencies and build
-        run: npx lerna bootstrap
+        run: npm i
 
       - name: Build packages
         run: npm run build
 
-      - name: Run unit test
-        run: yarn test
+      - name: Run test with coverage
+        run: npx lerna run test -- --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3

@@ -1,0 +1,11 @@
+array Skill [byte; 2];
+// fix vec
+vector Skills <Skill>;
+
+table Attrs {
+  name: byte,
+  role: byte,
+}
+
+// dynvec
+vector Users <Attrs>;

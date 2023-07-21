@@ -1,1 +1,11 @@
 *.js
+*.md
+*.txt
+docker-compose.yml
+dockerfile
+*.toml
+*.sh
+*.rs
+*.lock
+contract/
+*.mol

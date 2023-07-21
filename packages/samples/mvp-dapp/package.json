@@ -1,0 +1,30 @@
+{
+  "name": "kuai-mvp-dapp",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node src/main.ts",
+    "build": "tsc",
+    "build:watch": "tsc -w",
+    "start:prod": "node ./dist/main.js",
+    "cp-deploy-file": "cp -r ./contract/deployed_demo ./contract/deployed",
+    "test": "jest test"
+  },
+  "dependencies": {
+    "@ckb-js/kuai-core": "0.0.1-alpha",
+    "@ckb-js/kuai-io": "0.0.1-alpha",
+    "@ckb-js/kuai-models": "0.0.1-alpha",
+    "@ckb-lumos/base": "0.20.0",
+    "@ckb-lumos/bi": "0.20.0",
+    "@ckb-lumos/codec": "0.20.0",
+    "@ckb-lumos/lumos": "0.20.0",
+    "@koa/cors": "4.0.0",
+    "dotenv": "16.3.1",
+    "http-errors": "2.0.0",
+    "koa": "2.14.2",
+    "koa-body": "6.0.1"
+  },
+  "devDependencies": {
+    "@types/koa__cors": "4.0.0",
+    "typescript": "5.1.6"
+  }
+}

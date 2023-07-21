@@ -1,0 +1,13 @@
+[package]
+name = "kuai-mvp-contract"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ckb-std = "0.10.0"
+types = { path = "../../types", default-features = false }
+no-std-compat = { version = "0.4.1", features = [ "alloc" ] }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+

@@ -1,0 +1,48 @@
+{
+  "name": "@ckb-js/kuai-models",
+  "version": "0.0.1-alpha",
+  "description": "Models of Kuai runtime",
+  "author": "Keith <keithwhisper@gmail.com>",
+  "homepage": "https://github.com/ckb-js/kuai#readme",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ckb-js/kuai.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "bugs": {
+    "url": "https://github.com/ckb-js/kuai/issues"
+  },
+  "dependencies": {
+    "@ckb-js/kuai-common": "0.0.1-alpha",
+    "@ckb-js/kuai-io": "0.0.1-alpha",
+    "@ckb-lumos/base": "0.20.0",
+    "@ckb-lumos/codec": "0.20.0",
+    "@ckb-lumos/experiment-tx-assembler": "0.20.0",
+    "inversify": "6.0.1",
+    "ioredis": "5.3.2",
+    "lodash": "4.17.21",
+    "reflect-metadata": "0.1.13",
+    "tslib": "2.6.0",
+    "undici": "5.22.1"
+  },
+  "devDependencies": {
+    "@jest/globals": "29.6.1",
+    "typescript": "5.1.6"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@ckb-js/kuai-core",
+  "version": "0.0.1-alpha",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@ckb-js/kuai-common": "0.0.1-alpha",
+    "@ckb-js/kuai-docker-node": "0.0.1-alpha",
+    "@ckb-lumos/base": "0.20.0",
+    "@ckb-lumos/config-manager": "0.20.0",
+    "@ckb-lumos/hd": "0.20.0",
+    "@ckb-lumos/helpers": "0.20.0",
+    "@iarna/toml": "2.2.5",
+    "chalk": "4.1.2",
+    "decompress": "4.2.1",
+    "enquirer": "2.3.6",
+    "find-up": "5.0.0",
+    "jsonrepair": "3.2.0",
+    "lodash": "4.17.21",
+    "read": "2.1.0",
+    "undici": "5.22.1"
+  },
+  "devDependencies": {
+    "@types/decompress": "4.2.4",
+    "@types/lodash": "4.14.195"
+  }
+}

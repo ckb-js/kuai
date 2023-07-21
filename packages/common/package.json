@@ -1,0 +1,14 @@
+{
+  "name": "@ckb-js/kuai-common",
+  "version": "0.0.1-alpha",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@ckb-lumos/lumos": "0.20.0",
+    "undici": "5.22.1"
+  }
+}

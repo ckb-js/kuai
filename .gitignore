@@ -6,4 +6,12 @@ lerna-debug.log*
 node_modules/
 **/lib
 
+# build cache
+.tsbuildinfo
+
 .idea
+yarn.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
