@@ -1,5 +1,6 @@
 {
   "name": "kuai-mvp-dapp",
+  "private": true,
   "scripts": {
     "dev": "ts-node src/main.ts",
     "build": "tsc",
