@@ -1,6 +1,6 @@
 {
   "name": "@ckb-js/kuai-core",
-  "version": "0.0.1",
+  "version": "0.1.1-alpha",
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
@@ -8,8 +8,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@ckb-js/kuai-common": "^0.0.1",
-    "@ckb-js/kuai-docker-node": "0.0.1",
+    "@ckb-js/kuai-common": "0.1.1-alpha",
+    "@ckb-js/kuai-docker-node": "0.1.1-alpha",
     "@ckb-lumos/base": "0.20.0",
     "@ckb-lumos/config-manager": "0.20.0",
     "@ckb-lumos/hd": "0.20.0",
