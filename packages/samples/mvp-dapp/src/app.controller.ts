@@ -60,7 +60,7 @@ router.get<never, { path: string; address: string }>('/load/:address/:path', asy
   )
   const value = recordModel.load(`data.${params.path}`)
   if (value) {
-    ctx.ok(MvpResponse.ok(MvpResponse.ok(value)))
+    ctx.ok(MvpResponse.ok(value))
   } else {
     throw new MvpError('store is not found', '404')
   }
