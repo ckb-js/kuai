@@ -1,6 +1,6 @@
 {
   "name": "@ckb-js/kuai-common",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha",
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
