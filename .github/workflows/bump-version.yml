@@ -22,11 +22,6 @@ jobs:
         with:
           node-version: 18.x
 
-        # this is a patch for incompatibility between lerna@7 and npm@9 https://github.com/lerna/lerna/issues/3418#issuecomment-1337756237
-      - name: Remove lock file
-        if: env.IS_RC_BRANCH == 'true'
-        run: rm package-lock.json
-
       - name: Get version number
         if: env.IS_RC_BRANCH == 'true'
         id: version-number
@@ -64,4 +59,3 @@ jobs:
           body: ${{ steps.changelog.outputs.changelog }}
           committer: Chen Yu <chenyu@magickbase.com>
           branch: chore-update-version-for-${{ github.ref_name }}
-          add-paths: ':!package-lock.json'
