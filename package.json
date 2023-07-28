@@ -20,7 +20,7 @@
     "prepare": "husky install",
     "format:check": "prettier -cu packages/**/src/*",
     "format:write": "prettier -wu packages/**/src/*",
-    "bump-version": "npx lerna version --no-git-tag-version --no-private --no-push --sign-git-commit --yes",
+    "bump-version": "npx lerna version --no-git-tag-version --no-push --sign-git-commit --yes",
     "publish:all": "npx lerna publish --no-private from-package --yes"
   },
   "devDependencies": {
