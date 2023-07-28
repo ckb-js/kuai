@@ -4,7 +4,13 @@ import { getGenesisScriptsConfig, initialKuai } from '@ckb-js/kuai-core';
 import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io';
 import AppController from './app.controller';
 import './type-extends';
-import { REDIS_HOST_SYMBOL, REDIS_PORT_SYMBOL, initiateResourceBindingManager, mqContainer } from '@ckb-js/kuai-models';
+import {
+  REDIS_HOST_SYMBOL,
+  REDIS_OPT_SYMBOL,
+  REDIS_PORT_SYMBOL,
+  initiateResourceBindingManager,
+  mqContainer,
+} from '@ckb-js/kuai-models';
 import { config } from '@ckb-lumos/lumos';
 
 async function bootstrap() {
@@ -17,6 +23,10 @@ async function bootstrap() {
 
   if (kuaiEnv.config.redisHost) {
     mqContainer.bind(REDIS_HOST_SYMBOL).toConstantValue(kuaiEnv.config.redisHost);
+  }
+
+  if (kuaiEnv.config.redisOpt) {
+    mqContainer.bind(REDIS_OPT_SYMBOL).toConstantValue(kuaiEnv.config.redisOpt);
   }
 
   config.initializeConfig(
