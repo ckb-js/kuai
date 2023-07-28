@@ -286,8 +286,10 @@ describe('kuai cli', () => {
     })
 
     test('pass multiple variadic param', () => {
+      /* eslint-disable-next-line no-control-regex */
+      const ANSI_COLORS_CODE_REG = /\u001b\[[0-9;]*m/g
       const output = execSync(`npx kuai --config ${CONFIG_PATH} variadic-task --variadicParam 1 2`)
-      expect(output.toString()).toMatch('{ variadicParam: [ 1, 2 ] }')
+      expect(output.toString().replace(ANSI_COLORS_CODE_REG, '')).toMatch('{ variadicParam: [ 1, 2 ] }')
     })
   })
 })
