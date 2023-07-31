@@ -12,7 +12,13 @@ import { config } from '@ckb-lumos/lumos'
 import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io'
 import cors from '@koa/cors'
 import { router } from './app.controller'
-import { mqContainer, REDIS_PORT_SYMBOL, REDIS_HOST_SYMBOL, initiateResourceBindingManager } from '@ckb-js/kuai-models'
+import {
+  mqContainer,
+  REDIS_PORT_SYMBOL,
+  REDIS_HOST_SYMBOL,
+  initiateResourceBindingManager,
+  REDIS_OPT_SYMBOL,
+} from '@ckb-js/kuai-models'
 import { handleException } from './exception'
 
 async function bootstrap() {
@@ -25,6 +31,10 @@ async function bootstrap() {
 
   if (kuaiEnv.config.redisHost) {
     mqContainer.bind(REDIS_HOST_SYMBOL).toConstantValue(kuaiEnv.config.redisHost)
+  }
+
+  if (kuaiEnv.config.redisOpt) {
+    mqContainer.bind(REDIS_OPT_SYMBOL).toConstantValue(kuaiEnv.config.redisOpt)
   }
 
   config.initializeConfig(

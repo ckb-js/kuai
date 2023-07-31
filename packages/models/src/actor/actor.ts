@@ -12,6 +12,7 @@ import { ActorRefEmptyException } from '../exceptions/actor'
 
 export const REDIS_PORT_SYMBOL = Symbol('mq_redis_port')
 export const REDIS_HOST_SYMBOL = Symbol('mq_redis_host')
+export const REDIS_OPT_SYMBOL = Symbol('mq_redis_opt')
 
 @injectable()
 class MessageQueue {
@@ -20,8 +21,9 @@ class MessageQueue {
   constructor(
     @inject(REDIS_PORT_SYMBOL) @optional() port = 6379,
     @inject(REDIS_HOST_SYMBOL) @optional() host = '127.0.0.1',
+    @inject(REDIS_OPT_SYMBOL) @optional() opt = {},
   ) {
-    this.instance = new Redis(port, host)
+    this.instance = new Redis(port, host, opt)
   }
 }
 
