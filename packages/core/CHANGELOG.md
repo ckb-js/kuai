@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.1-alpha.0](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha...v0.0.1-alpha.0) (2023-07-31)
+
+
+### Bug Fixes
+
+* **deps:** update dependency enquirer to v2.4.1 ([#394](https://github.com/ckb-js/kuai/issues/394)) ([a869854](https://github.com/ckb-js/kuai/commit/a8698542a2de5cb1d15be6170142d37ffc5da7c8))
+
+
+
+
+
 ## 0.0.1-alpha (2023-07-21)
 
 

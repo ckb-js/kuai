@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.1-alpha.0](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha...v0.0.1-alpha.0) (2023-07-31)
+
+
+### Bug Fixes
+
+* **common:** add dependency env-paths to common package ([#401](https://github.com/ckb-js/kuai/issues/401)) ([1357300](https://github.com/ckb-js/kuai/commit/1357300bcf52147ff9722e0a643ceb67d7d6213c))
+* **deps:** update dependency enquirer to v2.4.1 ([#394](https://github.com/ckb-js/kuai/issues/394)) ([a869854](https://github.com/ckb-js/kuai/commit/a8698542a2de5cb1d15be6170142d37ffc5da7c8))
+* **deps:** update dependency enquirer to v2.4.1 ([#404](https://github.com/ckb-js/kuai/issues/404)) ([a804a8d](https://github.com/ckb-js/kuai/commit/a804a8d00c21fc22f4d6c36c0b0a4f084092656b))
+* **deps:** update dependency tslib to v2.6.1 ([#391](https://github.com/ckb-js/kuai/issues/391)) ([a19c590](https://github.com/ckb-js/kuai/commit/a19c5900017f8dcbd6a813674ccc1704226a9361))
+* strip ansi colors code from output for matching ([#399](https://github.com/ckb-js/kuai/issues/399)) ([6c3fcc1](https://github.com/ckb-js/kuai/commit/6c3fcc1aa8c4ec4b8184fae10afb48fb4fc31cc4))
+
+
+
+
+
 ## 0.0.1-alpha (2023-07-21)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@ckb-js/kuai-common",
-  "version": "0.0.1-alpha",
+  "version": "0.0.1-alpha.0",
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@ckb-lumos/lumos": "0.20.0",
+    "env-paths": "2.2.1",
     "undici": "5.22.1"
   }
 }

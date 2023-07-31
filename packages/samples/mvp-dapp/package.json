@@ -1,6 +1,7 @@
 {
   "name": "kuai-mvp-dapp",
   "private": true,
+  "version": "0.0.1-alpha.0",
   "scripts": {
     "dev": "ts-node src/main.ts",
     "build": "tsc",
@@ -10,9 +11,9 @@
     "test": "jest test"
   },
   "dependencies": {
-    "@ckb-js/kuai-core": "0.0.1-alpha",
-    "@ckb-js/kuai-io": "0.0.1-alpha",
-    "@ckb-js/kuai-models": "0.0.1-alpha",
+    "@ckb-js/kuai-core": "0.0.1-alpha.0",
+    "@ckb-js/kuai-io": "0.0.1-alpha.0",
+    "@ckb-js/kuai-models": "0.0.1-alpha.0",
     "@ckb-lumos/base": "0.20.0",
     "@ckb-lumos/bi": "0.20.0",
     "@ckb-lumos/codec": "0.20.0",
