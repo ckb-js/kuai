@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.1-alpha.0](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha...v0.0.1-alpha.0) (2023-07-31)
+
+
+### Bug Fixes
+
+* **common:** add dependency env-paths to common package ([#401](https://github.com/ckb-js/kuai/issues/401)) ([1357300](https://github.com/ckb-js/kuai/commit/1357300bcf52147ff9722e0a643ceb67d7d6213c))
+
+
+
+
+
 ## 0.0.1-alpha (2023-07-21)
 
 

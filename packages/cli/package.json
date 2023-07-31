@@ -1,6 +1,6 @@
 {
   "name": "@ckb-js/kuai-cli",
-  "version": "0.0.1-alpha",
+  "version": "0.0.1-alpha.0",
   "license": "MIT",
   "main": "lib/main.js",
   "bin": {
@@ -11,7 +11,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@ckb-js/kuai-core": "0.0.1-alpha",
+    "@ckb-js/kuai-core": "0.0.1-alpha.0",
     "commander": "11.0.0"
   },
   "devDependencies": {
