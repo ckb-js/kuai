@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.1-alpha.0](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha...v0.0.1-alpha.0) (2023-07-31)
+
+
+### Bug Fixes
+
+* strip ansi colors code from output for matching ([#399](https://github.com/ckb-js/kuai/issues/399)) ([6c3fcc1](https://github.com/ckb-js/kuai/commit/6c3fcc1aa8c4ec4b8184fae10afb48fb4fc31cc4))
+
+
+
+
+
 ## 0.0.1-alpha (2023-07-21)
 
 
