@@ -8,6 +8,8 @@ You can find an online preview of the Kuai MVP DApp at https://kuai-mvp-dapp-ui.
 
 [![kuai mvp dapp cover](https://i.imgur.com/romOKAF.png)](https://youtu.be/-R3EQxcWJVU)
 
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/KO6Gvb)
+
 ## Development Guide
 
 A comprehensive guide is available at [docs/tutorials/mvp-dapp.md](../../../docs/tutorials/mvp-dapp.md)
