@@ -32,7 +32,7 @@
   "dependencies": {
     "inversify": "6.0.1",
     "mysql": "2.18.1",
-    "pg": "8.11.1",
+    "pg": "8.11.2",
     "reflect-metadata": "0.1.13",
     "rxjs": "7.8.1",
     "tslib": "2.6.1",
