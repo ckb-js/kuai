@@ -5,7 +5,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## [0.0.1-alpha.1](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha.0...v0.0.1-alpha.1) (2023-08-03)
 
-**Note:** Version bump only for package @ckb-js/kuai-core
+* load ts-node on demand #411([#411](https://github.com/ckb-js/kuai/issues/411)) ([3d2e0ed](https://github.com/ckb-js/kuai/pull/411/commits/3d2e0edc64c9d895731a9b364428a58d7c0b18ad))```
 
 
 

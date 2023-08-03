@@ -9,6 +9,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Bug Fixes
 
 * **deps:** update dependency pg to v8.11.2 ([#410](https://github.com/ckb-js/kuai/issues/410)) ([4ec4d19](https://github.com/ckb-js/kuai/commit/4ec4d199813f87922aaf3a92f8faf5649625459f))
+* load ts-node on demand #411([#411](https://github.com/ckb-js/kuai/issues/411)) ([3d2e0ed](https://github.com/ckb-js/kuai/pull/411/commits/3d2e0edc64c9d895731a9b364428a58d7c0b18ad))
 
 
 
