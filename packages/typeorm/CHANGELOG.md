@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.1-alpha.1](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha.0...v0.0.1-alpha.1) (2023-08-03)
+
+
+### Bug Fixes
+
+* **deps:** update dependency pg to v8.11.2 ([#410](https://github.com/ckb-js/kuai/issues/410)) ([4ec4d19](https://github.com/ckb-js/kuai/commit/4ec4d199813f87922aaf3a92f8faf5649625459f))
+
+
+
+
+
 ## [0.0.1-alpha.0](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha...v0.0.1-alpha.0) (2023-07-31)
 
 
