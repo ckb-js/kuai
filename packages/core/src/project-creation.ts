@@ -30,9 +30,9 @@ const DEV_DEPENDENCIES: Dependencies = {
 }
 
 const KUAI_DEPENDENCIES: Dependencies = {
-  '@ckb-js/kuai-core': '0.0.1-alpha.0',
-  '@ckb-js/kuai-io': '0.0.1-alpha.0',
-  '@ckb-js/kuai-models': '0.0.1-alpha.0',
+  '@ckb-js/kuai-core': '0.0.1-alpha.1',
+  '@ckb-js/kuai-io': '0.0.1-alpha.1',
+  '@ckb-js/kuai-models': '0.0.1-alpha.1',
 }
 
 function printAsciiLogo() {
