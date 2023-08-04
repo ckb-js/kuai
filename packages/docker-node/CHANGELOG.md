@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.1-alpha.2](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha.1...v0.0.1-alpha.2) (2023-08-04)
+
+
+### Bug Fixes
+
+* list missing dependencies in package.json ([#416](https://github.com/ckb-js/kuai/issues/416)) ([019a24e](https://github.com/ckb-js/kuai/commit/019a24e6fd34969a0ec4ed19503ffa6bb130b07b))
+
+
+
+
+
 ## [0.0.1-alpha.1](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha.0...v0.0.1-alpha.1) (2023-08-03)
 
 **Note:** Version bump only for package @ckb-js/kuai-docker-node

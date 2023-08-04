@@ -1,6 +1,6 @@
 {
   "name": "@ckb-js/kuai-models",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.2",
   "description": "Models of Kuai runtime",
   "author": "Keith <keithwhisper@gmail.com>",
   "homepage": "https://github.com/ckb-js/kuai#readme",
@@ -29,8 +29,8 @@
     "url": "https://github.com/ckb-js/kuai/issues"
   },
   "dependencies": {
-    "@ckb-js/kuai-common": "0.0.1-alpha.1",
-    "@ckb-js/kuai-io": "0.0.1-alpha.1",
+    "@ckb-js/kuai-common": "0.0.1-alpha.2",
+    "@ckb-js/kuai-io": "0.0.1-alpha.2",
     "@ckb-lumos/base": "0.20.0",
     "@ckb-lumos/bi": "0.20.0",
     "@ckb-lumos/codec": "0.20.0",

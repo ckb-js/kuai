@@ -1,6 +1,6 @@
 {
   "name": "@ckb-js/kuai-docker-node",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.2",
   "license": "MIT",
   "description": "kuai run dev node by docker",
   "main": "lib/index.js",
@@ -12,7 +12,7 @@
     "@types/dockerode": "3.3.19"
   },
   "dependencies": {
-    "@ckb-js/kuai-common": "0.0.1-alpha.1",
+    "@ckb-js/kuai-common": "0.0.1-alpha.2",
     "@ckb-lumos/lumos": "0.20.0",
     "dockerode": "3.3.5",
     "undici": "5.22.1"
