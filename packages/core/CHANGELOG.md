@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.1-alpha.2](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha.1...v0.0.1-alpha.2) (2023-08-04)
+
+
+### Bug Fixes
+
+* list missing dependencies in package.json ([#416](https://github.com/ckb-js/kuai/issues/416)) ([019a24e](https://github.com/ckb-js/kuai/commit/019a24e6fd34969a0ec4ed19503ffa6bb130b07b))
+
+
+
+
+
 ## [0.0.1-alpha.1](https://github.com/ckb-js/kuai/compare/v0.0.1-alpha.0...v0.0.1-alpha.1) (2023-08-03)
 
 - load ts-node on demand #411([#411](https://github.com/ckb-js/kuai/issues/411)) ([3d2e0ed](https://github.com/ckb-js/kuai/pull/411/commits/3d2e0edc64c9d895731a9b364428a58d7c0b18ad))```
