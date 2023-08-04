@@ -1,13 +1,15 @@
-import { loadTsNode } from './typescript-support'
+import { willRunWithTypescript, loadTsNode } from './typescript-support'
 import { KuaiContext } from './context'
 import { KuaiRuntimeEnvironment } from './runtime'
 import { loadConfigAndTasks } from './config'
 import { KuaiArguments } from './type'
 
 export async function initialKuai(args: KuaiArguments = {}): Promise<KuaiContext> {
-  loadTsNode()
-
   const ctx = KuaiContext.getInstance()
+
+  if (willRunWithTypescript(args.configPath)) {
+    loadTsNode()
+  }
 
   const config = await loadConfigAndTasks(args)
 

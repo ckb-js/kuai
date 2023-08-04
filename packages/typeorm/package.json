@@ -1,6 +1,6 @@
 {
   "name": "@ckb-js/kuai-typeorm",
-  "version": "0.0.1-alpha.0",
+  "version": "0.0.1-alpha.1",
   "description": "Inject TypeOrm by InversifyJs",
   "author": "felicityin <yinjingping2022@gmail.com>",
   "homepage": "https://github.com/ckb-js/kuai#readme",
@@ -32,7 +32,7 @@
   "dependencies": {
     "inversify": "6.0.1",
     "mysql": "2.18.1",
-    "pg": "8.11.1",
+    "pg": "8.11.2",
     "reflect-metadata": "0.1.13",
     "rxjs": "7.8.1",
     "tslib": "2.6.1",
