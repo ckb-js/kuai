@@ -1,7 +1,6 @@
 import { Middleware, Route, Path, RouterContext, RoutePayload, Method } from './types'
-import type { Key } from 'path-to-regexp'
+import { type Key, pathToRegexp } from 'path-to-regexp'
 import { addLeadingSlash } from './helper'
-import { pathToRegexp } from 'path-to-regexp'
 import { NotFound } from 'http-errors'
 
 function isRoutePayload(x: unknown): x is RoutePayload {

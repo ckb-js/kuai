@@ -1,5 +1,5 @@
 import KoaRouter from 'koa-router'
-import * as Koa from 'koa'
+import type * as Koa from 'koa'
 import { CoR } from './cor'
 import type { JsonValue } from './types'
 

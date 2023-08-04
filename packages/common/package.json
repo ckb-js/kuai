@@ -8,8 +8,11 @@
     "test": "jest"
   },
   "dependencies": {
-    "@ckb-lumos/lumos": "0.20.0",
     "env-paths": "2.2.1",
     "undici": "5.22.1"
+  },
+  "devDependencies": {
+    "@ckb-lumos/base": "0.20.0",
+    "@ckb-lumos/lumos": "0.20.0"
   }
 }

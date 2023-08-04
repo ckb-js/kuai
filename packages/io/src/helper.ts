@@ -1,4 +1,4 @@
-import { Key, pathToRegexp } from 'path-to-regexp'
+import { type Key, pathToRegexp } from 'path-to-regexp'
 import { Method, Middleware, Path, Route, RouterContext } from './types'
 
 export const addLeadingSlash = (path?: string): string =>

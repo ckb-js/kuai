@@ -1,6 +1,5 @@
 import { Middleware, Route, Path, RouterContext, RoutePayload, Method } from './types'
-import type { Key } from 'path-to-regexp'
-import { pathToRegexp } from 'path-to-regexp'
+import { type Key, pathToRegexp } from 'path-to-regexp'
 import { NotFound } from 'http-errors'
 import { addLeadingSlash, concatPaths, matchParams } from './helper'
 import {
