@@ -1,6 +1,6 @@
 {
   "name": "@ckb-js/kuai-io",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.2",
   "description": "kuai io layer",
   "homepage": "https://github.com/ckb-js/kuai#readme",
   "license": "MIT",
@@ -32,9 +32,9 @@
     "url": "https://github.com/ckb-js/kuai/issues"
   },
   "dependencies": {
-    "@ckb-js/kuai-common": "0.0.1-alpha.1",
-    "@ckb-js/kuai-core": "0.0.1-alpha.1",
-    "@ckb-lumos/rpc": "0.20.0",
+    "@ckb-js/kuai-common": "0.0.1-alpha.2",
+    "@ckb-js/kuai-core": "0.0.1-alpha.2",
+    "@ckb-lumos/lumos": "0.20.0",
     "http-errors": "2.0.0",
     "koa-body": "6.0.1",
     "koa-compose": "4.1.0",
@@ -43,8 +43,11 @@
     "rxjs": "7.8.1"
   },
   "devDependencies": {
+    "@ckb-lumos/base": "0.20.0",
+    "@ckb-lumos/rpc": "0.20.0",
     "@types/koa-compose": "3.2.5",
     "@types/koa-router": "7.4.4",
-    "koa": "2.14.2"
+    "koa": "2.14.2",
+    "reflect-metadata": "0.1.13"
   }
 }
