@@ -1,4 +1,3 @@
-import { request } from 'undici'
 import { ActorURI, CallResponse, MessagePayload } from '../actor'
 import { ParamsMissException as MethodMissException } from '../exceptions'
 import { Store } from '../store'
@@ -20,7 +19,7 @@ export class Contract<
     if (!payload || !payload.value?.method) throw new MethodMissException()
     // call remote service
     try {
-      const res = await request(to, {
+      const res = await fetch(to, {
         method: 'POST',
         body: JSON.stringify({
           id: 0,
@@ -36,7 +35,7 @@ export class Contract<
         status: Status.ok,
         message: {
           pattern: payload.pattern,
-          value: res.body.json(),
+          value: res.json(),
         },
       }
     } catch (error) {
