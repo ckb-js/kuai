@@ -22,7 +22,7 @@ export const CKBLatestBinVersion = async (): Promise<string | undefined> => {
     // https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#user-agent-required
     headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'CKB-Js-Kuai-DApp' },
   })
-  const json = await body.json()
+  const json = (await body.json()) as { tag_name: string }
 
   return json.tag_name
 }

@@ -15,6 +15,6 @@
     "@ckb-js/kuai-common": "0.0.1-alpha.2",
     "@ckb-lumos/lumos": "0.20.0",
     "dockerode": "3.3.5",
-    "undici": "5.22.1"
+    "undici": "5.23.0"
   }
 }
