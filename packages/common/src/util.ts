@@ -1,14 +1,11 @@
 import type { TransactionWithStatus } from '@ckb-lumos/base'
 import type { RPC } from '@ckb-lumos/lumos'
-import type { URL, UrlObject } from 'node:url'
+import type { URL } from 'node:url'
 import { scheduler } from 'node:timers/promises'
 import path from 'node:path'
 import fs from 'node:fs'
 import { PATH } from './constant'
-import undici from 'undici'
 import { pipeline } from 'node:stream/promises'
-
-const MAX_REDIRECTS = 5
 
 export const waitUntilCommitted = async (rpc: RPC, txHash: string, timeout = 120): Promise<TransactionWithStatus> => {
   let waitTime = 0
@@ -41,9 +38,15 @@ export const cachePath = (...paths: string[]) => createPath(path.resolve(PATH.ca
 
 export const configPath = (...paths: string[]) => createPath(path.resolve(PATH.config, ...paths))
 
-export const downloadFile = async (url: string | URL | UrlObject, filePath: string) =>
+export const downloadFile = async (url: string | URL, filePath: string) =>
   await pipeline(
-    await undici.request(url, { method: 'GET', maxRedirections: MAX_REDIRECTS }).then((res) => res.body),
+    await fetch(url, { method: 'GET' }).then((res) => {
+      if (res.body) {
+        return res.body! as unknown as NodeJS.ReadableStream
+      } else {
+        throw new Error('No body in response')
+      }
+    }),
     fs.createWriteStream(filePath),
   ).catch((e) => {
     console.error('Error downloading file:', e)

@@ -2,6 +2,9 @@
   "name": "@ckb-js/kuai-core",
   "version": "0.0.1-alpha.2",
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",
@@ -22,8 +25,7 @@
     "find-up": "5.0.0",
     "jsonrepair": "3.2.0",
     "lodash": "4.17.21",
-    "read": "2.1.0",
-    "undici": "5.22.1"
+    "read": "2.1.0"
   },
   "devDependencies": {
     "@types/decompress": "4.2.4",
