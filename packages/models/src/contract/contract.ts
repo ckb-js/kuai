@@ -35,7 +35,7 @@ export class Contract<
         status: Status.ok,
         message: {
           pattern: payload.pattern,
-          value: res.json(),
+          value: await res.json(),
         },
       }
     } catch (error) {
