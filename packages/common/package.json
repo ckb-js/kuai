@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "env-paths": "2.2.1",
-    "undici": "5.22.1"
+    "undici": "5.23.0"
   },
   "devDependencies": {
     "@ckb-lumos/base": "0.20.0",

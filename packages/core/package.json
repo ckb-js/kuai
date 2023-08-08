@@ -23,7 +23,7 @@
     "jsonrepair": "3.2.0",
     "lodash": "4.17.21",
     "read": "2.1.0",
-    "undici": "5.22.1"
+    "undici": "5.23.0"
   },
   "devDependencies": {
     "@types/decompress": "4.2.4",
