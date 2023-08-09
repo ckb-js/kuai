@@ -1,4 +1,5 @@
-import type { CellDep, Indexer, RPC } from '@ckb-lumos/lumos'
+import { ContractManager } from '@ckb-js/kuai-common'
+import type { Indexer, RPC } from '@ckb-lumos/lumos'
 
 export interface StartOptions {
   genesisAccountArgs?: string[]
@@ -8,6 +9,7 @@ export interface StartOptions {
 
 export interface DeployOptions {
   builtInScriptName: string[]
+  contractManager: ContractManager
   configFilePath: string
   builtInDirPath: string
   indexer: Indexer
@@ -26,9 +28,3 @@ export interface BinNodeStopOptions extends StopOptions {
   version: string
   clear: boolean
 }
-
-export type InfraScript = {
-  name: string
-  path: string
-  cellDeps?: { name: string; cellDep: CellDep }[]
-} & CellDep
