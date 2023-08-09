@@ -16,7 +16,7 @@ if (process.env.REDIS_OPT) {
 }
 
 // fallback to REDISUSER due to https://github.com/ckb-js/kuai/pull/423#issuecomment-1668983983
-const REDIS_USER = redisOpt?.username ?? process.env.REDUSUSER
+const REDIS_USER = redisOpt?.username ?? process.env.REDISUSER
 const REDIS_PASSWORD = redisOpt?.password ?? process.env.REDISPASSWORD
 const REDIS_HOST = process.env.REDIS_HOST ?? process.env.REDISHOST
 const REDIS_PORT = process.env.REDIS_PORT ?? process.env.REDISPORT
