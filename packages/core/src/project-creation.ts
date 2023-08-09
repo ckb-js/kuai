@@ -29,10 +29,18 @@ const DEV_DEPENDENCIES: Dependencies = {
   typedoc: '0.24.7',
 }
 
-const KUAI_DEPENDENCIES: Dependencies = {
-  '@ckb-js/kuai-core': '0.0.1-alpha.2',
-  '@ckb-js/kuai-io': '0.0.1-alpha.2',
-  '@ckb-js/kuai-models': '0.0.1-alpha.2',
+async function getKuaiVersion(): Promise<string> {
+  const packageJson = await getPackageJson()
+  return packageJson.version
+}
+
+async function getKuaiDepdencies(): Promise<Dependencies> {
+  const version = await getKuaiVersion()
+  return {
+    '@ckb-js/kuai-core': version,
+    '@ckb-js/kuai-io': version,
+    '@ckb-js/kuai-models': version,
+  }
 }
 
 function printAsciiLogo() {
@@ -162,10 +170,14 @@ async function getNpmLinks(): Promise<Array<NpmLink>> {
 async function checkLocalKuaiLink() {
   const links = await getNpmLinks()
 
-  return Object.keys(KUAI_DEPENDENCIES).every((kuaiDep) => links.findIndex((link) => link.name === kuaiDep) !== -1)
+  const kuaiDep = await getKuaiDepdencies()
+
+  return Object.keys(kuaiDep).every((kuaiDep) => links.findIndex((link) => link.name === kuaiDep) !== -1)
 }
 
 async function installKuaiDependencies(projectRoot: string) {
+  const kuaiDep = await getKuaiDepdencies()
+
   if (await checkLocalKuaiLink()) {
     const { shouldUseLocalKuaiPackages } = await prompt<{ shouldUseLocalKuaiPackages: boolean }>({
       name: 'shouldUseLocalKuaiPackages',
@@ -175,13 +187,13 @@ async function installKuaiDependencies(projectRoot: string) {
     })
 
     if (shouldUseLocalKuaiPackages) {
-      await runCommand('npm', ['link', ...Object.keys(KUAI_DEPENDENCIES)], projectRoot)
+      await runCommand('npm', ['link', ...Object.keys(kuaiDep)], projectRoot)
       console.info(`✨ Link local kuai package successed ✨\n`)
     }
   }
 
   console.info('add kuai depende into package')
-  return installRecommendedDependencies(projectRoot, KUAI_DEPENDENCIES, false)
+  return installRecommendedDependencies(projectRoot, kuaiDep, false)
 }
 
 async function runCommand(command: string, args: string[], projectRoot?: string): Promise<boolean> {
