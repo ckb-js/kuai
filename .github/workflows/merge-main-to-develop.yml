@@ -1,0 +1,16 @@
+name: Merge main branch to develop branch
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  merge-main-to-develop:
+    name: Merge main back to develop
+    runs-on: ubuntu-latest
+    steps:
+      - name: pull-request
+        run: |
+          gh pr create --base develop --head main --title "Merge main to develop" --reviewer "ckb-js/kuai" --label "auto-pr"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
