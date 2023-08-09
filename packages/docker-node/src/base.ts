@@ -115,7 +115,6 @@ export abstract class CKBNodeBase implements CKBNode {
   async deployScripts({
     builtInScriptName,
     contractManager,
-    configFilePath,
     builtInDirPath,
     indexer,
     rpc,
@@ -123,20 +122,9 @@ export abstract class CKBNodeBase implements CKBNode {
   }: DeployOptions): Promise<void> {
     const from = helpers.encodeToConfigAddress(hd.key.privateKeyToBlake160(privateKey), 'SECP256K1_BLAKE160')
     await indexer.waitForSync()
-    const config = {
-      builtIn: await this.deployBuiltInScripts(
-        contractManager,
-        builtInScriptName,
-        builtInDirPath,
-        indexer,
-        rpc,
-        from,
-        privateKey,
-      ),
-      custom: await this.deployCustomScripts(contractManager, indexer, rpc, from, privateKey),
-    }
-
-    fs.writeFileSync(configFilePath, Buffer.from(JSON.stringify(config)), { flag: 'w' })
+    await this.deployBuiltInScripts(contractManager, builtInScriptName, builtInDirPath, indexer, rpc, from, privateKey)
+    await this.deployCustomScripts(contractManager, indexer, rpc, from, privateKey)
+    contractManager.write()
   }
 
   async generateLumosConfig(): Promise<void> {

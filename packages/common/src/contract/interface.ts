@@ -11,9 +11,3 @@ export interface ContractLoader {
   load: () => ContractDeploymentInfo[]
   write: (info: ContractDeploymentInfo[]) => void
 }
-
-export interface ContractManager {
-  contracts: ContractDeploymentInfo[]
-  updateContract: (info: ContractDeploymentInfo, loader?: ContractLoader) => void
-  write: () => void
-}
