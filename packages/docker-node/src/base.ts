@@ -25,7 +25,7 @@ export abstract class CKBNodeBase implements CKBNode {
     privateKey: string,
     script: string,
     filePath: string,
-    cellDeps?: { name: string; cellDep: CellDep }[],
+    cellDeps?: { cellDep: CellDep }[],
     depType: DepType = 'code',
   ): Promise<ContractDeploymentInfo> {
     const scriptBinary = fs.readFileSync(filePath)
@@ -101,10 +101,17 @@ export abstract class CKBNodeBase implements CKBNode {
         script.path,
         script.cellDeps
           ? contractManager.contracts
-              .filter((v) => script.cellDeps?.map((v) => v.name).includes(v.name))
+              .filter((v) =>
+                (script.cellDeps?.filter((v) => 'name' in v) as { name: string }[]).map((v) => v.name).includes(v.name),
+              )
               .map((v) => {
-                return { name: v.name, cellDep: { depType: v.depType, outPoint: v.outPoint } }
+                return { cellDep: { depType: v.depType, outPoint: v.outPoint } }
               })
+              .concat(
+                (script.cellDeps.filter((v) => 'cellDep' in v) as { cellDep: CellDep }[]).map((v) => ({
+                  cellDep: v.cellDep,
+                })),
+              )
           : undefined,
         script.depType,
       )
