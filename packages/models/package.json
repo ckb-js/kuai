@@ -47,7 +47,7 @@
     "tslib": "2.6.2"
   },
   "devDependencies": {
-    "@jest/globals": "29.6.2",
+    "@jest/globals": "29.6.3",
     "typescript": "5.1.6"
   }
 }
