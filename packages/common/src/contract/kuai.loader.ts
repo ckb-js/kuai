@@ -1,5 +1,5 @@
-import { ContractDeploymentInfo, ContractLoader } from './interface'
-import fs from 'fs'
+import type { ContractDeploymentInfo, ContractLoader } from './interface'
+import fs from 'node:fs'
 
 export class KuaiContractLoader implements ContractLoader {
   constructor(private path: string) {}
