@@ -1,4 +1,4 @@
-import { ContractDeploymentInfo, ContractLoader } from './interface'
+import type { ContractDeploymentInfo, ContractLoader } from './interface'
 
 export class ContractManager {
   #contracts: Map<string, [info: ContractDeploymentInfo, loader: ContractLoader]>
