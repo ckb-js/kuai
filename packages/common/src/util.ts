@@ -1,6 +1,5 @@
 import type { TransactionWithStatus } from '@ckb-lumos/base'
 import type { RPC } from '@ckb-lumos/lumos'
-import type { URL } from 'node:url'
 import { scheduler } from 'node:timers/promises'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -38,7 +37,7 @@ export const cachePath = (...paths: string[]) => createPath(path.resolve(PATH.ca
 
 export const configPath = (...paths: string[]) => createPath(path.resolve(PATH.config, ...paths))
 
-export const downloadFile = async (url: string | URL, filePath: string) =>
+export const downloadFile = async (url: RequestInfo | globalThis.URL, filePath: string) =>
   await pipeline(
     await fetch(url, { method: 'GET' }).then((res) => {
       if (res.body) {
