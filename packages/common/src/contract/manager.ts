@@ -13,15 +13,8 @@ export class ContractManager {
     })
   }
 
-  updateContract = (info: ContractDeploymentInfo, loader?: ContractLoader) => {
-    const contract = this.#contracts.get(info.name)
-    if (contract) {
-      const [_, loader] = contract
-      this.#contracts.set(info.name, [info, loader])
-    } else {
-      this.#contracts.set(info.name, [info, loader ?? this.loaders[0]])
-    }
-  }
+  updateContract = (info: ContractDeploymentInfo, loader?: ContractLoader) =>
+    this.#contracts.set(info.name, [info, loader ?? this.#contracts.get(info.name)?.[1] ?? this.loaders[0]])
 
   write = () => {
     this.#contracts.forEach(([info, loader]) => {
