@@ -32,10 +32,7 @@ export class ContractManager {
   getContract = (name: string): ContractDeploymentInfo | undefined => {
     const contract = this.#contracts.get(name)
 
-    if (contract) {
-      const [info] = contract
-      return info
-    }
+    return contract?.[0]
   }
 
   get contracts(): ContractDeploymentInfo[] {
