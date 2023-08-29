@@ -117,6 +117,27 @@ It's quite similar to the [setState](https://reactjs.org/docs/faq-state.html#wha
 
 ---
 
+## Prerequisites
+
+CKB Node and Redis Service are required in this MVP.
+
+### Get CKB Node Ready
+
+#### How to run CKB node locally
+
+- Mainnet: https://docs.nervos.org/docs/basics/guides/mainnet
+- Testnet: https://docs.nervos.org/docs/basics/guides/testnet
+- Devnet: https://docs.nervos.org/docs/basics/guides/devchain
+
+#### Available CKB nodes of community
+
+- Mainnet RPC endpoint: https://mainnet.ckb.dev/rpc
+- Testnet RPC endpoint: https://testnet.ckb.dev/rpc
+
+### Run Redis
+
+[Getting redis started](https://redis.io/docs/getting-started/)
+
 ## Getting started
 
 ### Get Contract Ready
@@ -162,22 +183,3 @@ $ npm run build
 # Service is expected to run on port 3000
 $ npm run start:prod
 ```
-
-### Get CKB Node Ready
-
-#### How to run CKB node locally
-
-- Mainnet: https://docs.nervos.org/docs/basics/guides/mainnet
-- Testnet: https://docs.nervos.org/docs/basics/guides/testnet
-- Devnet: https://docs.nervos.org/docs/basics/guides/devchain
-
-#### Available CKB nodes of community
-
-- Mainnet RPC endpoint: https://mainnet.ckb.dev/rpc
-- Testnet RPC endpoint: https://testnet.ckb.dev/rpc
-
-### Start the mvp dapp locally
-
-### Run Redis
-
-[Getting redis started](https://redis.io/docs/getting-started/)
