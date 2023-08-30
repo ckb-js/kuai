@@ -1,4 +1,4 @@
-import { ContractDeploymentInfo, ContractLoader } from './interface'
+import type { ContractDeploymentInfo, ContractLoader } from './interface'
 
 export class ContractManager {
   #contracts: Map<string, [info: ContractDeploymentInfo, loader: ContractLoader]>
@@ -13,15 +13,8 @@ export class ContractManager {
     })
   }
 
-  updateContract = (info: ContractDeploymentInfo, loader?: ContractLoader) => {
-    const contract = this.#contracts.get(info.name)
-    if (contract) {
-      const [_, loader] = contract
-      this.#contracts.set(info.name, [info, loader])
-    } else {
-      this.#contracts.set(info.name, [info, loader ?? this.loaders[0]])
-    }
-  }
+  updateContract = (info: ContractDeploymentInfo, loader?: ContractLoader) =>
+    this.#contracts.set(info.name, [info, loader ?? this.#contracts.get(info.name)?.[1] ?? this.loaders[0]])
 
   write = () => {
     this.#contracts.forEach(([info, loader]) => {
@@ -32,10 +25,7 @@ export class ContractManager {
   getContract = (name: string): ContractDeploymentInfo | undefined => {
     const contract = this.#contracts.get(name)
 
-    if (contract) {
-      const [info] = contract
-      return info
-    }
+    return contract?.[0]
   }
 
   get contracts(): ContractDeploymentInfo[] {
