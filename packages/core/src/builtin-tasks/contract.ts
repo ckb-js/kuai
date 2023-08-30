@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process'
 import read from 'read'
 import { existsSync, writeFileSync, cpSync, rmSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { KuaiError } from '@ckb-js/kuai-common'
+import { KuaiError, KuaiContractLoader, ContractManager, configPath } from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import type { FromInfo, MultisigScript } from '@ckb-lumos/common-scripts'
 import { parseFromInfo } from '@ckb-lumos/common-scripts'
@@ -97,7 +97,9 @@ subtask('contract:deploy')
 
     const fromInfos = parseFromInfoByCli(from)
 
-    if (!name && !binPath) {
+    const nameOrBinPath = name || binPath
+
+    if (!nameOrBinPath) {
       throw new KuaiError(ERRORS.BUILTIN_TASKS.NOT_SPECIFY_CONTRACT)
     }
 
@@ -152,6 +154,8 @@ subtask('contract:deploy')
       index,
       dataHash,
       typeId,
+      hashType,
+      depType,
       send: sendTx,
     } = await deployer.deploy(conrtactBinPath, fromInfos[0], { feeRate, enableTypeId: !noTypeId })
 
@@ -202,7 +206,7 @@ subtask('contract:deploy')
         const migrationData = {
           cell_recipes: [
             {
-              name: name || binPath,
+              name: nameOrBinPath,
               tx_hash: txHash,
               index: index,
               data_hash: dataHash,
@@ -213,6 +217,26 @@ subtask('contract:deploy')
 
         writeFileSync(path.join(_migrationPath, migrationFileName), JSON.stringify(migrationData, null, 2))
       }
+
+      const contractManager = new ContractManager([
+        new KuaiContractLoader(config.devNode?.builtInContractConfigPath ?? path.resolve(configPath(), 'scripts.json')),
+      ])
+
+      contractManager.updateContract({
+        name: nameOrBinPath,
+        path: conrtactBinPath,
+        scriptBase: {
+          codeHash: dataHash,
+          hashType: hashType,
+        },
+        outPoint: {
+          txHash: txHash,
+          index: '0x' + index.toString(16),
+        },
+        depType: depType,
+      })
+
+      contractManager.write()
     }
 
     return tx
@@ -335,6 +359,8 @@ subtask('contract:upgrade')
       index,
       dataHash,
       typeId,
+      hashType,
+      depType,
       send: sendTx,
     } = await contractDeployer.upgrade(
       conrtactBinPath,
@@ -391,7 +417,7 @@ subtask('contract:upgrade')
       const migrationData = {
         cell_recipes: [
           {
-            name: name || binPath,
+            name: targetContractName,
             tx_hash: txHash,
             index: index,
             data_hash: dataHash,
@@ -401,6 +427,26 @@ subtask('contract:upgrade')
       }
 
       writeFileSync(path.join(_migrationPath, migrationFileName), JSON.stringify(migrationData, null, 2))
+
+      const contractManager = new ContractManager([
+        new KuaiContractLoader(config.devNode?.builtInContractConfigPath ?? path.resolve(configPath(), 'scripts.json')),
+      ])
+
+      contractManager.updateContract({
+        name: targetContractName,
+        path: conrtactBinPath,
+        scriptBase: {
+          codeHash: dataHash,
+          hashType: hashType,
+        },
+        outPoint: {
+          txHash: txHash,
+          index: '0x' + index.toString(16),
+        },
+        depType: depType,
+      })
+
+      contractManager.write()
     }
 
     return tx
