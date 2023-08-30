@@ -1,0 +1,20 @@
+{
+  "name": "sudt",
+  "scripts": {
+    "dev": "ts-node src/main.ts",
+    "build": "tsc",
+    "build:watch": "tsc -w",
+    "start:prod": "node ./dist/main.js",
+    "test": "jest",
+    "doc": "typedoc"
+  },
+  "dependencies": {
+    "koa": "2.14.1",
+    "koa-body": "6.0.1"
+  },
+  "devDependencies": {
+    "ts-node": "10.9.1",
+    "typedoc": "0.24.7",
+    "typescript": "4.9.4"
+  }
+}
