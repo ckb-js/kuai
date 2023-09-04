@@ -9,6 +9,9 @@
     "doc": "typedoc"
   },
   "dependencies": {
+    "@ckb-js/kuai-core": "0.0.1-alpha.2",
+    "@ckb-js/kuai-io": "0.0.1-alpha.2",
+    "@ckb-js/kuai-models": "0.0.1-alpha.2",
     "koa": "2.14.1",
     "koa-body": "6.0.1"
   },
