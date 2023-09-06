@@ -181,13 +181,15 @@ Deploy contracts with kuai-cli[^5]
 
 ```bash
 # cd to /profile
-# kuai contract deploy --name <contract name> --from <deployer address> --netwrok <chain type> --send --signer <signer>
-$ kuai contract deploy --name kuai-mvp-contract --from ckt***************************************slzz --network testnet --send --signer ckb-cli
+# kuai contract deploy --name <contract name> --from <deployer address> --netwrok <chain type> --signer <signer>
+$ kuai contract deploy --name kuai-mvp-contract --from ckt***************************************slzz --network testnet --signer ckb-cli
 
 # [warn] `config` changed, regenerate lockScriptInfos!
 # Input ckt1q*****************************************************************************************gt9's password for sign messge by ckb-cli:
 # deploy success, txHash:  0x1ed********************************************************fbd3c
 ```
+
+Deploy contracts by tx file
 
 So far, we've completed the development&deployment of contracts.
 
