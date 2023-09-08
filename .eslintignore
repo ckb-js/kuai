@@ -9,3 +9,4 @@ dockerfile
 *.lock
 contract/
 *.mol
+packages/samples/sudt/docs
