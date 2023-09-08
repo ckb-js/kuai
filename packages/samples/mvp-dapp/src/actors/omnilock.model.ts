@@ -15,8 +15,8 @@ import {
   OutPointString,
   SchemaPattern,
   UpdateStorageValue,
-  DataPattern,
-  LockPattern,
+  DataFilter,
+  LockFilter,
   JSONStorage,
 } from '@ckb-js/kuai-models'
 import { BI } from '@ckb-lumos/bi'
@@ -29,8 +29,8 @@ import { bytes } from '@ckb-lumos/codec'
  * add business logic in an actor
  */
 @ActorProvider({ ref: { name: 'omnilock', path: `/:args/` } })
-@LockPattern()
-@DataPattern('0x')
+@LockFilter()
+@DataFilter('0x')
 @Omnilock()
 export class OmnilockModel extends JSONStore<Record<string, never>> {
   #omnilockAddress: string
@@ -45,7 +45,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       schemaPattern?: SchemaPattern
     },
   ) {
-    super(undefined, { ...params, ref: ActorReference.newWithPattern(OmnilockModel, `/${args}/`) })
+    super(undefined, { ...params, ref: ActorReference.newWithFilter(OmnilockModel, `/${args}/`) })
     if (!this.lockScript) {
       throw new Error('lock script is required')
     }

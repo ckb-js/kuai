@@ -16,8 +16,8 @@ import {
   OutPointString,
   SchemaPattern,
   UpdateStorageValue,
-  LockPattern,
-  TypePattern,
+  LockFilter,
+  TypeFilter,
 } from '@ckb-js/kuai-models'
 import { InternalServerError } from 'http-errors'
 import { BI } from '@ckb-lumos/bi'
@@ -42,8 +42,8 @@ export type StoreType = {
  * add business logic in an actor
  */
 @ActorProvider({ ref: { name: 'record', path: '/:codeHash/:hashType/:args/' } })
-@LockPattern()
-@TypePattern()
+@LockFilter()
+@TypeFilter()
 @Lock()
 @Type(MVP_CONTRACT_TYPE_SCRIPT)
 export class RecordModel extends JSONStore<{ data: { offset: number; schema: StoreType['data'] } }> {
@@ -63,7 +63,7 @@ export class RecordModel extends JSONStore<{ data: { offset: number; schema: Sto
       { data: { offset: (DAPP_DATA_PREFIX_LEN - 2) / 2 } },
       {
         ...params,
-        ref: ActorReference.newWithPattern(RecordModel, `/${codeHash}/${hashType}/${args}/`),
+        ref: ActorReference.newWithFilter(RecordModel, `/${codeHash}/${hashType}/${args}/`),
       },
     )
 
