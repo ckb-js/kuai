@@ -12,8 +12,8 @@ export class KuaiContractLoader implements ContractLoader {
     if (!Array.isArray(info)) {
       throw new Error(`info must be an array`)
     }
-    for (const item of info) {
-      validatecellDep(validatePath(validateName(validateScriptBase(validatecellDep(item)))))
+    for (const key in info) {
+      validatecellDep(validatePath(validateName(validateScriptBase(validatecellDep(info[key])))))
     }
 
     fs.writeFileSync(this.path, Buffer.from(JSON.stringify(info)))

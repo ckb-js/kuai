@@ -4,6 +4,7 @@ import type { DeployOptions } from './types'
 import fs from 'node:fs'
 import { ContractManager, ContractDeploymentInfo, waitUntilCommitted } from '@ckb-js/kuai-common'
 import path from 'node:path'
+import { Path } from '@ckb-js/kuai-common/lib/contract/path'
 
 export abstract class CKBNodeBase implements CKBNode {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,7 +50,7 @@ export abstract class CKBNodeBase implements CKBNode {
 
     return {
       name: script,
-      path: filePath,
+      path: new Path(filePath),
       depType,
       cellDeps,
       outPoint: {
@@ -98,7 +99,7 @@ export abstract class CKBNodeBase implements CKBNode {
         from,
         privateKey,
         script.name,
-        script.path,
+        script.path.path,
         script.cellDeps
           ? contractManager.contracts
               .filter((v) =>

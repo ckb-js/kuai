@@ -17,6 +17,7 @@ import { paramTypes } from '../params'
 import { getUserConfigPath } from '../project-structure'
 import { getGenesisScriptsConfig } from '../util/chain'
 import { generateMigrationFileName, findMigrationByDir } from '../util/contract-migration'
+import { Path } from '@ckb-js/kuai-common/lib/contract/path'
 
 task('contract').setAction(async () => {
   execSync('kuai contract --help', { stdio: 'inherit' })
@@ -224,7 +225,7 @@ subtask('contract:deploy')
 
       contractManager.updateContract({
         name: nameOrBinPath,
-        path: conrtactBinPath,
+        path: new Path(conrtactBinPath),
         scriptBase: {
           codeHash: dataHash,
           hashType: hashType,
@@ -434,7 +435,7 @@ subtask('contract:upgrade')
 
       contractManager.updateContract({
         name: targetContractName,
-        path: conrtactBinPath,
+        path: new Path(conrtactBinPath),
         scriptBase: {
           codeHash: dataHash,
           hashType: hashType,
