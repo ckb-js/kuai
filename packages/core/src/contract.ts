@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { Hash, Transaction, blockchain } from '@ckb-lumos/base'
+import { Hash, Transaction, blockchain, HashType, DepType } from '@ckb-lumos/base'
 import { generateDeployWithTypeIdTx, generateUpgradeTypeIdDataTx } from '@ckb-lumos/common-scripts/lib/deploy'
 import { sealTransaction, createTransactionFromSkeleton, scriptToAddress } from '@ckb-lumos/helpers'
 import { Indexer, commons, config, RPC, utils } from '@ckb-lumos/lumos'
@@ -40,6 +40,8 @@ export class ContractDeployer {
   ): Promise<{
     tx: Transaction
     index: number
+    hashType: HashType
+    depType: DepType
     dataHash: string
     typeId?: string
     send: () => Promise<Hash>
@@ -82,6 +84,8 @@ export class ContractDeployer {
     return {
       tx,
       index: parseInt(scriptConfig.INDEX),
+      hashType: scriptConfig.HASH_TYPE,
+      depType: scriptConfig.DEP_TYPE,
       dataHash: scriptConfig.CODE_HASH,
       typeId: utils.ckbHash(blockchain.Script.pack(typeId)),
       send: () => this.#rpc.sendTransaction(tx),
@@ -104,6 +108,8 @@ export class ContractDeployer {
     tx: Transaction
     index: number
     dataHash: string
+    hashType: HashType
+    depType: DepType
     typeId?: string
     send: () => Promise<Hash>
   }> {
@@ -150,6 +156,8 @@ export class ContractDeployer {
       tx,
       index: parseInt(scriptConfig.INDEX),
       dataHash: scriptConfig.CODE_HASH,
+      hashType: scriptConfig.HASH_TYPE,
+      depType: scriptConfig.DEP_TYPE,
       typeId: utils.ckbHash(blockchain.Script.pack(typeIdScript)),
       send: () => this.#rpc.sendTransaction(tx),
     }

@@ -1,7 +1,14 @@
 import { task, subtask } from '../config/config-env'
 import { paramTypes } from '../params'
 import { CKBBinNetwork, CkbDockerNetwork, CKBLatestBinVersion, CKBNode } from '@ckb-js/kuai-docker-node'
-import { KuaiError, cachePath, configPath, downloadFile } from '@ckb-js/kuai-common'
+import {
+  KuaiError,
+  cachePath,
+  configPath,
+  downloadFile,
+  ContractManager,
+  KuaiContractLoader,
+} from '@ckb-js/kuai-common'
 import { ERRORS } from '../errors-list'
 import '../type/runtime'
 import { Indexer, RPC, config } from '@ckb-lumos/lumos'
@@ -86,7 +93,11 @@ subtask('node:start', 'start a ckb node')
 
     await node.deployScripts({
       builtInScriptName: BUILTIN_SCRIPTS,
-      configFilePath: env.config.devNode?.builtInContractConfigPath ?? path.resolve(configPath(), 'scripts.json'),
+      contractManager: new ContractManager([
+        new KuaiContractLoader(
+          env.config.devNode?.builtInContractConfigPath ?? path.resolve(configPath(), 'scripts.json'),
+        ),
+      ]),
       builtInDirPath,
       indexer: new Indexer(node.url),
       rpc: new RPC(node.url),

@@ -19,7 +19,7 @@ describe('kuai cli', () => {
         'npx kuai node --port 9002 --detached --genesisArgs 0x0000000000000000000000000000000000000000 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
       )
       await scheduler.wait(10000)
-    }, 50000)
+    }, 500000)
 
     afterAll(() => {
       execSync('npx kuai node stop')

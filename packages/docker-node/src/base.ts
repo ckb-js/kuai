@@ -1,9 +1,10 @@
 import { CKBNode } from './interface'
 import { Address, CellDep, DepType, Indexer, RPC, Transaction, commons, config, hd, helpers } from '@ckb-lumos/lumos'
-import type { DeployOptions, InfraScript } from './types'
+import type { DeployOptions } from './types'
 import fs from 'node:fs'
-import { waitUntilCommitted } from '@ckb-js/kuai-common'
+import { ContractManager, ContractDeploymentInfo, waitUntilCommitted } from '@ckb-js/kuai-common'
 import path from 'node:path'
+import { Path } from '@ckb-js/kuai-common/lib/contract/path'
 
 export abstract class CKBNodeBase implements CKBNode {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,9 +26,9 @@ export abstract class CKBNodeBase implements CKBNode {
     privateKey: string,
     script: string,
     filePath: string,
-    cellDeps?: { name: string; cellDep: CellDep }[],
+    cellDeps?: { cellDep: CellDep }[],
     depType: DepType = 'code',
-  ): Promise<InfraScript> {
+  ): Promise<ContractDeploymentInfo> {
     const scriptBinary = fs.readFileSync(filePath)
     let txSkeleton = (
       await commons.deploy.generateDeployWithDataTx({
@@ -49,31 +50,33 @@ export abstract class CKBNodeBase implements CKBNode {
 
     return {
       name: script,
-      path: filePath,
+      path: new Path(filePath),
       depType,
       cellDeps,
       outPoint: {
         txHash,
         index: '0x0',
       },
+      scriptBase: {
+        codeHash: '',
+        hashType: 'type',
+      },
     }
   }
 
   protected async deployBuiltInScripts(
+    contractManager: ContractManager,
     scriptName: string[],
     builtInDirPath: string,
     indexer: Indexer,
     rpc: RPC,
     from: Address,
     privateKey: string,
-  ): Promise<InfraScript[]> {
-    const scripts: InfraScript[] = []
+  ): Promise<void> {
     for (const script of scriptName) {
       const filePath = path.join(builtInDirPath, script)
-      scripts.push(await this.doDeploy(rpc, indexer, from, privateKey, script, filePath))
+      contractManager.updateContract(await this.doDeploy(rpc, indexer, from, privateKey, script, filePath))
     }
-
-    return scripts
   }
 
   private sign(txSkeleton: helpers.TransactionSkeletonType, privateKey: string): Transaction {
@@ -83,44 +86,43 @@ export abstract class CKBNodeBase implements CKBNode {
   }
 
   protected async deployCustomScripts(
-    filePath: string,
+    contractManager: ContractManager,
     indexer: Indexer,
     rpc: RPC,
     from: Address,
     privateKey: string,
-  ): Promise<InfraScript[]> {
-    const scripts: InfraScript[] = []
-    if (fs.existsSync(filePath)) {
-      const configs = JSON.parse(fs.readFileSync(filePath).toString()) as { custom: InfraScript[] }
-      if (configs.custom && Array.isArray(configs.custom)) {
-        for (const script of configs.custom) {
-          const deployedScript = await this.doDeploy(
-            rpc,
-            indexer,
-            from,
-            privateKey,
-            script.name,
-            script.path,
-            script.cellDeps
-              ? scripts
-                  .filter((v) => script.cellDeps?.map((v) => v.name).includes(v.name))
-                  .map((v) => {
-                    return { name: v.name, cellDep: { depType: v.depType, outPoint: v.outPoint } }
-                  })
-              : undefined,
-            script.depType,
-          )
-          scripts.push(deployedScript)
-        }
-      }
+  ): Promise<void> {
+    for (const script of contractManager.contracts) {
+      const deployedScript = await this.doDeploy(
+        rpc,
+        indexer,
+        from,
+        privateKey,
+        script.name,
+        script.path.path,
+        script.cellDeps
+          ? contractManager.contracts
+              .filter((v) =>
+                (script.cellDeps?.filter((v) => 'name' in v) as { name: string }[]).map((v) => v.name).includes(v.name),
+              )
+              .map((v) => {
+                return { cellDep: { depType: v.depType, outPoint: v.outPoint } }
+              })
+              .concat(
+                (script.cellDeps.filter((v) => 'cellDep' in v) as { cellDep: CellDep }[]).map((v) => ({
+                  cellDep: v.cellDep,
+                })),
+              )
+          : undefined,
+        script.depType,
+      )
+      contractManager.updateContract(deployedScript)
     }
-
-    return scripts
   }
 
   async deployScripts({
     builtInScriptName,
-    configFilePath,
+    contractManager,
     builtInDirPath,
     indexer,
     rpc,
@@ -128,12 +130,9 @@ export abstract class CKBNodeBase implements CKBNode {
   }: DeployOptions): Promise<void> {
     const from = helpers.encodeToConfigAddress(hd.key.privateKeyToBlake160(privateKey), 'SECP256K1_BLAKE160')
     await indexer.waitForSync()
-    const config = {
-      builtIn: await this.deployBuiltInScripts(builtInScriptName, builtInDirPath, indexer, rpc, from, privateKey),
-      custom: await this.deployCustomScripts(configFilePath, indexer, rpc, from, privateKey),
-    }
-
-    fs.writeFileSync(configFilePath, Buffer.from(JSON.stringify(config)), { flag: 'w' })
+    await this.deployBuiltInScripts(contractManager, builtInScriptName, builtInDirPath, indexer, rpc, from, privateKey)
+    await this.deployCustomScripts(contractManager, indexer, rpc, from, privateKey)
+    contractManager.write()
   }
 
   async generateLumosConfig(): Promise<void> {
