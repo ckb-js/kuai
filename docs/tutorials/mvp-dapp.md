@@ -327,4 +327,4 @@ In conclusion, the modules introduced above are the critical components of the e
 [^2]: Capsule and its prerequisites: https://github.com/nervosnetwork/capsule#prerequisites
 [^3]: CKB CLI: https://github.com/nervosnetwork/ckb-cli
 [^4]: CKB Testnet Faucet: https://faucet.nervos.org/
-[^5]: Deploy contracts by kuai-cli: https://github.com/ckb-js/kuai/pull/242
+[^5]: Deploy contracts by kuai-cli: [kuai-cli-deploy-contract.md](docs/tutorials/kuai-cli-deploy-contract.md)
