@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { getPackageRoot } from '../util'
 
 export class Path {
   constructor(private _path: string) {}
@@ -7,7 +8,7 @@ export class Path {
     if (path.isAbsolute(this._path)) {
       return this._path
     } else {
-      return path.resolve(process.cwd(), this._path)
+      return path.resolve(getPackageRoot(), this._path)
     }
   }
 

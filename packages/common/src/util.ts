@@ -6,6 +6,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { PATH } from './constant'
 import { pipeline } from 'node:stream/promises'
+import findup from 'find-up'
 
 export const waitUntilCommitted = async (rpc: RPC, txHash: string, timeout = 120): Promise<TransactionWithStatus> => {
   let waitTime = 0
@@ -51,3 +52,36 @@ export const downloadFile = async (url: string | URL, filePath: string) =>
   ).catch((e) => {
     console.error('Error downloading file:', e)
   })
+
+export function findClosestPackageJson(file: string): string | undefined {
+  return findup.sync('package.json', { cwd: path.dirname(file) })
+}
+
+export function getPackageJsonPath(): string {
+  const packageJsonPath = findClosestPackageJson(__filename)
+
+  if (!packageJsonPath) {
+    throw new Error('package.json not found')
+  }
+
+  return packageJsonPath
+}
+
+export function getPackageRoot(): string {
+  const packageJsonPath = getPackageJsonPath()
+
+  return path.dirname(packageJsonPath)
+}
+
+export interface PackageJson {
+  name: string
+  version: string
+  engines: {
+    node: string
+  }
+}
+
+export async function getPackageJson(): Promise<PackageJson> {
+  const root = getPackageRoot()
+  return JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf-8'))
+}
