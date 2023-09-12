@@ -144,3 +144,14 @@ export const DefaultLock =
 export const Omnilock = (): ClassDecorator => DefaultLock('OMNILOCK')
 
 export const Secp256k1Lock = (): ClassDecorator => DefaultLock('SECP256K1_BLAKE160')
+
+/*
+ * Alias pattern to filter for better understanding in functional context
+ */
+export {
+  Pattern as Filter,
+  LockPattern as LockFilter,
+  TypePattern as TypeFilter,
+  DataPattern as DataFilter,
+  DataPrefixPattern as DataPrefixFilter,
+}

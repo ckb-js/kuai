@@ -29,6 +29,8 @@ export class ActorReference {
     return ref
   }
 
+  static newWithFilter = this.newWithPattern
+
   #name: ActorName
   #path: string
   #protocol: string

@@ -403,11 +403,11 @@ For this, we provider the default `listener` and the default `data source` in `k
 We provider several decorators to help to register the `store` to resource binding, here is one example to use these decorators as below.
 
 ```typescript
-import { ActorProvider, DataPattern, LockPattern, Omnilock } from '@ckb-js/kuai-models'
+import { ActorProvider, DataFilter, LockFilter, Omnilock } from '@ckb-js/kuai-models'
 
 @ActorProvider({ ref: { name: 'omnilock', path: `/:args/` } })
-@LockPattern()
-@DataPattern('0x')
+@LockFilter()
+@DataFilter('0x')
 @Omnilock()
 class OmnilockModel extends JSONStore<Record<string, never>> {
   constructor() {
@@ -438,9 +438,9 @@ The Lock decorators we provided as below.
 
 `kuai` should know which cell should be connected to the `store`, filter data of them from chain. We provide several decorator for you to do this.
 
-- `LockPattern`: Filter the lock to equal to the `lockscript` of `store` defined.
-- `DataPattern`: It has one parameter means data, filter the data in cell to equal to the parameter.
-- `DataPrefixPattern`: It has one parameter means data prefix, filter the data to start with the parameter.
+- `LockFilter`: Filter the lock to equal to the `lockscript` of `store` defined.
+- `DataFilter`: It has one parameter means data, filter the data in cell to equal to the parameter.
+- `DataPrefixFilter`: It has one parameter means data prefix, filter the data to start with the parameter.
 
 ### [store](https://github.com/ckb-js/kuai/tree/develop/packages/models/src/store)
 
