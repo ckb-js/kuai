@@ -11,7 +11,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "env-paths": "2.2.1"
+    "env-paths": "2.2.1",
+    "find-up": "5.0.0"
   },
   "devDependencies": {
     "@ckb-lumos/base": "0.20.0",
