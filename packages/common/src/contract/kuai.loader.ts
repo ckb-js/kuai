@@ -1,6 +1,6 @@
 import type { ContractDeploymentInfo, ContractLoader } from './interface'
 import fs from 'node:fs'
-import { validateName, validatePath, validateScriptBase, validatecellDep } from './validator'
+import { validateCellDeps, validateName, validatePath, validateScriptBase, validateCellDep } from './validator'
 
 export class KuaiContractLoader implements ContractLoader {
   constructor(private path: string) {}
@@ -12,8 +12,12 @@ export class KuaiContractLoader implements ContractLoader {
     if (!Array.isArray(info)) {
       throw new Error(`info must be an array`)
     }
-    for (const key in info) {
-      validatecellDep(validatePath(validateName(validateScriptBase(validatecellDep(info[key])))))
+    for (const item of info) {
+      validateCellDeps(item)
+      validatePath(item)
+      validateName(item)
+      validateScriptBase(item)
+      validateCellDep(item)
     }
 
     fs.writeFileSync(this.path, Buffer.from(JSON.stringify(info)))

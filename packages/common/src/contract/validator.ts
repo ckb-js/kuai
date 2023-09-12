@@ -8,22 +8,14 @@ export const validateCellDeps = (info: ContractDeploymentInfo) => {
 
     if (
       !info.cellDeps.every((cellDep) => {
-        if ('name' in cellDep) {
-          return true
-        } else if (!('cellDep' in cellDep)) {
-          false
-        } else {
-          if (
+        return (
+          'name' in cellDep ||
+          ('cellDep' in cellDep &&
             'outPoint' in cellDep.cellDep &&
             'txHash' in cellDep.cellDep.outPoint &&
             'index' in cellDep.cellDep.outPoint &&
-            ['code', 'depGroup'].includes(cellDep.cellDep.depType)
-          ) {
-            return true
-          } else {
-            return false
-          }
-        }
+            ['code', 'depGroup'].includes(cellDep.cellDep.depType))
+        )
       })
     ) {
       throw new Error(`cellDeps must be an array of { name: string } or { cellDep: CellDep }`)
@@ -65,7 +57,7 @@ export const validatePath = (info: ContractDeploymentInfo) => {
   return info
 }
 
-export const validatecellDep = (info: ContractDeploymentInfo) => {
+export const validateCellDep = (info: ContractDeploymentInfo) => {
   if (!('outPoint' in info)) {
     throw new Error(`outPoint is required`)
   }
