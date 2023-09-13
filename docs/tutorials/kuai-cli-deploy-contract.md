@@ -2,19 +2,23 @@
 
 ## deploy contract workflow by builtin signer (directly deploy):
 
-1. Create a new conrtact, skip this step if the contract already exists: `kuai contract new --name [contract-name]`
+1. Create a new conrtact, skip this step if the contract already exists ([How to import exists contract](#how-to-import-contract-to-kuai-project))
+
+- `kuai contract new --name [contract-name]`
 
 ```bash
 $ kuai contract new --name always-success
 
 New contract "always-success"
-     Created binary (application) `always-success` package
+    Created binary (application) `always-success` package
 Rewrite Cargo.toml
 Rewrite capsule.toml
 Done
 ```
 
-2. Build contract: `kuai contract build --name [contract-name] --release`
+2. Build contract
+
+- `kuai contract build --name [contract-name] --release`
 
 ```bash
 $ kuai contract build --name always-success --release
@@ -24,7 +28,9 @@ Building contract always-success
 Done
 ```
 
-1. Deploy contract `kuai contract deploy --name [contract-name] --from [0x.....] --signer ckb-cli`
+3. Deploy contract
+
+- `kuai contract deploy --name [contract-name] --from [0x.....] --signer ckb-cli`
 
 ```bash
 $ kuai contract deploy --name always-success --from ckt1qyqw8yx5hx6vwcm7eqren0d0v39wvfwdhy3q2807pp --signer ckb-cli
@@ -108,7 +114,29 @@ $ ckb-cli tx send --tx-file ./tx.json
 0xa0fad2950093488baf41b25f3459482b5c7870b21f8d2bb709a731417cb99e33
 ```
 
-### Tips: How to deploy contract to other network
+### How to import contract to kuai project
+
+Typically, the file directory of a ckb contract looks something like this:
+
+```bash
+.
+├── Cargo.toml
+└── src
+    ├── entry.rs
+    ├── error.rs
+    └── main.rs
+```
+
+1. Copy all of this directory directly into the kuai's convention directory where the contracts are placed, which by default should be`/contract/contracts/`
+
+2. Edit the `/contract/cargo.toml` file to add information about the contract to `[workspace]`, e.g.
+
+```toml
+[workspace]
+members = ["tests", "contracts/kuai-mvp-contract", "types", "contracts/always-success"]
+```
+
+### How to deploy contract to other network
 
 - `kuai contract deploy --name [contract-name] --from [0x.....] --network [networkname]`
 - or set network to `.env` file
