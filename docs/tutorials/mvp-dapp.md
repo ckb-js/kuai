@@ -181,13 +181,15 @@ Deploy contracts with kuai-cli[^5]
 
 ```bash
 # cd to /profile
-# kuai contract deploy --name <contract name> --from <deployer address> --netwrok <chain type> --send --signer <signer>
-$ kuai contract deploy --name kuai-mvp-contract --from ckt***************************************slzz --network testnet --send --signer ckb-cli
+# kuai contract deploy --name <contract name> --from <deployer address> --netwrok <chain type> --signer <signer>
+$ kuai contract deploy --name kuai-mvp-contract --from ckt***************************************slzz --network testnet --signer ckb-cli
 
 # [warn] `config` changed, regenerate lockScriptInfos!
 # Input ckt1q*****************************************************************************************gt9's password for sign messge by ckb-cli:
 # deploy success, txHash:  0x1ed********************************************************fbd3c
 ```
+
+Deploy contracts by tx file
 
 So far, we've completed the development&deployment of contracts.
 
@@ -325,4 +327,4 @@ In conclusion, the modules introduced above are the critical components of the e
 [^2]: Capsule and its prerequisites: https://github.com/nervosnetwork/capsule#prerequisites
 [^3]: CKB CLI: https://github.com/nervosnetwork/ckb-cli
 [^4]: CKB Testnet Faucet: https://faucet.nervos.org/
-[^5]: Deploy contracts by kuai-cli: https://github.com/ckb-js/kuai/pull/242
+[^5]: Deploy contracts by kuai-cli: [kuai-cli-deploy-contract.md](./kuai-cli-deploy-contract.md)
