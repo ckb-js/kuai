@@ -2,8 +2,8 @@ import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import { getGenesisScriptsConfig, initialKuai } from '@ckb-js/kuai-core';
 import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io';
-import AppController from './app.controller';
-import './type-extends';
+import OmnilockController from './controllers/omnilock.controller';
+import SudtController from './controllers/sudt.controller';
 import {
   REDIS_HOST_SYMBOL,
   REDIS_OPT_SYMBOL,
@@ -12,6 +12,7 @@ import {
   mqContainer,
 } from '@ckb-js/kuai-models';
 import { config } from '@ckb-lumos/lumos';
+import './type-extends';
 
 async function bootstrap() {
   const kuaiCtx = await initialKuai();
@@ -47,8 +48,10 @@ async function bootstrap() {
 
   // init kuai io
   const cor = new CoR();
-  const appController = new AppController();
-  cor.use(appController.middleware());
+  const omnilockController = new OmnilockController();
+  const sudtController = new SudtController();
+  cor.use(omnilockController.middleware());
+  cor.use(sudtController.middleware());
 
   const koaRouterAdapter = new KoaRouterAdapter(cor);
 

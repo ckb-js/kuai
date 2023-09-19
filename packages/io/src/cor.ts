@@ -1,5 +1,11 @@
 import { CoR as ICoR, Middleware, Context, JsonValue } from './types'
 import compose from 'koa-compose'
+import { NotFound } from 'http-errors'
+
+const notFoundMiddleware: Middleware = async (ctx, next) => {
+  ctx.err(new NotFound())
+  return next()
+}
 
 export class CoR<ContextT extends object = Record<string, never>> implements ICoR<ContextT> {
   private _exceptionHandler: Middleware<ContextT> = CoR.handleException()
@@ -23,7 +29,7 @@ export class CoR<ContextT extends object = Record<string, never>> implements ICo
         err: rej,
       } as Context<ContextT>
 
-      compose([this._exceptionHandler, ...this._middlewares])(ctx)
+      compose([this._exceptionHandler, ...this._middlewares, notFoundMiddleware])(ctx)
     })
   }
 
