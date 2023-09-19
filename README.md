@@ -425,12 +425,12 @@ class OmnilockModel extends JSONStore<Record<string, never>> {
 
 ##### Lock
 
-As in nervos network, each cell has its own `lock script`, so the `lock script` should be defined in `store`. We provide two default lock decorators, the `Omnilock` and the `Secp256k1Lock`, to use to define the most used `lock script`s in nervos network, and if you are using other `lock script`s in system, the `DefaultLock` could be used. Also we provide the `Lock` decorator for you to define your custom `lock script`.
+As in nervos network, each cell has its own `lock script`, so the `lock script` should be defined in `store`. We provide two default lock decorators, the `Omnilock` and the `Secp256k1Lock`, to use to define the most used `lock script`s in nervos network, and if you are using other `lock script`s in system, the `DefaultScript` could be used. Also we provide the `Lock` decorator for you to define your custom `lock script`.
 
 The Lock decorators we provided as below.
 
 - `Lock`
-- `DefaultLock`
+- `DefaultScript`
 - `Omnilock`
 - `Secp256k1Lock`
 

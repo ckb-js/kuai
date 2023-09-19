@@ -110,7 +110,7 @@ export const Lock =
       (ref?: ActorRef) => {
         const codeHash = script?.codeHash ?? ref?.params?.codeHash
         const hashType = script?.hashType ?? ref?.params?.hashType
-        const args = script?.args ?? ref?.params?.args ?? '0x'
+        const args = script?.args ?? ref?.params?.args ?? ref?.params?.lockArgs ?? '0x'
         return codeHash && hashType ? { codeHash, hashType, args } : undefined
       },
       target,
@@ -125,25 +125,30 @@ export const Type =
       (ref?: ActorRef) => {
         const codeHash = script?.codeHash ?? ref?.params?.codeHash
         const hashType = script?.hashType ?? ref?.params?.hashType
-        const args = script?.args ?? ref?.params?.args ?? '0x'
+        const args = script?.args ?? ref?.params?.args ?? ref?.params?.typeArgs ?? '0x'
         return codeHash && hashType ? { codeHash, hashType, args } : undefined
       },
       target,
     )
 
-export const DefaultLock =
-  (lockName: keyof config.ScriptConfigs): ClassDecorator =>
+export const DefaultScript =
+  (lockName: keyof config.ScriptConfigs, scriptType: keyof typeof ProviderKey = 'LockPattern'): ClassDecorator =>
   (target: object) =>
     Reflect.defineMetadata(
-      ProviderKey.LockPattern,
+      ProviderKey[scriptType],
       (ref?: ActorRef) =>
-        createScriptRegistry(config.getConfig().SCRIPTS).newScript(lockName, ref?.params?.args ?? '0x'),
+        createScriptRegistry(config.getConfig().SCRIPTS).newScript(
+          lockName,
+          ref?.params?.args ?? ref?.params?.[scriptType === 'LockPattern' ? 'lockArgs' : 'typeArgs'] ?? '0x',
+        ),
       target,
     )
 
-export const Omnilock = (): ClassDecorator => DefaultLock('OMNILOCK')
+export const Omnilock = (): ClassDecorator => DefaultScript('OMNILOCK')
 
-export const Secp256k1Lock = (): ClassDecorator => DefaultLock('SECP256K1_BLAKE160')
+export const Secp256k1Lock = (): ClassDecorator => DefaultScript('SECP256K1_BLAKE160')
+
+export const Sudt = (): ClassDecorator => DefaultScript('SUDT', 'TypePattern')
 
 /*
  * Alias pattern to filter for better understanding in functional context
