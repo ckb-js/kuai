@@ -28,6 +28,7 @@ const config: KuaiConfig = {
           ...redisAuth,
         }
       : undefined,
+  network: 'testnet',
   ckbChain: {
     rpcUrl: 'http://127.0.0.1:8114',
     prefix: 'ckt',
