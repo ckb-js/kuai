@@ -1,10 +1,10 @@
-import { BadRequest } from 'http-errors';
-import { parseAddress } from '@ckb-lumos/helpers';
+import { BadRequest } from 'http-errors'
+import { parseAddress } from '@ckb-lumos/helpers'
 
 export const getLock = (address: string) => {
   try {
-    return parseAddress(address);
+    return parseAddress(address)
   } catch {
-    throw new BadRequest('invalid address');
+    throw new BadRequest('invalid address')
   }
-};
+}
