@@ -1,7 +1,7 @@
-import { type Cell, helpers, config } from '@ckb-lumos/lumos';
-import { SECP_SIGNATURE_PLACEHOLDER, OMNILOCK_SIGNATURE_PLACEHOLDER } from '@ckb-lumos/common-scripts/lib/helper';
-import { blockchain } from '@ckb-lumos/base';
-import { bytes } from '@ckb-lumos/codec';
+import { type Cell, helpers, config } from '@ckb-lumos/lumos'
+import { SECP_SIGNATURE_PLACEHOLDER, OMNILOCK_SIGNATURE_PLACEHOLDER } from '@ckb-lumos/common-scripts/lib/helper'
+import { blockchain } from '@ckb-lumos/base'
+import { bytes } from '@ckb-lumos/codec'
 
 export class Tx {
   static async toJsonString({
@@ -9,13 +9,13 @@ export class Tx {
     outputs,
     witnesses,
   }: {
-    inputs: Cell[];
-    outputs: Cell[];
-    witnesses?: string[];
+    inputs: Cell[]
+    outputs: Cell[]
+    witnesses?: string[]
   }): Promise<helpers.TransactionSkeletonObject> {
-    let txSkeleton = helpers.TransactionSkeleton({});
-    txSkeleton = txSkeleton.update('outputs', (v) => v.push(...outputs));
-    const CONFIG = config.getConfig();
+    let txSkeleton = helpers.TransactionSkeleton({})
+    txSkeleton = txSkeleton.update('outputs', (v) => v.push(...outputs))
+    const CONFIG = config.getConfig()
     txSkeleton = txSkeleton.update('cellDeps', (v) =>
       v.push(
         {
@@ -40,15 +40,15 @@ export class Tx {
           depType: CONFIG.SCRIPTS.SECP256K1_BLAKE160!.DEP_TYPE,
         },
       ),
-    );
+    )
 
     inputs.forEach((input, idx) => {
-      txSkeleton = txSkeleton.update('inputs', (inputs) => inputs.push(input));
+      txSkeleton = txSkeleton.update('inputs', (inputs) => inputs.push(input))
 
       txSkeleton = txSkeleton.update('witnesses', (wit) => {
         if (!witnesses?.[idx] || witnesses?.[idx] === '0x' || witnesses?.[idx] === '') {
-          const omniLock = CONFIG.SCRIPTS.OMNILOCK as NonNullable<config.ScriptConfig>;
-          const fromLockScript = input.cellOutput.lock;
+          const omniLock = CONFIG.SCRIPTS.OMNILOCK as NonNullable<config.ScriptConfig>
+          const fromLockScript = input.cellOutput.lock
           return wit.push(
             bytes.hexify(
               blockchain.WitnessArgs.pack({
@@ -58,12 +58,12 @@ export class Tx {
                     : SECP_SIGNATURE_PLACEHOLDER,
               }),
             ),
-          );
+          )
         }
-        return wit.push(witnesses?.[idx]);
-      });
-    });
+        return wit.push(witnesses?.[idx])
+      })
+    })
 
-    return helpers.transactionSkeletonToObject(txSkeleton);
+    return helpers.transactionSkeletonToObject(txSkeleton)
   }
 }
