@@ -2,7 +2,7 @@
 
 ## deploy contract workflow by builtin signer (directly deploy):
 
-1. Create a new conrtact, skip this step if the contract already exists ([How to import existent contract](#how-to-import-contract-to-kuai-project))
+1. Create a new contract, skip this step if the contract already exists ([How to import existent contract](#how-to-import-contract-to-kuai-project))
 
 - `kuai contract new --name [contract-name]`
 
