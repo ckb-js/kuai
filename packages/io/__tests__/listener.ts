@@ -53,7 +53,7 @@ describe('test Listener', () => {
     getCurrentEpoch: () => Promise.resolve(mockEpoch),
     getBlock: () => Promise.resolve(mockBlock),
     getAllLiveCellsWithWitness: function (
-      _lockScript: Script,
+      _lockScript?: Script,
       _typeScript?: Script,
     ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
       return Promise.resolve([])

@@ -74,7 +74,7 @@ const mockSource: ChainSource = {
     throw new Error('Function not implemented.')
   },
   getAllLiveCellsWithWitness: function (
-    _lockScript: Script,
+    _lockScript?: Script,
     _typeScript?: Script,
   ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
     return Promise.resolve([])
@@ -99,7 +99,7 @@ describe('Test resource binding', () => {
         throw new Error('Function not implemented.')
       },
       getAllLiveCellsWithWitness: function (
-        _lockScript: Script,
+        _lockScript?: Script,
         _typeScript?: Script,
       ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
         const witness = '0x'
@@ -181,7 +181,7 @@ describe('Test resource binding', () => {
           },
         },
       })
-      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual(
+      expect(manager.registry.getRegistry(LockScriptHash, TypeScriptHash)).toEqual(
         new Map<ActorURI, ResourceBindingRegistry>([
           [
             'local://store',
@@ -202,7 +202,7 @@ describe('Test resource binding', () => {
         ]),
       )
       await setTimeout(2000)
-      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual(
+      expect(manager.registry.getRegistry(LockScriptHash, TypeScriptHash)).toEqual(
         new Map<ActorURI, ResourceBindingRegistry>([
           [
             'local://store',
@@ -222,7 +222,7 @@ describe('Test resource binding', () => {
           ],
         ]),
       )
-      expect(manager.registryReverse.get(ref.uri)).toEqual([TypeScriptHash, LockScriptHash])
+      expect(manager.registry.getRegistryByUri(ref.uri)).toEqual([LockScriptHash, TypeScriptHash])
       expect(mockXAdd).toBeCalledTimes(2)
     })
   })
@@ -259,8 +259,8 @@ describe('Test resource binding', () => {
           },
         },
       })
-      expect(manager.registry.get(TypeScriptHash)?.get(LockScriptHash)).toEqual(new Map())
-      expect(manager.registryReverse.get(ref.uri)).toBeUndefined()
+      expect(manager.registry.getRegistry(LockScriptHash, TypeScriptHash)).toEqual(new Map())
+      expect(manager.registry.getRegistryByUri(ref.uri)).toBeUndefined()
     })
 
     it('will to nothing when no registry', () => {
@@ -347,7 +347,7 @@ describe('Test resource binding', () => {
         return Promise.resolve(mockBlock)
       },
       getAllLiveCellsWithWitness: function (
-        _lockScript: Script,
+        _lockScript?: Script,
         _typeScript?: Script,
       ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
         return Promise.resolve([])
@@ -400,7 +400,12 @@ describe('Test resource binding', () => {
       jest.spyOn(CellChangeBuffer.prototype, 'popAll').mockImplementationOnce(() => [[change]])
       jest.spyOn(CellChangeBuffer.prototype, 'hasReadyStore').mockImplementationOnce(() => true)
 
-      manager.register(cell.cellOutput.lock, cell.cellOutput.type, registry.uri, 'normal')
+      manager.register({
+        lockScript: cell.cellOutput.lock,
+        typeScript: cell.cellOutput.type,
+        uri: registry.uri,
+        pattern: 'normal',
+      })
       listener = manager.listen()
       await setTimeout(2000)
       expect(mockXAdd).toBeCalledTimes(2)
@@ -422,7 +427,7 @@ describe('Test resource binding', () => {
         throw new Error('Function not implemented.')
       },
       getAllLiveCellsWithWitness: function (
-        _lockScript: Script,
+        _lockScript?: Script,
         _typeScript?: Script,
       ): Promise<(CKBComponents.IndexerCell & { witness: string })[]> {
         return Promise.resolve([])
@@ -845,10 +850,10 @@ describe('Test resource binding', () => {
       expect(manager.lastBlock?.header.number).toEqual(mockBlock0.header.number)
       mockSource.getTipHeader = () => Promise.resolve(mockBlock.header)
       mockSource.getBlock = () => Promise.resolve(mockBlock)
-      manager.register(outputA.lock, outputA.type, ref1.uri, 'normal')
-      manager.register(outputE.lock, outputE.type, ref1.uri, 'normal')
-      manager.register(outputD.lock, outputD.type, ref2.uri, 'normal')
-      manager.register(outputC.lock, outputC.type, ref2.uri, 'normal')
+      manager.register({ lockScript: outputA.lock, typeScript: outputA.type, uri: ref1.uri, pattern: 'normal' })
+      manager.register({ lockScript: outputE.lock, typeScript: outputE.type, uri: ref1.uri, pattern: 'normal' })
+      manager.register({ lockScript: outputD.lock, typeScript: outputD.type, uri: ref2.uri, pattern: 'normal' })
+      manager.register({ lockScript: outputC.lock, typeScript: outputC.type, uri: ref2.uri, pattern: 'normal' })
 
       await setTimeout(2000)
       expect(mockXAdd).toBeCalledTimes(2)

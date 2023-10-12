@@ -5,7 +5,10 @@ import type { CKBComponents } from '@ckb-lumos/rpc/lib/types/api'
 export class NervosChainSource implements ChainSource {
   #rpc: RPC
 
-  constructor(rpcUrl: string, private _getCellsLimit: number = 1000) {
+  constructor(
+    rpcUrl: string,
+    private _getCellsLimit: number = 1000,
+  ) {
     this.#rpc = new RPC(rpcUrl)
   }
 
@@ -20,25 +23,43 @@ export class NervosChainSource implements ChainSource {
     return header.number
   }
 
-  getAllLiveCellsWithWitness = async (
-    lockScript: Script,
-    typeScript?: Script | undefined,
-    startBlock?: BI,
-    endBlock?: BI,
-  ) => {
+  getAllLiveCellsWithWitness = async (lockScript?: Script, typeScript?: Script, startBlock?: BI, endBlock?: BI) => {
     const res: (CKBComponents.IndexerCell & { witness: string })[] = []
 
     startBlock = startBlock ?? BI.from(0)
     endBlock = endBlock ?? BI.from(await this.getTipBlockNumber())
 
     let lastCursor = ''
+    let scriptFilterOption: CKBComponents.GetCellsSearchKey<true> | undefined = undefined
+    if (lockScript && typeScript) {
+      scriptFilterOption = {
+        script: lockScript,
+        scriptType: 'lock',
+        filter: {
+          script: typeScript,
+        },
+        withData: true,
+      }
+    } else if (lockScript) {
+      scriptFilterOption = {
+        script: lockScript,
+        scriptType: 'lock',
+        withData: true,
+      }
+    } else if (typeScript) {
+      scriptFilterOption = {
+        script: typeScript,
+        scriptType: 'type',
+        withData: true,
+      }
+    }
+    if (!scriptFilterOption) throw new Error('One of lock script and type script is required at least')
     do {
       const cells = await this.#rpc.getCells(
         {
-          script: lockScript,
-          scriptType: 'lock',
+          ...scriptFilterOption,
           filter: {
-            script: typeScript,
+            ...scriptFilterOption?.filter,
             blockRange: [startBlock.toHexString(), endBlock.toHexString()],
           },
         },

@@ -8,6 +8,7 @@ import {
   ResourceBindingRegistry,
   ResourceBindingManagerMessage,
   CellChange,
+  RegisterMessage,
 } from './types'
 import { outPointToOutPointString } from './utils'
 import { Listener } from '@ckb-js/kuai-io'
@@ -18,16 +19,97 @@ import { CellChangeBuffer } from './cell-change-buffer'
 
 type Registry = Map<ActorURI, ResourceBindingRegistry>
 
+class ScriptRegistry {
+  #singleRegistry: Map<LockScriptHash | TypeScriptHash, Registry> = new Map()
+  #unionRegistry: Map<LockScriptHash, Map<TypeScriptHash, Registry>> = new Map()
+  #registryReverse: Map<ActorURI, [LockScriptHash | undefined, TypeScriptHash | undefined]> = new Map()
+
+  getRegistry(lockHash?: LockScriptHash, typeHash?: TypeScriptHash) {
+    if (lockHash && typeHash) {
+      return this.#unionRegistry.get(lockHash)?.get(typeHash)
+    }
+    if (lockHash) {
+      return this.#singleRegistry.get(lockHash)
+    }
+    if (typeHash) {
+      return this.#singleRegistry.get(typeHash)
+    }
+  }
+
+  getRegistryByUri(uri: ActorURI) {
+    return this.#registryReverse.get(uri)
+  }
+
+  setActorRegistry(
+    uri: ActorURI,
+    register: ResourceBindingRegistry,
+    lockHash?: LockScriptHash,
+    typeHash?: TypeScriptHash,
+  ) {
+    if (lockHash && typeHash) {
+      if (!this.#unionRegistry.has(lockHash)) {
+        this.#unionRegistry.set(lockHash, new Map([[typeHash, new Map([[uri, register]])]]))
+      } else if (!this.#unionRegistry.get(lockHash)?.get(typeHash)) {
+        this.#unionRegistry.get(lockHash)?.set(typeHash, new Map([[uri, register]]))
+      } else {
+        this.#unionRegistry.get(lockHash)?.get(typeHash)?.set(uri, register)
+      }
+      this.#registryReverse.set(uri, [lockHash, typeHash])
+      return
+    }
+    const hash = lockHash ?? typeHash
+    if (hash) {
+      if (this.#singleRegistry.has(hash)) {
+        this.#singleRegistry.get(hash)?.set(uri, register)
+      } else {
+        this.#singleRegistry.set(hash, new Map([[uri, register]]))
+      }
+      return
+    }
+  }
+
+  removeRegistry(lockHash?: LockScriptHash, typeHash?: TypeScriptHash) {
+    if (lockHash && typeHash) {
+      return this.#unionRegistry.get(lockHash)?.delete(typeHash)
+    }
+    if (lockHash) {
+      return this.#singleRegistry.delete(lockHash)
+    }
+    if (typeHash) {
+      return this.#singleRegistry.delete(typeHash)
+    }
+  }
+
+  removeActorURI(uri: ActorURI) {
+    if (!this.#registryReverse.has(uri)) return
+    const [lockHash, typeHash] = this.#registryReverse.get(uri)!
+    this.#registryReverse.delete(uri)
+    if (lockHash && typeHash) {
+      this.#unionRegistry.get(lockHash)?.get(typeHash)?.delete(uri)
+      return
+    }
+    if (lockHash) {
+      this.#singleRegistry.get(lockHash)?.delete(uri)
+      return
+    }
+    if (typeHash) {
+      this.#singleRegistry.get(typeHash)?.delete(uri)
+      return
+    }
+  }
+}
 @ActorProvider({ ref: { name: 'manager' }, autoBind: true })
 export class Manager extends Actor<object, MessagePayload<ResourceBindingManagerMessage>> {
-  #registry: Map<TypeScriptHash, Map<LockScriptHash, Registry>> = new Map()
+  #registry: ScriptRegistry = new ScriptRegistry()
   #registryOutPoint: Map<OutPointString, Registry> = new Map()
-  #registryReverse: Map<ActorURI, [TypeScriptHash, LockScriptHash]> = new Map()
   #lastBlock: Block | undefined = undefined
   #tipBlockNumber = BI.from(0)
   #buffer: CellChangeBuffer = new CellChangeBuffer()
 
-  constructor(private _listener: Listener<Header>, private _dataSource: ChainSource) {
+  constructor(
+    private _listener: Listener<Header>,
+    private _dataSource: ChainSource,
+  ) {
     super()
   }
 
@@ -163,9 +245,9 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     const changes = new Map<ActorURI, CellChange>()
     ;[...newOutputs.entries()].forEach(([outPoint, cellChangeData]) => {
       const { lock, type } = cellChangeData[0].cellOutput
-      const lockHash = utils.computeScriptHash(lock)
-      const typeHash = type ? utils.computeScriptHash(type) : 'null'
-      const registries = this.#registry.get(typeHash)?.get(lockHash)
+      const lockHash = lock ? utils.computeScriptHash(lock) : undefined
+      const typeHash = type ? utils.computeScriptHash(type) : undefined
+      const registries = this.#registry.getRegistry(lockHash, typeHash)
 
       // regsitry is empty
       if (!registries) return
@@ -189,7 +271,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return [...changes.values()]
   }
 
-  private async initiateStore(registry: ResourceBindingRegistry, lockScript: Script, typeScript?: Script) {
+  private async initiateStore(registry: ResourceBindingRegistry, lockScript?: Script, typeScript?: Script) {
     const cells = await this._dataSource.getAllLiveCellsWithWitness(lockScript, typeScript)
     this.updateCellChanges(
       registry,
@@ -210,9 +292,6 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     )
     this.#buffer.signalReady(registry.uri)
     registry.status = 'initiated'
-    const lockHash = utils.computeScriptHash(lockScript)
-    const typeHash = typeScript ? utils.computeScriptHash(typeScript) : 'null'
-    this.#registryReverse.set(registry.uri, [typeHash, lockHash])
   }
 
   handleCall = (_msg: ActorMessage<MessagePayload<ResourceBindingManagerMessage>>): void => {
@@ -220,14 +299,14 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
       case 'register': {
         const register = _msg.payload?.value?.register
         if (register) {
-          this.register(register.lockScript, register.typeScript, register.uri, register.pattern)
+          this.register(register)
         }
         break
       }
       case 'revoke': {
         const revoke = _msg.payload?.value?.revoke
         if (revoke) {
-          this.revoke(revoke.uri)
+          this.#registry.removeActorURI(revoke.uri)
         }
         break
       }
@@ -236,30 +315,13 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     }
   }
 
-  async register(lock: Script, type: Script | undefined, uri: ActorURI, pattern: string) {
-    const lockHash = utils.computeScriptHash(lock)
-    const typeHash = type ? utils.computeScriptHash(type) : 'null'
-    if (!this.#registry.get(typeHash)) {
-      this.#registry.set(typeHash, new Map())
-    }
-    let registries = this.#registry.get(typeHash)?.get(lockHash)
-    if (!registries) {
-      registries = new Map<ActorURI, ResourceBindingRegistry>()
-    }
+  async register(registerInfo: RegisterMessage['register']) {
+    const { lockScript, typeScript, uri, pattern } = registerInfo
+    const lockHash = lockScript ? utils.computeScriptHash(lockScript) : undefined
+    const typeHash = typeScript ? utils.computeScriptHash(typeScript) : undefined
     const registry: ResourceBindingRegistry = { uri, pattern, status: 'registered' }
-    registries.set(uri, registry)
-    this.#registry.get(typeHash)?.set(lockHash, registries)
-    this.#registryReverse.set(uri, [typeHash, lockHash])
-    await this.initiateStore(registry, lock, type)
-  }
-
-  revoke(uri: ActorURI) {
-    const registry = this.#registryReverse.get(uri)
-    if (registry) {
-      const [type, lock] = registry
-      this.#registry.get(type)?.get(lock)?.delete(uri)
-      this.#registryReverse.delete(uri)
-    }
+    this.#registry.setActorRegistry(uri, registry, lockHash, typeHash)
+    await this.initiateStore(registry, lockScript, typeScript)
   }
 
   listen(pollingInterval = 1000): { subscription: Subscription; updator: NodeJS.Timer } {
@@ -277,16 +339,12 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     })
   }
 
-  get registry(): Map<TypeScriptHash, Map<LockScriptHash, Map<ActorURI, ResourceBindingRegistry>>> {
+  get registry(): ScriptRegistry {
     return this.#registry
   }
 
   get registryOutPoint(): Map<OutPointString, Registry> {
     return this.#registryOutPoint
-  }
-
-  get registryReverse(): Map<ActorURI, [TypeScriptHash, LockScriptHash]> {
-    return this.#registryReverse
   }
 
   get lastBlock(): Block | undefined {

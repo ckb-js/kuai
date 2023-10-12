@@ -131,11 +131,11 @@ export class Store<
   }
 
   protected registerResourceBinding() {
-    if (!this.#lock) return
-
-    const lockHash = computeScriptHash(this.#lock)
+    const lockHash = this.#lock ? computeScriptHash(this.#lock) : undefined
+    const typeHash = this.#type ? computeScriptHash(this.#type) : undefined
+    if (!lockHash && !typeHash) return
     this.call('local://resource', {
-      pattern: lockHash,
+      pattern: `${lockHash ?? ''}/${typeHash ?? ''}`,
       value: {
         type: 'register',
         register: {
