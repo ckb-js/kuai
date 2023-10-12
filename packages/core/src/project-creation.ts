@@ -24,6 +24,7 @@ const DEPENDENCIES: Dependencies = {
 }
 
 const DEV_DEPENDENCIES: Dependencies = {
+  jest: '29.7.0',
   'ts-node': '10.9.1',
   typescript: '4.9.4',
   typedoc: '0.24.7',
@@ -192,7 +193,7 @@ async function installKuaiDependencies(projectRoot: string) {
     }
   }
 
-  console.info('add kuai depende into package')
+  console.info('add kuai dependencies into package')
   return installRecommendedDependencies(projectRoot, kuaiDep, false)
 }
 
