@@ -25,7 +25,7 @@ import { MIN_SUDT_WITH_OMINILOCK, TX_FEE } from '../const'
 /**
  * add business logic in an actor
  */
-@ActorProvider({ ref: { name: 'sudt', path: `/:lockArgs/:typeArgs/` } })
+@ActorProvider({ ref: { name: 'sudt', path: `/:args/` } })
 @TypeFilter()
 @Sudt()
 export class SudtModel extends JSONStore<Record<string, never>> {
@@ -147,6 +147,14 @@ export class SudtModel extends JSONStore<Record<string, never>> {
         },
       ],
       witnesses: [],
+    }
+  }
+
+  meta() {
+    return {
+      // will get from explorer or db
+      name: 'sudt',
+      symbol: 'symbol',
     }
   }
 }

@@ -1,5 +1,5 @@
 import type { HexString, Hash } from '@ckb-lumos/base'
-import { BaseController, Controller, Body, Post } from '@ckb-js/kuai-io'
+import { BaseController, Controller, Body, Post, Get, Param } from '@ckb-js/kuai-io'
 import { ActorReference } from '@ckb-js/kuai-models'
 import { BadRequest } from 'http-errors'
 import { SudtModel, appRegistry } from '../actors'
@@ -9,6 +9,28 @@ import { SudtResponse } from '../response'
 
 @Controller('sudt')
 export default class SudtController extends BaseController {
+  @Get('/meta/:typeArgs')
+  async meta(@Param('typeArgs') typeArgs: string) {
+    if (!typeArgs) {
+      throw new BadRequest('invalid typeArgs')
+    }
+
+    const sudtModel = appRegistry.findOrBind<SudtModel>(new ActorReference('sudt', `/${typeArgs}/`))
+
+    return SudtResponse.ok(sudtModel.meta())
+  }
+
+  @Post('/getSudtBalance')
+  async getSudtBalance(@Body() { addresses, typeArgs }: { addresses: string[]; typeArgs: Hash }) {
+    if (!addresses?.length || !typeArgs) {
+      throw new BadRequest('undefined body field: from or typeArgs')
+    }
+
+    const sudtModel = appRegistry.findOrBind<SudtModel>(new ActorReference('sudt', `/${typeArgs}/`))
+
+    return SudtResponse.ok(sudtModel.getSudtBalance(addresses.map((v) => getLock(v))))
+  }
+
   @Post('/send')
   async send(
     @Body() { from, to, amount, typeArgs }: { from: string[]; to: string; amount: HexString; typeArgs: Hash },
