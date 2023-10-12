@@ -1,14 +1,24 @@
 import type { HexString, Hash } from '@ckb-lumos/base'
-import { BaseController, Controller, Body, Post, Get, Param } from '@ckb-js/kuai-io'
 import { ActorReference } from '@ckb-js/kuai-models'
-import { BadRequest } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
 import { SudtModel, appRegistry } from '../actors'
 import { Tx } from '../views/tx.view'
 import { getLock } from '../utils'
-import { SudtResponse } from '../response'
+import { BaseController, Body, Controller, Get, Param, Post, Put } from '@ckb-js/kuai-io'
+import { SudtResponse } from '../../response'
+import { CreateTokenRequest } from '../dto/create-token.dto'
+import { DataSource, QueryFailedError } from 'typeorm'
+import { Token } from '../entities/token.entity'
+import { Account } from '../entities/account.entity'
+import { tokenEntityToDto } from '../dto/token.dto'
 
 @Controller('sudt')
 export default class SudtController extends BaseController {
+  #explorerHost = process.env.EXPLORER_HOST || 'https://explorer.nervos.org'
+  constructor(private _dataSource: DataSource) {
+    super()
+  }
+
   @Get('/meta/:typeArgs')
   async meta(@Param('typeArgs') typeArgs: string) {
     if (!typeArgs) {
@@ -60,5 +70,59 @@ export default class SudtController extends BaseController {
       amount,
     )
     return SudtResponse.ok(await Tx.toJsonString(result))
+  }
+
+  @Post('/token')
+  async createToken(@Body() req: CreateTokenRequest) {
+    let owner = await this._dataSource.getRepository(Account).findOneBy({ address: req.account })
+    if (!owner) {
+      owner = await this._dataSource
+        .getRepository(Account)
+        .save(this._dataSource.getRepository(Account).create({ address: req.account }))
+    }
+
+    try {
+      const token = await this._dataSource
+        .getRepository(Token)
+        .save(this._dataSource.getRepository(Token).create({ ...req, ownerId: owner.id }))
+      return new SudtResponse('201', { url: `${this.#explorerHost}/transaction/${token.typeId}` })
+    } catch (e) {
+      if (e instanceof QueryFailedError) {
+        switch (e.driverError.code) {
+          case 'ER_DUP_ENTRY':
+            return SudtResponse.err('409', { message: 'Token already exists' })
+        }
+      }
+
+      console.error(e)
+    }
+  }
+
+  @Put('/token')
+  async updateToken(@Body() req: CreateTokenRequest) {
+    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId: req.typeId })
+    if (token) {
+      await this._dataSource.getRepository(Token).save({ ...token, ...req })
+    }
+
+    return new SudtResponse('201', {})
+  }
+
+  @Get('/token/:typeId')
+  async getToken(@Param('typeId') typeId: string) {
+    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
+
+    if (token) {
+      return SudtResponse.ok(tokenEntityToDto(token, '0', this.#explorerHost))
+    } else {
+      throw new NotFound()
+    }
+  }
+
+  @Get('/tokens')
+  async listTokens() {
+    const tokens = await this._dataSource.getRepository(Token).find()
+
+    return SudtResponse.ok(tokens.map((token) => tokenEntityToDto(token, '0', this.#explorerHost)))
   }
 }

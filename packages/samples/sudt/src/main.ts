@@ -1,33 +1,52 @@
-import Koa from 'koa';
-import { koaBody } from 'koa-body';
-import { getGenesisScriptsConfig, initialKuai } from '@ckb-js/kuai-core';
-import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io';
-import OmnilockController from './controllers/omnilock.controller';
-import SudtController from './controllers/sudt.controller';
+import Koa from 'koa'
+import { koaBody } from 'koa-body'
+import { getGenesisScriptsConfig, initialKuai } from '@ckb-js/kuai-core'
+import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io'
+import SudtController from './controllers/sudt.controller'
 import {
   REDIS_HOST_SYMBOL,
   REDIS_OPT_SYMBOL,
   REDIS_PORT_SYMBOL,
   initiateResourceBindingManager,
   mqContainer,
-} from '@ckb-js/kuai-models';
-import { config } from '@ckb-lumos/lumos';
-import './type-extends';
+} from '@ckb-js/kuai-models'
+import { config } from '@ckb-lumos/lumos'
+import './type-extends'
+import 'dotenv/config'
+import { DataSource } from 'typeorm'
+
+const initiateDataSource = async () => {
+  const dataSource = new DataSource({
+    connectorPackage: 'mysql2',
+    type: 'mysql',
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT) || 3306,
+    username: process.env.DB_USERNAME || 'root',
+    password: process.env.DB_PASSWORD || 'root',
+    database: process.env.DB_DATABASE || 'sudt',
+    entities: [__dirname + '/entities/*.{js,ts}'],
+    synchronize: true,
+  })
+
+  await dataSource.initialize()
+
+  return dataSource
+}
 
 async function bootstrap() {
-  const kuaiCtx = await initialKuai();
-  const kuaiEnv = kuaiCtx.getRuntimeEnvironment();
+  const kuaiCtx = await initialKuai()
+  const kuaiEnv = kuaiCtx.getRuntimeEnvironment()
 
   if (kuaiEnv.config.redisPort) {
-    mqContainer.bind(REDIS_PORT_SYMBOL).toConstantValue(kuaiEnv.config.redisPort);
+    mqContainer.bind(REDIS_PORT_SYMBOL).toConstantValue(kuaiEnv.config.redisPort)
   }
 
   if (kuaiEnv.config.redisHost) {
-    mqContainer.bind(REDIS_HOST_SYMBOL).toConstantValue(kuaiEnv.config.redisHost);
+    mqContainer.bind(REDIS_HOST_SYMBOL).toConstantValue(kuaiEnv.config.redisHost)
   }
 
   if (kuaiEnv.config.redisOpt) {
-    mqContainer.bind(REDIS_OPT_SYMBOL).toConstantValue(kuaiEnv.config.redisOpt);
+    mqContainer.bind(REDIS_OPT_SYMBOL).toConstantValue(kuaiEnv.config.redisOpt)
   }
 
   config.initializeConfig(
@@ -37,42 +56,42 @@ async function bootstrap() {
         ...(await getGenesisScriptsConfig(kuaiEnv.config.ckbChain.rpcUrl)),
       },
     }),
-  );
+  )
 
-  const port = kuaiEnv.config?.port || 3000;
+  const port = kuaiEnv.config?.port || 3000
 
-  initiateResourceBindingManager({ rpc: kuaiEnv.config.ckbChain.rpcUrl });
+  initiateResourceBindingManager({ rpc: kuaiEnv.config.ckbChain.rpcUrl })
 
-  const app = new Koa();
-  app.use(koaBody());
+  const app = new Koa()
+  app.use(koaBody())
+
+  const dataSource = await initiateDataSource()
 
   // init kuai io
-  const cor = new CoR();
-  const omnilockController = new OmnilockController();
-  const sudtController = new SudtController();
-  cor.use(omnilockController.middleware());
-  cor.use(sudtController.middleware());
+  const cor = new CoR()
+  const sudtController = new SudtController(dataSource)
+  cor.use(sudtController.middleware())
 
-  const koaRouterAdapter = new KoaRouterAdapter(cor);
+  const koaRouterAdapter = new KoaRouterAdapter(cor)
 
-  app.use(koaRouterAdapter.routes());
+  app.use(koaRouterAdapter.routes())
 
   const server = app.listen(port, function () {
     const address = (() => {
-      const _address = server.address();
+      const _address = server.address()
       if (!_address) {
-        return '';
+        return ''
       }
 
       if (typeof _address === 'string') {
-        return _address;
+        return _address
       }
 
-      return `http://${_address.address}:${_address.port}`;
-    })();
+      return `http://${_address.address}:${_address.port}`
+    })()
 
-    console.log(`kuai app listening at ${address}`);
-  });
+    console.log(`kuai app listening at ${address}`)
+  })
 }
 
-bootstrap();
+bootstrap()

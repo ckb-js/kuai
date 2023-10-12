@@ -22,13 +22,20 @@ method: POST
 
 ```javascript
 {
-  "symbol": "USDT",
-  "name": "USDT",
-  "amount": "100000",
-  "decimal": "18",
-  "description": "",
-  "website": "",
-  "icon": ""
+  "code": 200,
+  "data": {
+    "symbol": "USDT",
+    "name": "USDT",
+    "account": "", // the args of account in omnilock
+    "supply": "100000",
+    "decimal": 18,
+    "description": "",
+    "website": "",
+    "icon": "",
+    "typeId": "",
+    "args": "", // the args of sudt type script
+    "explorerCode": "" // the verify code from explorer
+  }
 }
 ```
 
@@ -53,15 +60,18 @@ method: PUT
 
 ```javascript
 {
-  "symbol": "USDT",
-  "name": "USDT",
-  "amount": "100000",
-  "decimal": "18",
-  "description": "",
-  "website": "",
-  "icon": "",
-  "args": "", // sudt args
-  "signature": ""
+  "code": 200,
+  "data": {
+    "symbol": "USDT",
+    "name": "USDT",
+    "amount": "100000",
+    "decimal": "18",
+    "description": "",
+    "website": "",
+    "icon": "",
+    "args": "", // sudt args
+    "signature": ""
+  }
 }
 ```
 
@@ -84,9 +94,12 @@ method: POST
 
 ```javascript
 {
-  "token": "", // token args
-  "amount": "",
-  "to": ""
+  "code": 200,
+  "data": {
+    "token": "", // token args
+    "amount": "",
+    "to": ""
+  }
 }
 ```
 
@@ -105,17 +118,20 @@ method: GET
 #### Response
 
 ```javascript
-[
-  {
-    symbol: 'USDT',
-    name: 'USDT',
-    amount: '100000',
-    decimal: '18',
-    description: '',
-    website: '',
-    icon: '',
-  },
-];
+{
+  "code": 200,
+  "data": [
+    {
+      symbol: 'USDT',
+      name: 'USDT',
+      amount: '100000',
+      decimal: '18',
+      description: '',
+      website: '',
+      icon: '',
+    },
+  ]
+}
 ```
 
 ### Token Detail
@@ -145,7 +161,7 @@ method: GET
 
 ### Asset List
 
-path: /assets
+path: /account/:address/assets
 
 method: GET
 
@@ -172,7 +188,7 @@ method: GET
 
 ### Token Transfer History
 
-path: /token/transfer/history
+path: /account/:address/assets/transfer/history
 
 method: GET
 
