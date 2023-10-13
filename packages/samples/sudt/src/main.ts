@@ -14,6 +14,7 @@ import { config } from '@ckb-lumos/lumos'
 import './type-extends'
 import 'dotenv/config'
 import { DataSource } from 'typeorm'
+import { AccountController } from './controllers/account.controller'
 
 const initiateDataSource = async () => {
   const dataSource = new DataSource({
@@ -70,7 +71,9 @@ async function bootstrap() {
   // init kuai io
   const cor = new CoR()
   const sudtController = new SudtController(dataSource)
+  const accountController = new AccountController(dataSource)
   cor.use(sudtController.middleware())
+  cor.use(accountController.middleware())
 
   const koaRouterAdapter = new KoaRouterAdapter(cor)
 

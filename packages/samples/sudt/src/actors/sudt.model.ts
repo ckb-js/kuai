@@ -15,6 +15,8 @@ import {
   UpdateStorageValue,
   TypeFilter,
   Sudt,
+  LockFilter,
+  Omnilock,
 } from '@ckb-js/kuai-models'
 import type { Cell, HexString, Script } from '@ckb-lumos/base'
 import { number, bytes } from '@ckb-lumos/codec'
@@ -27,10 +29,13 @@ import { MIN_SUDT_WITH_OMINILOCK, TX_FEE } from '../const'
  */
 @ActorProvider({ ref: { name: 'sudt', path: `/:args/` } })
 @TypeFilter()
+@LockFilter()
+@Omnilock()
 @Sudt()
 export class SudtModel extends JSONStore<Record<string, never>> {
   constructor(
-    @Param('args') args: string,
+    @Param('typeArgs') typeArgs: string,
+    @Param('lockArgs') lockArgs: string,
     _schemaOption?: void,
     params?: {
       states?: Record<OutPointString, never>
@@ -39,7 +44,7 @@ export class SudtModel extends JSONStore<Record<string, never>> {
       schemaPattern?: SchemaPattern
     },
   ) {
-    super(undefined, { ...params, ref: ActorReference.newWithFilter(SudtModel, `/${args}/`) })
+    super(undefined, { ...params, ref: ActorReference.newWithFilter(SudtModel, `/${lockArgs}/${typeArgs}/`) })
     if (!this.typeScript) {
       throw new Error('type script is required')
     }
