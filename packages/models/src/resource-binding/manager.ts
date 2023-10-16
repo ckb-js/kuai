@@ -271,8 +271,8 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
     return [...changes.values()]
   }
 
-  private async initiateStore(registry: ResourceBindingRegistry, lockScript?: Script, typeScript?: Script) {
-    const cells = await this._dataSource.getAllLiveCellsWithWitness(lockScript, typeScript)
+  private async initiateStore(registry: ResourceBindingRegistry, lock?: Script, type?: Script) {
+    const cells = await this._dataSource.getAllLiveCellsWithWitness({ lock, type })
     this.updateCellChanges(
       registry,
       [],

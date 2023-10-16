@@ -44,8 +44,7 @@ export interface ChainSource {
   getCurrentEpoch: () => Promise<CKBComponents.Epoch>
   getBlock: (blockNumber: string) => Promise<CKBComponents.Block | undefined>
   getAllLiveCellsWithWitness: (
-    lockScript?: Script,
-    typeScript?: Script,
+    scripts: Partial<Record<'lock' | 'type', Script>>,
   ) => Promise<(CKBComponents.IndexerCell & { witness: CKBComponents.Witness })[]>
 }
 

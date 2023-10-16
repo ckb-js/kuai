@@ -23,7 +23,11 @@ export class NervosChainSource implements ChainSource {
     return header.number
   }
 
-  getAllLiveCellsWithWitness = async (lockScript?: Script, typeScript?: Script, startBlock?: BI, endBlock?: BI) => {
+  getAllLiveCellsWithWitness = async (
+    scripts: Partial<Record<'lock' | 'type', Script>>,
+    startBlock?: BI,
+    endBlock?: BI,
+  ) => {
     const res: (CKBComponents.IndexerCell & { witness: string })[] = []
 
     startBlock = startBlock ?? BI.from(0)
@@ -31,29 +35,29 @@ export class NervosChainSource implements ChainSource {
 
     let lastCursor = ''
     let scriptFilterOption: CKBComponents.GetCellsSearchKey<true> | undefined = undefined
-    if (lockScript && typeScript) {
+    if (scripts.lock && scripts.type) {
       scriptFilterOption = {
-        script: lockScript,
+        script: scripts.lock,
         scriptType: 'lock',
         filter: {
-          script: typeScript,
+          script: scripts.type,
         },
         withData: true,
       }
-    } else if (lockScript) {
+    } else if (scripts.lock) {
       scriptFilterOption = {
-        script: lockScript,
+        script: scripts.lock,
         scriptType: 'lock',
         withData: true,
       }
-    } else if (typeScript) {
+    } else if (scripts.type) {
       scriptFilterOption = {
-        script: typeScript,
+        script: scripts.type,
         scriptType: 'type',
         withData: true,
       }
     }
-    if (!scriptFilterOption) throw new Error('One of lock script and type script is required at least')
+    if (!scriptFilterOption) throw new Error('One of lock script or type script is required at least')
     do {
       const cells = await this.#rpc.getCells(
         {
