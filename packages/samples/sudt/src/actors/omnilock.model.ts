@@ -74,7 +74,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
         type: {
           codeHash: CONFIG.SCRIPTS.SUDT!.CODE_HASH,
           hashType: CONFIG.SCRIPTS.SUDT!.HASH_TYPE,
-          args: utils.computeScriptHash(lockScript),
+          args: utils.computeScriptHash(this.lockScript!),
         },
       },
       data: bytes.hexify(number.Uint128LE.pack(amount)),
