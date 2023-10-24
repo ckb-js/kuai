@@ -1,7 +1,7 @@
 import type { HexString, Hash } from '@ckb-lumos/base'
 import { ActorReference } from '@ckb-js/kuai-models'
 import { BadRequest, NotFound } from 'http-errors'
-import { SudtModel, appRegistry } from '../actors'
+import { OmnilockModel, SudtModel, appRegistry } from '../actors'
 import { Tx } from '../views/tx.view'
 import { getLock } from '../utils'
 import { BaseController, Body, Controller, Get, Param, Post, Put } from '@ckb-js/kuai-io'
@@ -11,11 +11,16 @@ import { DataSource, QueryFailedError } from 'typeorm'
 import { Token } from '../entities/token.entity'
 import { Account } from '../entities/account.entity'
 import { tokenEntityToDto } from '../dto/token.dto'
+import { ExplorerService } from '../services/explorer.service'
+import { BI, utils } from '@ckb-lumos/lumos'
 
 @Controller('sudt')
 export default class SudtController extends BaseController {
   #explorerHost = process.env.EXPLORER_HOST || 'https://explorer.nervos.org'
-  constructor(private _dataSource: DataSource) {
+  constructor(
+    private _dataSource: DataSource,
+    private _explorerService: ExplorerService,
+  ) {
     super()
   }
 
@@ -81,11 +86,26 @@ export default class SudtController extends BaseController {
         .save(this._dataSource.getRepository(Account).create({ address: req.account }))
     }
 
+    const amount = BI.isBI(req.amount) ? BI.from(req.amount) : BI.from(0)
     try {
-      const token = await this._dataSource
-        .getRepository(Token)
-        .save(this._dataSource.getRepository(Token).create({ ...req, ownerId: owner.id }))
-      return new SudtResponse('201', { url: `${this.#explorerHost}/transaction/${token.typeId}` })
+      const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
+        new ActorReference('omnilock', `/${getLock(req.account).args}/`),
+      )
+      const { typeScript, ...result } = omniLockModel.mint(getLock(req.account), amount)
+
+      await this._dataSource.getRepository(Token).save(
+        this._dataSource.getRepository(Token).create({
+          name: req.name,
+          ownerId: owner.id,
+          decimal: req.decimal,
+          description: req.description,
+          website: req.website,
+          icon: req.icon,
+          args: typeScript.args,
+          typeId: utils.computeScriptHash(typeScript),
+        }),
+      )
+      return new SudtResponse('201', Tx.toJsonString(result))
     } catch (e) {
       if (e instanceof QueryFailedError) {
         switch (e.driverError.code) {
@@ -95,17 +115,37 @@ export default class SudtController extends BaseController {
       }
 
       console.error(e)
+      throw e
     }
   }
 
-  @Put('/token')
-  async updateToken(@Body() req: CreateTokenRequest) {
-    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId: req.typeId })
-    if (token) {
-      await this._dataSource.getRepository(Token).save({ ...token, ...req })
+  @Put('/token/:typeId')
+  async updateToken(@Body() req: CreateTokenRequest, @Param('typeId') typeId: string) {
+    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
+    if (!token) {
+      return SudtResponse.err('404', { message: 'Token not found' })
     }
 
-    return new SudtResponse('201', {})
+    try {
+      await this._explorerService.updateSUDT({
+        typeHash: typeId,
+        symbol: req.name,
+        fullName: req.name,
+        decimal: req.decimal.toString(),
+        totalAmount: '0',
+        description: req.description,
+        operatorWebsite: req.website,
+        iconFile: req.icon,
+        uan: `${req.name}.ckb`,
+        displayName: req.name,
+        email: req.email,
+        token: req.explorerCode,
+      })
+      await this._dataSource.getRepository(Token).save({ ...token, ...req })
+      return new SudtResponse('201', {})
+    } catch (e) {
+      throw SudtResponse.err('500', { message: (e as Error).message })
+    }
   }
 
   @Get('/token/:typeId')

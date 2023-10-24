@@ -4,7 +4,7 @@
  * This is the actor model for omnilock, which is used to gather omnilock cells to generate record models.
  */
 
-import type { Cell, HexString, Script } from '@ckb-lumos/base'
+import type { Cell, Script } from '@ckb-lumos/base'
 import {
   ActorProvider,
   Omnilock,
@@ -60,25 +60,27 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
 
   mint(
     lockScript: Script,
-    amount: HexString,
+    amount: BI,
     args?: string,
   ): {
     inputs: Cell[]
     outputs: Cell[]
     witnesses: string[]
+    typeScript: Script
   } {
     const CONFIG = getConfig()
+    const typeScript = {
+      codeHash: CONFIG.SCRIPTS.SUDT!.CODE_HASH,
+      hashType: CONFIG.SCRIPTS.SUDT!.HASH_TYPE,
+      args: args ?? utils.computeScriptHash(lockScript),
+    }
     const sudtCell: Cell = {
       cellOutput: {
         capacity: BI.from(MIN_SUDT_WITH_OMINILOCK).toHexString(),
         lock: lockScript,
-        type: {
-          codeHash: CONFIG.SCRIPTS.SUDT!.CODE_HASH,
-          hashType: CONFIG.SCRIPTS.SUDT!.HASH_TYPE,
-          args: args ?? utils.computeScriptHash(lockScript),
-        },
+        type: typeScript,
       },
-      data: bytes.hexify(number.Uint128LE.pack(amount)),
+      data: bytes.hexify(number.Uint128LE.pack(amount.toHexString())),
     }
     const cells = Object.values(this.chainData)
     let currentTotalCapacity: BI = BI.from(0)
@@ -93,6 +95,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     if (currentTotalCapacity.lt(needCapacity)) throw new InternalServerError('not enough capacity')
 
     return {
+      typeScript,
       inputs: inputs.map((v) => v.cell),
       outputs: [
         sudtCell,

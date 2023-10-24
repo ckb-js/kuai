@@ -1,5 +1,10 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm'
 
+export enum TokenStatus {
+  New = 1,
+  Committed,
+}
+
 @Entity()
 export class Token {
   @PrimaryGeneratedColumn()
@@ -34,6 +39,9 @@ export class Token {
   @Column()
   @Unique('uniq_args', ['args'])
   args!: string
+
+  @Column({ default: TokenStatus.New })
+  status!: TokenStatus
 
   @CreateDateColumn()
   createdAt!: Date
