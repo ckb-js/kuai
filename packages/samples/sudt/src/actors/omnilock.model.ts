@@ -61,6 +61,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
   mint(
     lockScript: Script,
     amount: HexString,
+    args?: string,
   ): {
     inputs: Cell[]
     outputs: Cell[]
@@ -74,7 +75,7 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
         type: {
           codeHash: CONFIG.SCRIPTS.SUDT!.CODE_HASH,
           hashType: CONFIG.SCRIPTS.SUDT!.HASH_TYPE,
-          args: utils.computeScriptHash(this.lockScript!),
+          args: args ?? utils.computeScriptHash(lockScript),
         },
       },
       data: bytes.hexify(number.Uint128LE.pack(amount)),

@@ -8,8 +8,8 @@ import { getLock } from '../utils'
 import { SudtResponse } from '../response'
 import { Token } from '../entities/token.entity'
 import { BadRequest } from 'http-errors'
-import { HexString } from '@ckb-lumos/lumos'
 import { Tx } from '../views/tx.view'
+import { MintRequest } from '../dto/mint.dto'
 
 @Controller('/account')
 export class AccountController extends BaseController {
@@ -18,17 +18,22 @@ export class AccountController extends BaseController {
     super()
   }
 
-  @Post('/mint')
-  async mint(@Body() { from, to, amount }: { from: string; to: string; amount: HexString }) {
-    if (!from || !to || !amount) {
+  @Post('/mint/:typeId')
+  async mint(@Body() { from, to, amount }: MintRequest, @Param('typeId') typeId: string) {
+    if (!from || from.length === 0 || !to || !amount) {
       throw new BadRequest('undefined body field: from, to or amount')
     }
 
+    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
+    if (!token) {
+      return SudtResponse.err(404, 'token not found')
+    }
+
     const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
-      new ActorReference('omnilock', `/${getLock(from).args}/`),
+      new ActorReference('omnilock', `/${getLock(from[0]).args}/`),
     )
 
-    const result = omniLockModel.mint(getLock(to), amount)
+    const result = omniLockModel.mint(getLock(to), amount, token.args)
 
     return SudtResponse.ok(await Tx.toJsonString(result))
   }
