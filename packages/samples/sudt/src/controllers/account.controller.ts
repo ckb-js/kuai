@@ -10,6 +10,7 @@ import { Token } from '../entities/token.entity'
 import { BadRequest } from 'http-errors'
 import { Tx } from '../views/tx.view'
 import { MintRequest } from '../dto/mint.dto'
+import { BI } from '@ckb-lumos/lumos'
 
 @Controller('/account')
 export class AccountController extends BaseController {
@@ -33,7 +34,7 @@ export class AccountController extends BaseController {
       new ActorReference('omnilock', `/${getLock(from[0]).args}/`),
     )
 
-    const result = omniLockModel.mint(getLock(to), amount, token.args)
+    const result = omniLockModel.mint(getLock(to), BI.isBI(amount) ? BI.from(amount) : BI.from(0), token.args)
 
     return SudtResponse.ok(await Tx.toJsonString(result))
   }
