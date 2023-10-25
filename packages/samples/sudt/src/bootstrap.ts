@@ -13,6 +13,7 @@ import {
 import { config } from '@ckb-lumos/lumos'
 import { DataSource } from 'typeorm'
 import { AccountController } from './controllers/account.controller'
+import { ExplorerService } from './services/explorer.service'
 
 const initiateDataSource = async () => {
   const dataSource = new DataSource({
@@ -68,7 +69,7 @@ export const bootstrap = async () => {
 
   // init kuai io
   const cor = new CoR()
-  const sudtController = new SudtController(dataSource)
+  const sudtController = new SudtController(dataSource, new ExplorerService())
   const accountController = new AccountController(dataSource)
   cor.use(sudtController.middleware())
   cor.use(accountController.middleware())
