@@ -496,16 +496,24 @@ subtask('contract:sign-message')
   })
 
 subtask('contract:get-workspace').setAction(async (_, { config }) => {
-  if (config.contract?.workspace) {
-    return config.contract?.workspace
-  }
-
-  const userConfigPath = getUserConfigPath()
+  const userConfigPath = config.kuaiArguments?.configPath || getUserConfigPath()
   if (!userConfigPath) {
     throw new Error('Please run in kuai project')
   }
 
-  return path.join(path.dirname(userConfigPath), 'contract')
+  const workspacePath = path.join(path.dirname(userConfigPath), config.contract?.workspace ?? 'contract')
+
+  if (!existsSync(workspacePath)) {
+    const workspaceName = path.basename(workspacePath)
+    const workspaceDir = path.dirname(workspacePath)
+
+    mkdirSync(workspaceDir, { recursive: true })
+    execSync(`cd ${workspaceDir} && capsule new ${workspaceName}`, {
+      stdio: 'inherit',
+    })
+  }
+
+  return workspacePath
 })
 
 subtask('contract:set-environment').setAction(async () => {
