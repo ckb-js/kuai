@@ -28,7 +28,7 @@
     "read": "2.1.0"
   },
   "devDependencies": {
-    "@types/decompress": "4.2.6",
+    "@types/decompress": "4.2.7",
     "@types/lodash": "4.14.200"
   }
 }
