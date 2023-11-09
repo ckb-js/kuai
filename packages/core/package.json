@@ -23,7 +23,7 @@
     "decompress": "4.2.1",
     "enquirer": "2.4.1",
     "find-up": "5.0.0",
-    "jsonrepair": "3.2.4",
+    "jsonrepair": "3.4.0",
     "lodash": "4.17.21",
     "read": "2.1.0"
   },
