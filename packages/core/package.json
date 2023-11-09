@@ -29,6 +29,6 @@
   },
   "devDependencies": {
     "@types/decompress": "4.2.7",
-    "@types/lodash": "4.14.200"
+    "@types/lodash": "4.14.201"
   }
 }
