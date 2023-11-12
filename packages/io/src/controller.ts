@@ -1,6 +1,5 @@
 import { Middleware, Route, Path, RouterContext, RoutePayload, Method } from './types'
 import { type Key, pathToRegexp } from 'path-to-regexp'
-import { NotFound } from 'http-errors'
 import { addLeadingSlash, concatPaths, matchParams } from './helper'
 import {
   KUAI_ROUTE_METADATA_METHOD,
@@ -51,7 +50,7 @@ export class BaseController {
   #routes: Route[] = this.getRoutes()
 
   createMiddleware(key: string | symbol): Middleware<RouterContext> {
-    return (ctx) => {
+    return async (ctx) => {
       const argsMetadata: Record<number, RouteParamMetadata> =
         Reflect.getMetadata(KUAI_ROUTE_ARGS_METADATA, this, key) || {}
 
@@ -92,7 +91,7 @@ export class BaseController {
 
       try {
         // eslint-disable-next-line @typescript-eslint/ban-types
-        const result = (this[key as keyof this] as Function)(...args)
+        const result = await (this[key as keyof this] as Function)(...args)
         ctx.ok(result)
       } catch (e) {
         ctx.err(e)
@@ -132,7 +131,6 @@ export class BaseController {
 
         return route.middleware(ctx, next)
       } else {
-        ctx.err(new NotFound())
         return next()
       }
     }
