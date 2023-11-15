@@ -1,5 +1,6 @@
 import { describe, expect, test, beforeAll, afterAll } from '@jest/globals'
 import { execSync, exec } from 'node:child_process'
+import { rmSync } from 'node:fs'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const { scheduler } = require('node:timers/promises')
 const CONFIG_PATH = './__tests__/__fixtures__/kuai-config-case/kuai.config.ts'
@@ -290,6 +291,18 @@ describe('kuai cli', () => {
       const ANSI_COLORS_CODE_REG = /\u001b\[[0-9;]*m/g
       const output = execSync(`npx kuai --config ${CONFIG_PATH} variadic-task --variadicParam 1 2`)
       expect(output.toString().replace(ANSI_COLORS_CODE_REG, '')).toMatch('{ variadicParam: [ 1, 2 ] }')
+    })
+  })
+
+  describe('contract command', () => {
+    test('not init capsule case', () => {
+      const output = execSync(
+        'npx kuai contract new --name hello --config ./__tests__/__fixtures__/not-init-capsule-case/kuai.config.ts',
+      )
+      expect(output.toString()).toMatch(/Done/)
+
+      // remove temp files
+      rmSync('./__tests__/__fixtures__/not-init-capsule-case/contract', { recursive: true })
     })
   })
 })

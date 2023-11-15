@@ -21,8 +21,7 @@ subtask('signer:get-signer', 'get built-in signer').setAction(async (_, env) => 
   }
 
   const ckbcli = new CKBCLI({ url: env.config.ckbChain.rpcUrl })
-
-  const userConfigPath = getUserConfigPath()
+  const userConfigPath = env.config.kuaiArguments?.configPath || getUserConfigPath()
   if (!userConfigPath) {
     throw new Error('Please run in kuai project')
   }
