@@ -34,6 +34,6 @@ subtask('demo-task2:sub').setAction(() => {
   console.info('subtask')
 })
 
-const config: KuaiConfig = {}
+const config: KuaiConfig = { ckbChain: { prefix: '', rpcUrl: '' } }
 
 export default config

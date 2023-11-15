@@ -19,6 +19,12 @@ jobs:
       - name: Install project dependencies and build
         run: npm i
 
+      - name: Install capsule
+        uses: actions-rs/install@v0.1
+        with:
+          crate: ckb-capsule
+          version: latest
+
       - name: Build packages
         run: npm run build
 
