@@ -58,6 +58,20 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
     }
   }
 
+  loadCapacity = (capacity: BI) => {
+    const cells = Object.values(this.chainData)
+    let currentTotalCapacity = BI.from(0)
+    const inputs = cells.filter((v) => {
+      if (currentTotalCapacity.gte(capacity)) return false
+      currentTotalCapacity = currentTotalCapacity.add(BI.from(v.cell.cellOutput.capacity))
+      return true
+    })
+
+    if (currentTotalCapacity.lt(capacity)) throw new InternalServerError('not enough capacity')
+
+    return { inputs, currentTotalCapacity }
+  }
+
   mint(
     lockScript: Script,
     amount: BI,
@@ -82,17 +96,9 @@ export class OmnilockModel extends JSONStore<Record<string, never>> {
       },
       data: bytes.hexify(number.Uint128LE.pack(amount.toHexString())),
     }
-    const cells = Object.values(this.chainData)
-    let currentTotalCapacity: BI = BI.from(0)
     // additional 0.001 ckb for tx fee
     const needCapacity = BI.from(sudtCell.cellOutput.capacity).add(TX_FEE)
-    const inputs = cells.filter((v) => {
-      if (v.cell.cellOutput.type) return false
-      if (currentTotalCapacity.gte(needCapacity)) return false
-      currentTotalCapacity = currentTotalCapacity.add(BI.from(v.cell.cellOutput.capacity))
-      return true
-    })
-    if (currentTotalCapacity.lt(needCapacity)) throw new InternalServerError('not enough capacity')
+    const { inputs, currentTotalCapacity } = this.loadCapacity(needCapacity)
 
     return {
       typeScript,

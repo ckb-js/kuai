@@ -13,8 +13,9 @@ import { Account } from '../entities/account.entity'
 import { tokenEntityToDto } from '../dto/token.dto'
 import { ExplorerService } from '../services/explorer.service'
 import { BI, utils } from '@ckb-lumos/lumos'
+import { MintRequest } from '../dto/mint.dto'
 
-@Controller('sudt')
+@Controller('token')
 export default class SudtController extends BaseController {
   #explorerHost = process.env.EXPLORER_HOST || 'https://explorer.nervos.org'
   constructor(
@@ -35,31 +36,38 @@ export default class SudtController extends BaseController {
     return SudtResponse.ok(sudtModel.meta())
   }
 
-  @Post('/getSudtBalance')
-  async getSudtBalance(@Body() { addresses, typeArgs }: { addresses: string[]; typeArgs: Hash }) {
-    if (!addresses?.length || !typeArgs) {
-      throw new BadRequest('undefined body field: from or typeArgs')
+  // @Post('/getSudtBalance')
+  // async getSudtBalance(@Body() { addresses, typeArgs }: { addresses: string[]; typeArgs: Hash }) {
+  //   if (!addresses?.length || !typeArgs) {
+  //     throw new BadRequest('undefined body field: from or typeArgs')
+  //   }
+
+  //   const sudtModel = appRegistry.findOrBind<SudtModel>(new ActorReference('sudt', `/${typeArgs}/`))
+
+  //   return SudtResponse.ok(sudtModel.getSudtBalance(addresses.map((v) => getLock(v))))
+  // }
+
+  @Post('/send/:typeId')
+  async send(@Body() { from, to, amount }: MintRequest, @Param('typeId') typeId: string) {
+    if (!from?.length || !to || !amount) {
+      throw new BadRequest('undefined body field: from, to or amount')
     }
 
-    const sudtModel = appRegistry.findOrBind<SudtModel>(new ActorReference('sudt', `/${typeArgs}/`))
-
-    return SudtResponse.ok(sudtModel.getSudtBalance(addresses.map((v) => getLock(v))))
-  }
-
-  @Post('/send')
-  async send(
-    @Body() { from, to, amount, typeArgs }: { from: string[]; to: string; amount: HexString; typeArgs: Hash },
-  ) {
-    if (!from?.length || !to || !amount || !typeArgs) {
-      throw new BadRequest('undefined body field: from, to, amount or typeArgs')
+    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
+    if (!token) {
+      return SudtResponse.err('404', 'token not found')
     }
 
-    const sudtModel = appRegistry.findOrBind<SudtModel>(new ActorReference('sudt', `/${typeArgs}/`))
-    const result = sudtModel.send(
-      from.map((v) => getLock(v)),
-      getLock(to),
-      amount,
+    const fromLocks = from.map((v) => getLock(v))
+
+    const sudtModel = appRegistry.findOrBind<SudtModel>(
+      new ActorReference('sudt', `/${token.args}/${fromLocks[0].args}/`),
     )
+    const omnilockModel = appRegistry.findOrBind<OmnilockModel>(
+      new ActorReference('omnilock', `/${fromLocks[0].args}/`),
+    )
+
+    const result = sudtModel.send(omnilockModel, getLock(to), amount)
     return SudtResponse.ok(await Tx.toJsonString(result))
   }
 
@@ -77,7 +85,7 @@ export default class SudtController extends BaseController {
     return SudtResponse.ok(await Tx.toJsonString(result))
   }
 
-  @Post('/token')
+  @Post('/')
   async createToken(@Body() req: CreateTokenRequest) {
     let owner = await this._dataSource.getRepository(Account).findOneBy({ address: req.account })
     if (!owner) {
@@ -119,7 +127,7 @@ export default class SudtController extends BaseController {
     }
   }
 
-  @Put('/token/:typeId')
+  @Put('/:typeId')
   async updateToken(@Body() req: CreateTokenRequest, @Param('typeId') typeId: string) {
     const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
     if (!token) {
@@ -148,7 +156,7 @@ export default class SudtController extends BaseController {
     }
   }
 
-  @Get('/token/:typeId')
+  @Get('/:typeId')
   async getToken(@Param('typeId') typeId: string) {
     const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
 
@@ -159,7 +167,7 @@ export default class SudtController extends BaseController {
     }
   }
 
-  @Get('/tokens')
+  @Get('/')
   async listTokens() {
     const tokens = await this._dataSource.getRepository(Token).find()
 

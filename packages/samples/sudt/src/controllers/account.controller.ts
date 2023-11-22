@@ -2,7 +2,7 @@ import { BaseController, Body, Controller, Get, Param, Post } from '@ckb-js/kuai
 import { DataSource } from 'typeorm'
 import { Transaction } from '../entities/transaction.entity'
 import { Account } from '../entities/account.entity'
-import { OmnilockModel, SudtModel, appRegistry } from '../actors'
+import { OmnilockModel, appRegistry } from '../actors'
 import { ActorReference } from '@ckb-js/kuai-models'
 import { getLock } from '../utils'
 import { SudtResponse } from '../response'
@@ -11,6 +11,7 @@ import { BadRequest } from 'http-errors'
 import { Tx } from '../views/tx.view'
 import { MintRequest } from '../dto/mint.dto'
 import { BI } from '@ckb-lumos/lumos'
+import { Asset } from '../entities/asset.entity'
 
 @Controller('/account')
 export class AccountController extends BaseController {
@@ -81,18 +82,46 @@ export class AccountController extends BaseController {
   @Get('/:address/assets')
   async accountAssets(@Param('address') address: string) {
     const tokens = await this._dataSource.getRepository(Token).find()
-    const lock = getLock(address)
+    const account = await this._dataSource.getRepository(Account).findOneBy({ address })
+    if (!account) {
+      throw SudtResponse.err(404, 'account not found')
+    }
+
+    const assets = await this._dataSource.getRepository(Asset).findBy({ accountId: account.id })
+    const assetsMap = assets.reduce((acc, cur) => {
+      acc.set(cur.tokenId, cur)
+      return acc
+    }, new Map<number, Asset>())
+    console.log(assetsMap)
     return tokens.map((token) => {
       try {
         return {
-          ...token,
-          ...appRegistry
-            .findOrBind<SudtModel>(new ActorReference('sudt', `/${lock.args}/${token.args}/`))
-            .getSudtBalance([getLock(address)]),
+          uan: token.name,
+          displayName: token.name,
+          decimal: token.decimal,
+          amount: assetsMap.get(token.id)?.balance ?? '0',
         }
       } catch (e) {
         console.error(e)
       }
     })
   }
+
+  // @Post('/transfer/:typeId')
+  //   async transfer(@Param('tokenId') typeId: string, @Body() { from, to, amount }: MintRequest) {
+  //     if (!from || from.length === 0 || !to || !amount) {
+  //       throw new BadRequest('undefined body field: from, to or amount')
+  //     }
+
+  //     const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
+  //     if (!token) {
+  //       return SudtResponse.err(404, 'token not found')
+  //     }
+
+  //     const sudt = appRegistry.findOrBind<SudtModel>(new ActorReference('sudt', `/${token.args}/`))
+
+  //     const result = sudt.send(getLock(to), amount)
+
+  //     return Tx.toJsonString(result)
+  //   }
 }

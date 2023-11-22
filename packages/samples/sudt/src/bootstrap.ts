@@ -14,6 +14,7 @@ import { config } from '@ckb-lumos/lumos'
 import { DataSource } from 'typeorm'
 import { AccountController } from './controllers/account.controller'
 import { ExplorerService } from './services/explorer.service'
+import { BalanceTask } from './tasks/balance.task'
 
 const initiateDataSource = async () => {
   const dataSource = new DataSource({
@@ -67,9 +68,12 @@ export const bootstrap = async () => {
 
   const dataSource = await initiateDataSource()
 
+  const balanceTask = new BalanceTask(dataSource)
+  balanceTask.run()
+
   // init kuai io
   const cor = new CoR()
-  const sudtController = new SudtController(dataSource, new ExplorerService())
+  const sudtController = new SudtController(dataSource, new ExplorerService(process.env.EXPLORER_API_HOST))
   const accountController = new AccountController(dataSource)
   cor.use(sudtController.middleware())
   cor.use(accountController.middleware())
@@ -78,20 +82,26 @@ export const bootstrap = async () => {
 
   app.use(koaRouterAdapter.routes())
 
-  const server = app.listen(port, function () {
-    const address = (() => {
-      const _address = server.address()
-      if (!_address) {
-        return ''
-      }
+  // while (true) {
+  try {
+    const server = app.listen(port, function () {
+      const address = (() => {
+        const _address = server.address()
+        if (!_address) {
+          return ''
+        }
 
-      if (typeof _address === 'string') {
-        return _address
-      }
+        if (typeof _address === 'string') {
+          return _address
+        }
 
-      return `http://${_address.address}:${_address.port}`
-    })()
+        return `http://${_address.address}:${_address.port}`
+      })()
 
-    console.log(`kuai app listening at ${address}`)
-  })
+      console.log(`kuai app listening at ${address}`)
+    })
+  } catch (e) {
+    console.error(e)
+  }
+  // }
 }

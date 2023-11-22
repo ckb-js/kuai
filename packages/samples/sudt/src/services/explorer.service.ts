@@ -1,5 +1,5 @@
 export class ExplorerService {
-  constructor(private host = '') {}
+  constructor(private host = 'https://testnet-api.explorer.nervos.org') {}
 
   updateSUDT = async (params: {
     typeHash: string
@@ -15,7 +15,14 @@ export class ExplorerService {
     email: string
     token?: string
   }) => {
-    const res = await fetch(`${this.host}/api/v1/udts/${params.typeHash}`, { method: 'POST', body: JSON.stringify({}) })
+    const res = await fetch(`${this.host}/api/v1/udts/${params.typeHash}`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+      headers: {
+        Accept: 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+      },
+    })
     if (!res.ok) {
       throw new Error('Internal Service Error')
     }

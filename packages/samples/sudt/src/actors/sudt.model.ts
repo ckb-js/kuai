@@ -23,11 +23,12 @@ import { number, bytes } from '@ckb-lumos/codec'
 import { InternalServerError } from 'http-errors'
 import { BI, utils, config } from '@ckb-lumos/lumos'
 import { MIN_SUDT_WITH_OMINILOCK, TX_FEE } from '../const'
+import { OmnilockModel } from './omnilock.model'
 
 /**
  * add business logic in an actor
  */
-@ActorProvider({ ref: { name: 'sudt', path: `/:args/` } })
+@ActorProvider({ ref: { name: 'sudt', path: `/:typeArgs/:lockArgs/` } })
 @TypeFilter()
 @LockFilter()
 @Omnilock()
@@ -44,30 +45,27 @@ export class SudtModel extends JSONStore<Record<string, never>> {
       schemaPattern?: SchemaPattern
     },
   ) {
-    super(undefined, { ...params, ref: ActorReference.newWithFilter(SudtModel, `/${lockArgs}/${typeArgs}/`) })
+    super(undefined, { ...params, ref: ActorReference.newWithFilter(SudtModel, `/${typeArgs}/${lockArgs}/`) })
     if (!this.typeScript) {
       throw new Error('type script is required')
     }
     this.registerResourceBinding()
   }
 
-  getSudtBalance(lockScripts: Script[]): Record<'capacity' | 'sudtBalance', string> {
-    let capacity = BigInt(0)
-    let sudtBalance = BigInt(0)
-    const filterScriptHashes = new Set(lockScripts.map((v) => utils.computeScriptHash(v)))
+  getSudtBalance(): Record<'capacity' | 'sudtBalance', BI> {
+    let capacity = BI.from(0)
+    let sudtBalance = BI.from(0)
     Object.values(this.chainData).forEach((v) => {
-      if (filterScriptHashes.has(utils.computeScriptHash(v.cell.cellOutput.lock))) {
-        capacity += BigInt(v.cell.cellOutput.capacity ?? 0)
-        sudtBalance += number.Uint128LE.unpack(v.cell.data.slice(0, 34)).toBigInt()
-      }
+      capacity = capacity.add(v.cell.cellOutput.capacity ?? 0)
+      sudtBalance = sudtBalance.add(number.Uint128LE.unpack(v.cell.data.slice(0, 34)))
     })
     return {
-      capacity: capacity.toString(),
-      sudtBalance: sudtBalance.toString(),
+      capacity: capacity,
+      sudtBalance: sudtBalance,
     }
   }
 
-  send(from: Script[], lockScript: Script, amount: HexString) {
+  send(omnilock: OmnilockModel, lockScript: Script, amount: HexString) {
     const CONFIG = config.getConfig()
     const sudtCell: Cell = {
       cellOutput: {
@@ -86,15 +84,15 @@ export class SudtModel extends JSONStore<Record<string, never>> {
     let currentTotalCapacity: BI = BI.from(0)
     // additional 0.001 ckb for tx fee
     const needCapacity = BI.from(sudtCell.cellOutput.capacity).add(TX_FEE)
-    const fromScriptHashes = new Set(from.map((v) => utils.computeScriptHash(v)))
-    const inputs = cells.filter((v) => {
-      if (!fromScriptHashes.has(utils.computeScriptHash(v.cell.cellOutput.lock))) return false
+    let inputs = cells.filter((v) => {
       if (currentTotalCapacity.gte(needCapacity) && currentTotalSudt.gte(amount)) return false
       currentTotalCapacity = currentTotalCapacity.add(BI.from(v.cell.cellOutput.capacity))
       currentTotalSudt = currentTotalSudt.add(number.Uint128LE.unpack(v.cell.data.slice(0, 34)))
       return true
     })
-    if (currentTotalCapacity.lt(needCapacity)) throw new InternalServerError('not enough capacity')
+    if (currentTotalCapacity.lt(needCapacity)) {
+      inputs = inputs.concat(omnilock.loadCapacity(needCapacity.sub(currentTotalCapacity)))
+    }
     if (currentTotalSudt.lt(amount)) throw new InternalServerError('not enough sudt balance')
 
     const leftSudt = currentTotalSudt.sub(amount)
