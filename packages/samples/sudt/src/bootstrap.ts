@@ -1,5 +1,6 @@
 import Koa from 'koa'
 import { koaBody } from 'koa-body'
+import cors from '@koa/cors'
 import { getGenesisScriptsConfig, initialKuai } from '@ckb-js/kuai-core'
 import { KoaRouterAdapter, CoR } from '@ckb-js/kuai-io'
 import SudtController from './controllers/sudt.controller'
@@ -33,6 +34,10 @@ const initiateDataSource = async () => {
 
   return dataSource
 }
+
+process.on('uncaughtException', (error) => {
+  console.log(error)
+})
 
 export const bootstrap = async () => {
   const kuaiCtx = await initialKuai()
@@ -80,6 +85,7 @@ export const bootstrap = async () => {
 
   const koaRouterAdapter = new KoaRouterAdapter(cor)
 
+  app.use(cors())
   app.use(koaRouterAdapter.routes())
 
   // while (true) {
