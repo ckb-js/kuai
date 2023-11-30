@@ -91,7 +91,7 @@ export class SudtModel extends JSONStore<Record<string, never>> {
       return true
     })
     if (currentTotalCapacity.lt(needCapacity)) {
-      inputs = inputs.concat(omnilock.loadCapacity(needCapacity.sub(currentTotalCapacity)))
+      inputs = inputs.concat(omnilock.loadCapacity(needCapacity.sub(currentTotalCapacity)).inputs)
     }
     if (currentTotalSudt.lt(amount)) throw new InternalServerError('not enough sudt balance')
 

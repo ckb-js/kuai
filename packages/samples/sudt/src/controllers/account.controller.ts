@@ -20,6 +20,18 @@ export class AccountController extends BaseController {
     super()
   }
 
+  async getOrCreateAccount(address: string) {
+    const repo = this._dataSource.getRepository(Account)
+    const account = await repo.findOneBy({ address })
+    if (account) {
+      return account
+    }
+
+    appRegistry.findOrBind<OmnilockModel>(new ActorReference('omnilock', `/${getLock(address).args}/`))
+
+    return repo.save(repo.create({ address }))
+  }
+
   @Post('/mint/:typeId')
   async mint(@Body() { from, to, amount }: MintRequest, @Param('typeId') typeId: string) {
     if (!from || from.length === 0 || !to || !amount) {
@@ -45,12 +57,7 @@ export class AccountController extends BaseController {
     if (!address) {
       throw new Request('invalid address')
     }
-
-    const repo = this._dataSource.getRepository(Account)
-    const account = await repo.findBy({ address })
-    if (!account) {
-      repo.save(repo.create({ address }))
-    }
+    await this.getOrCreateAccount(address)
 
     const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
       new ActorReference('omnilock', `/${getLock(address).args}/`),
@@ -82,10 +89,7 @@ export class AccountController extends BaseController {
   @Get('/:address/assets')
   async accountAssets(@Param('address') address: string) {
     const tokens = await this._dataSource.getRepository(Token).find()
-    const account = await this._dataSource.getRepository(Account).findOneBy({ address })
-    if (!account) {
-      throw SudtResponse.err(404, 'account not found')
-    }
+    const account = await this.getOrCreateAccount(address)
 
     const assets = await this._dataSource.getRepository(Asset).findBy({ accountId: account.id })
     const assetsMap = assets.reduce((acc, cur) => {
