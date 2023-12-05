@@ -23,7 +23,7 @@ import { number, bytes } from '@ckb-lumos/codec'
 import { InternalServerError } from 'http-errors'
 import { BI, utils, config } from '@ckb-lumos/lumos'
 import { MIN_SUDT_WITH_OMINILOCK, TX_FEE } from '../const'
-import { OmnilockModel } from './omnilock.model'
+import { LockModel } from './lock.model'
 
 /**
  * add business logic in an actor
@@ -65,7 +65,7 @@ export class SudtModel extends JSONStore<Record<string, never>> {
     }
   }
 
-  send(omnilock: OmnilockModel, lockScript: Script, amount: HexString) {
+  send(omnilock: LockModel, lockScript: Script, amount: HexString) {
     const CONFIG = config.getConfig()
     const sudtCell: Cell = {
       cellOutput: {

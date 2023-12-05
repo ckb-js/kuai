@@ -1,5 +1,7 @@
 import { type Cell, helpers, commons } from '@ckb-lumos/lumos'
+import { getConfig } from '@ckb-lumos/config-manager'
 import { addBuiltInCellDeps } from '@ckb-js/kuai-common'
+import { HttpError } from 'http-errors'
 
 export class Tx {
   static async toJsonString({
@@ -13,7 +15,16 @@ export class Tx {
   }): Promise<helpers.TransactionSkeletonObject> {
     let txSkeleton = helpers.TransactionSkeleton({})
     for (const input of inputs) {
-      txSkeleton = await commons.omnilock.setupInputCell(txSkeleton, input)
+      switch (input.cellOutput.lock.args) {
+        case getConfig().SCRIPTS.ANYONE_CAN_PAY?.CODE_HASH:
+          txSkeleton = await commons.anyoneCanPay.setupInputCell(txSkeleton, input)
+          break
+        case getConfig().SCRIPTS.OMNILOCK?.CODE_HASH:
+          txSkeleton = await commons.omnilock.setupInputCell(txSkeleton, input)
+          break
+        default:
+          throw new HttpError('not support lock script')
+      }
       txSkeleton = txSkeleton.remove('outputs')
     }
     txSkeleton = txSkeleton.update('outputs', (v) => v.push(...outputs))

@@ -1,7 +1,7 @@
 import type { HexString, Hash } from '@ckb-lumos/base'
 import { ActorReference } from '@ckb-js/kuai-models'
 import { BadRequest, NotFound } from 'http-errors'
-import { OmnilockModel, SudtModel, appRegistry } from '../actors'
+import { SudtModel, appRegistry } from '../actors'
 import { Tx } from '../views/tx.view'
 import { getLock } from '../utils'
 import { BaseController, Body, Controller, Get, Param, Post, Put } from '@ckb-js/kuai-io'
@@ -14,6 +14,7 @@ import { tokenEntityToDto } from '../dto/token.dto'
 import { ExplorerService } from '../services/explorer.service'
 import { BI, utils } from '@ckb-lumos/lumos'
 import { MintRequest } from '../dto/mint.dto'
+import { LockModel } from '../actors/lock.model'
 
 @Controller('token')
 export default class SudtController extends BaseController {
@@ -36,17 +37,6 @@ export default class SudtController extends BaseController {
     return SudtResponse.ok(sudtModel.meta())
   }
 
-  // @Post('/getSudtBalance')
-  // async getSudtBalance(@Body() { addresses, typeArgs }: { addresses: string[]; typeArgs: Hash }) {
-  //   if (!addresses?.length || !typeArgs) {
-  //     throw new BadRequest('undefined body field: from or typeArgs')
-  //   }
-
-  //   const sudtModel = appRegistry.findOrBind<SudtModel>(new ActorReference('sudt', `/${typeArgs}/`))
-
-  //   return SudtResponse.ok(sudtModel.getSudtBalance(addresses.map((v) => getLock(v))))
-  // }
-
   @Post('/send/:typeId')
   async send(@Body() { from, to, amount }: MintRequest, @Param('typeId') typeId: string) {
     if (!from?.length || !to || !amount) {
@@ -63,11 +53,10 @@ export default class SudtController extends BaseController {
     const sudtModel = appRegistry.findOrBind<SudtModel>(
       new ActorReference('sudt', `/${token.args}/${fromLocks[0].args}/`),
     )
-    const omnilockModel = appRegistry.findOrBind<OmnilockModel>(
-      new ActorReference('omnilock', `/${fromLocks[0].args}/`),
-    )
 
-    const result = sudtModel.send(omnilockModel, getLock(to), amount)
+    const lockModel = LockModel.getLock(from[0])
+
+    const result = sudtModel.send(lockModel, getLock(to), amount)
     return SudtResponse.ok(await Tx.toJsonString(result))
   }
 
@@ -96,10 +85,9 @@ export default class SudtController extends BaseController {
 
     const amount = BI.isBI(req.amount) ? BI.from(req.amount) : BI.from(0)
     try {
-      const omniLockModel = appRegistry.findOrBind<OmnilockModel>(
-        new ActorReference('omnilock', `/${getLock(req.account).args}/`),
-      )
-      const { typeScript, ...result } = omniLockModel.mint(getLock(req.account), amount)
+      const lockModel = LockModel.getLock(req.account)
+
+      const { typeScript, ...result } = lockModel.mint(getLock(req.account), amount)
 
       await this._dataSource.getRepository(Token).save(
         this._dataSource.getRepository(Token).create({
