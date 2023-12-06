@@ -2,16 +2,17 @@ import { ActorReference, JSONStore, UpdateStorageValue } from '@ckb-js/kuai-mode
 import { BI, Cell, Script } from '@ckb-lumos/lumos'
 import { getConfig } from '@ckb-lumos/config-manager'
 import { BadRequest } from 'http-errors'
-import { appRegistry } from '.'
+import { OmnilockModel, appRegistry } from '.'
 import { getLock } from '../utils'
+import { ACPModel } from './acp.model'
 
 export abstract class LockModel extends JSONStore<Record<string, never>> {
   static getLock = (address: string): LockModel => {
     const lock = getLock(address)
     if (lock.codeHash === getConfig().SCRIPTS.ANYONE_CAN_PAY?.CODE_HASH) {
-      return appRegistry.findOrBind<LockModel>(new ActorReference('acp', `/${lock.args}/`))
+      return appRegistry.findOrBind<ACPModel>(new ActorReference('acp', `/${lock.args}/`))
     } else if (lock.codeHash === getConfig().SCRIPTS.OMNILOCK?.CODE_HASH) {
-      return appRegistry.findOrBind<LockModel>(new ActorReference('omnilock', `/${lock.args}/`))
+      return appRegistry.findOrBind<OmnilockModel>(new ActorReference('omnilock', `/${lock.args}/`))
     } else {
       throw new BadRequest('not support address')
     }
