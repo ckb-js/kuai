@@ -101,7 +101,7 @@ export default class SudtController extends BaseController {
           typeId: utils.computeScriptHash(typeScript),
         }),
       )
-      return new SudtResponse('201', Tx.toJsonString(result))
+      return new SudtResponse('201', await Tx.toJsonString(result))
     } catch (e) {
       if (e instanceof QueryFailedError) {
         switch (e.driverError.code) {
