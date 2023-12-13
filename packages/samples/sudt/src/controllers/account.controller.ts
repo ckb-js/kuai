@@ -1,6 +1,5 @@
-import { BaseController, Body, Controller, Get, Param, Post } from '@ckb-js/kuai-io'
+import { BaseController, Body, Controller, Get, Param, Post, Query } from '@ckb-js/kuai-io'
 import { DataSource } from 'typeorm'
-import { Transaction } from '../entities/transaction.entity'
 import { Account } from '../entities/account.entity'
 import { getLock } from '../utils'
 import { SudtResponse } from '../response'
@@ -9,13 +8,18 @@ import { BadRequest } from 'http-errors'
 import { Tx } from '../views/tx.view'
 import { MintRequest } from '../dto/mint.dto'
 import { BI } from '@ckb-lumos/lumos'
+import { getConfig } from '@ckb-lumos/config-manager'
 import { Asset } from '../entities/asset.entity'
 import { LockModel } from '../actors/lock.model'
+import { NervosService } from '../services/nervos.service'
 
 @Controller('/account')
 export class AccountController extends BaseController {
   #explorerHost = process.env.EXPLORER_HOST || 'https://explorer.nervos.org'
-  constructor(private _dataSource: DataSource) {
+  constructor(
+    private _dataSource: DataSource,
+    private _nervosService: NervosService,
+  ) {
     super()
   }
 
@@ -61,24 +65,25 @@ export class AccountController extends BaseController {
     return SudtResponse.ok(lockModel?.meta)
   }
 
-  @Get('/:address/assets/transaction')
-  async accountTransaction(@Param('address') address: string) {
-    const account = await this._dataSource.getRepository(Account).findOneBy({ address })
-    if (!account) {
+  @Get('/:address/assets/transaction/:typeId')
+  async accountTransaction(
+    @Param('address') address: string,
+    @Param('typeId') typeId: string,
+    @Query('size') size: number,
+    @Query('lastCursor') lastCursor?: string,
+  ) {
+    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
+    if (!token) {
       return []
     }
 
-    const txs = await this._dataSource.getRepository(Transaction).findBy({ fromAccountId: account.id })
-    return txs.map((tx) => ({
-      txHash: tx.txHash,
-      from: tx.fromAccountId,
-      to: tx.toAccountId,
-      time: tx.createdAt,
-      status: tx.status,
-      sudtAmount: tx.sudtAmount,
-      ckbAmount: tx.ckbAmount,
-      url: `${this.#explorerHost}/transaction/${tx.txHash}`,
-    }))
+    const typeScript = {
+      codeHash: getConfig().SCRIPTS.SUDT!.CODE_HASH,
+      hashType: getConfig().SCRIPTS.SUDT!.HASH_TYPE,
+      args: token.args,
+    }
+
+    return this._nervosService.fetchTransferHistory(getLock(address), typeScript, size, lastCursor)
   }
 
   @Get('/:address/assets')

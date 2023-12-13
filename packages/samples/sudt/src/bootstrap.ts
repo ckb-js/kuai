@@ -16,6 +16,7 @@ import { DataSource } from 'typeorm'
 import { AccountController } from './controllers/account.controller'
 import { ExplorerService } from './services/explorer.service'
 import { BalanceTask } from './tasks/balance.task'
+import { NervosService } from './services/nervos.service'
 
 const initiateDataSource = async () => {
   const dataSource = new DataSource({
@@ -75,11 +76,12 @@ export const bootstrap = async () => {
 
   const balanceTask = new BalanceTask(dataSource)
   balanceTask.run()
+  const nervosService = new NervosService(kuaiEnv.config.ckbChain.rpcUrl, kuaiEnv.config.ckbChain.rpcUrl)
 
   // init kuai io
   const cor = new CoR()
   const sudtController = new SudtController(dataSource, new ExplorerService(process.env.EXPLORER_API_HOST))
-  const accountController = new AccountController(dataSource)
+  const accountController = new AccountController(dataSource, nervosService)
   cor.use(sudtController.middleware())
   cor.use(accountController.middleware())
 
