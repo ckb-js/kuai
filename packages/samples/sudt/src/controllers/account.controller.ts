@@ -1,13 +1,9 @@
-import { BaseController, Body, Controller, Get, Param, Post, Query } from '@ckb-js/kuai-io'
+import { BaseController, Controller, Get, Param, Query, } from '@ckb-js/kuai-io'
 import { DataSource } from 'typeorm'
 import { Account } from '../entities/account.entity'
-import { getLock } from '../utils'
 import { SudtResponse } from '../response'
 import { Token } from '../entities/token.entity'
-import { BadRequest } from 'http-errors'
-import { Tx } from '../views/tx.view'
-import { MintRequest } from '../dto/mint.dto'
-import { BI } from '@ckb-lumos/lumos'
+import { getLock } from '../utils'
 import { encodeToAddress } from '@ckb-lumos/helpers'
 import { getConfig } from '@ckb-lumos/config-manager'
 import { Asset } from '../entities/asset.entity'
@@ -34,24 +30,6 @@ export class AccountController extends BaseController {
     LockModel.getLock(address)
 
     return repo.save(repo.create({ address }))
-  }
-
-  @Post('/mint/:typeId')
-  async mint(@Body() { from, to, amount }: MintRequest, @Param('typeId') typeId: string) {
-    if (!from || from.length === 0 || !to || !amount) {
-      throw new BadRequest('undefined body field: from, to or amount')
-    }
-
-    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
-    if (!token) {
-      return SudtResponse.err(404, 'token not found')
-    }
-
-    const lockModel = LockModel.getLock(from[0])
-
-    const result = lockModel.mint(getLock(to), BI.isBI(amount) ? BI.from(amount) : BI.from(0), token.args)
-
-    return SudtResponse.ok(await Tx.toJsonString(result))
   }
 
   @Get('/meta/:address')
@@ -122,6 +100,7 @@ export class AccountController extends BaseController {
           displayName: token.name,
           decimal: token.decimal,
           amount: assetsMap.get(token.id)?.balance ?? '0',
+          typeId: token.typeId,
         }
       } catch (e) {
         console.error(e)

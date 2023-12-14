@@ -13,7 +13,7 @@ import { Account } from '../entities/account.entity'
 import { tokenEntityToDto } from '../dto/token.dto'
 import { ExplorerService } from '../services/explorer.service'
 import { BI, utils } from '@ckb-lumos/lumos'
-import { MintRequest } from '../dto/mint.dto'
+import { MintRequest, TransferRequest } from '../dto/mint.dto'
 import { LockModel } from '../actors/lock.model'
 
 @Controller('token')
@@ -38,8 +38,8 @@ export default class SudtController extends BaseController {
   }
 
   @Post('/send/:typeId')
-  async send(@Body() { from, to, amount }: MintRequest, @Param('typeId') typeId: string) {
-    if (!from?.length || !to || !amount) {
+  async send(@Body() { from, to, amount }: TransferRequest, @Param('typeId') typeId: string) {
+    if (!from || !to || !amount) {
       throw new BadRequest('undefined body field: from, to or amount')
     }
 
@@ -57,6 +57,29 @@ export default class SudtController extends BaseController {
     const lockModel = LockModel.getLock(from[0])
 
     const result = sudtModel.send(lockModel, getLock(to), amount)
+    return SudtResponse.ok(await Tx.toJsonString(result))
+  }
+
+  @Post('/mint/:typeId')
+  async mint(@Body() { to, amount }: MintRequest, @Param('typeId') typeId: string) {
+    if (!to || !amount) {
+      throw new BadRequest('undefined body field: from, to or amount')
+    }
+
+    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
+    if (!token) {
+      return SudtResponse.err('404', 'token not found')
+    }
+
+    const owner = await this._dataSource.getRepository(Account).findOneBy({ id: token.ownerId })
+    if (!owner) {
+      return SudtResponse.err('404', 'token owner not found')
+    }
+
+    const lockModel = LockModel.getLock(owner.address)
+
+    const result = lockModel.mint(getLock(to), BI.isBI(amount) ? amount : BI.from(amount), token.args)
+
     return SudtResponse.ok(await Tx.toJsonString(result))
   }
 
@@ -88,19 +111,26 @@ export default class SudtController extends BaseController {
       const lockModel = LockModel.getLock(req.account)
 
       const { typeScript, ...result } = lockModel.mint(getLock(req.account), amount)
+      const getOrCreateToken = async () => {
+        const checkToken = await this._dataSource.getRepository(Token).findOneBy({ name: req.name })
+        if (checkToken) {
+          return checkToken
+        }
+        return this._dataSource.getRepository(Token).save(
+          this._dataSource.getRepository(Token).create({
+            name: req.name,
+            ownerId: owner!.id,
+            decimal: req.decimal,
+            description: req.description,
+            website: req.website,
+            icon: req.icon,
+            args: typeScript.args,
+            typeId: utils.computeScriptHash(typeScript),
+          }),
+        )
+      }
+      await getOrCreateToken()
 
-      await this._dataSource.getRepository(Token).save(
-        this._dataSource.getRepository(Token).create({
-          name: req.name,
-          ownerId: owner.id,
-          decimal: req.decimal,
-          description: req.description,
-          website: req.website,
-          icon: req.icon,
-          args: typeScript.args,
-          typeId: utils.computeScriptHash(typeScript),
-        }),
-      )
       return new SudtResponse('201', await Tx.toJsonString(result))
     } catch (e) {
       if (e instanceof QueryFailedError) {
@@ -122,21 +152,22 @@ export default class SudtController extends BaseController {
       return SudtResponse.err('404', { message: 'Token not found' })
     }
 
+    this._explorerService.updateSUDT({
+      typeHash: typeId,
+      symbol: req.name,
+      fullName: req.name,
+      decimal: req.decimal.toString(),
+      totalAmount: '0',
+      description: req.description,
+      operatorWebsite: req.website,
+      iconFile: req.icon,
+      uan: `${req.name}.ckb`,
+      displayName: req.name,
+      email: req.email,
+      token: req.explorerCode,
+    })
+
     try {
-      await this._explorerService.updateSUDT({
-        typeHash: typeId,
-        symbol: req.name,
-        fullName: req.name,
-        decimal: req.decimal.toString(),
-        totalAmount: '0',
-        description: req.description,
-        operatorWebsite: req.website,
-        iconFile: req.icon,
-        uan: `${req.name}.ckb`,
-        displayName: req.name,
-        email: req.email,
-        token: req.explorerCode,
-      })
       await this._dataSource.getRepository(Token).save({ ...token, ...req })
       return new SudtResponse('201', {})
     } catch (e) {

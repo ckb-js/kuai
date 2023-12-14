@@ -2,6 +2,7 @@ import { Token } from '../entities/token.entity'
 
 export interface TokenResponse {
   symbol: string
+  typeId: string
   name: string
   amount: string
   decimal: number
@@ -20,6 +21,7 @@ export const tokenEntityToDto = (token: Token, amount: string, explorerHost: str
     description: token.description ?? '',
     website: token.website,
     icon: token.icon,
+    typeId: token.typeId,
     explorerUrl: `${explorerHost}/sudt/${token.typeId}`,
   }
 }
