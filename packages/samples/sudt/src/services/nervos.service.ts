@@ -67,11 +67,11 @@ export class NervosService {
 
         return {
           froms: Array.from(from.entries()).map(([lockHash, amount]) => ({
-            lock: lockMap.get(lockHash),
+            lock: lockMap.get(lockHash)!,
             amount: amount.toString(),
           })),
           to: Array.from(to.entries()).map(([lockHash, amount]) => ({
-            lock: lockMap.get(lockHash),
+            lock: lockMap.get(lockHash)!,
             amount: amount.toString(),
           })),
         }

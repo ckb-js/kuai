@@ -8,6 +8,7 @@ import { BadRequest } from 'http-errors'
 import { Tx } from '../views/tx.view'
 import { MintRequest } from '../dto/mint.dto'
 import { BI } from '@ckb-lumos/lumos'
+import { encodeToAddress } from '@ckb-lumos/helpers'
 import { getConfig } from '@ckb-lumos/config-manager'
 import { Asset } from '../entities/asset.entity'
 import { LockModel } from '../actors/lock.model'
@@ -83,7 +84,25 @@ export class AccountController extends BaseController {
       args: token.args,
     }
 
-    return this._nervosService.fetchTransferHistory(getLock(address), typeScript, size, lastCursor)
+    const history = await this._nervosService.fetchTransferHistory(getLock(address), typeScript, size, lastCursor)
+
+    return {
+      ...history,
+      ...{
+        history: history.history.map((tx) => {
+          return {
+            froms: tx.froms.map((from) => ({
+              amount: from.amount,
+              address: encodeToAddress(from.lock),
+            })),
+            to: tx.to.map((to) => ({
+              amount: to.amount,
+              address: encodeToAddress(to.lock),
+            })),
+          }
+        }),
+      },
+    }
   }
 
   @Get('/:address/assets')
@@ -96,7 +115,6 @@ export class AccountController extends BaseController {
       acc.set(cur.tokenId, cur)
       return acc
     }, new Map<number, Asset>())
-    console.log(assetsMap)
     return tokens.map((token) => {
       try {
         return {
