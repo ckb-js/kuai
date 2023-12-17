@@ -18,7 +18,7 @@
     "koa-body": "6.0.1"
   },
   "devDependencies": {
-    "ts-node": "10.9.1",
+    "ts-node": "10.9.2",
     "typedoc": "0.25.4",
     "typescript": "5.3.3"
   }
