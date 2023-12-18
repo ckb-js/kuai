@@ -1,5 +1,7 @@
 {
   "name": "sudt",
+  "private": true,
+  "version": "0.0.1-alpha.2",
   "scripts": {
     "dev": "ts-node src/main.ts",
     "build": "tsc",
