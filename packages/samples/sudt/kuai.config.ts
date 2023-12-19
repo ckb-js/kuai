@@ -17,8 +17,8 @@ const redisAuth = REDIS_USER && REDIS_PASSWORD ? { username: REDIS_USER, passwor
 
 const config = {
   port: 3000,
-  redisPort: REDIS_HOST ? +REDIS_HOST : undefined,
-  redisHost: REDIS_PORT,
+  redisPort: REDIS_PORT ? +REDIS_PORT : undefined,
+  redisHost: REDIS_HOST,
   network: process.env.NETWORK || 'testnet',
   redisOpt:
     redisOpt || redisAuth
