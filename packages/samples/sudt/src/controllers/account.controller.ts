@@ -1,11 +1,10 @@
-import { BaseController, Controller, Get, Param, Query, } from '@ckb-js/kuai-io'
+import { BaseController, Controller, Get, Param, Query } from '@ckb-js/kuai-io'
 import { DataSource } from 'typeorm'
 import { Account } from '../entities/account.entity'
 import { SudtResponse } from '../response'
 import { Token } from '../entities/token.entity'
 import { getLock } from '../utils'
 import { encodeToAddress } from '@ckb-lumos/helpers'
-import { getConfig } from '@ckb-lumos/config-manager'
 import { Asset } from '../entities/asset.entity'
 import { LockModel } from '../actors/lock.model'
 import { NervosService } from '../services/nervos.service'
@@ -44,41 +43,45 @@ export class AccountController extends BaseController {
     return SudtResponse.ok(lockModel?.meta)
   }
 
-  @Get('/:address/assets/transaction/:typeId')
+  @Get('/:address/assets/transaction')
   async accountTransaction(
     @Param('address') address: string,
-    @Param('typeId') typeId: string,
     @Query('size') size: number,
     @Query('lastCursor') lastCursor?: string,
   ) {
-    const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
-    if (!token) {
-      return []
+    const tokens = await this._dataSource.getRepository(Token).find()
+
+    if (tokens.length === 0) {
+      return { lastCursor: '', history: [] }
     }
 
-    const typeScript = {
-      codeHash: getConfig().SCRIPTS.SUDT!.CODE_HASH,
-      hashType: getConfig().SCRIPTS.SUDT!.HASH_TYPE,
-      args: token.args,
-    }
+    const history = await this._nervosService.fetchTransferHistory(
+      getLock(address),
+      tokens.map((token) => token.typeId),
+      size,
+      lastCursor,
+    )
 
-    const history = await this._nervosService.fetchTransferHistory(getLock(address), typeScript, size, lastCursor)
+    console.log(history)
 
     return {
       ...history,
       ...{
-        history: history.history.map((tx) => {
-          return {
-            froms: tx.froms.map((from) => ({
-              amount: from.amount,
-              address: encodeToAddress(from.lock),
+        history: history.history.map((tx) => ({
+          ...tx,
+          ...{
+            list: tx.list.map((item) => ({
+              from: item.from.map((from) => ({
+                amount: from.amount,
+                address: encodeToAddress(from.lock),
+              })),
+              to: item.to.map((to) => ({
+                amount: to.amount,
+                address: encodeToAddress(to.lock),
+              })),
             })),
-            to: tx.to.map((to) => ({
-              amount: to.amount,
-              address: encodeToAddress(to.lock),
-            })),
-          }
-        }),
+          },
+        })),
       },
     }
   }
