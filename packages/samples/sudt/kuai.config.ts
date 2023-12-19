@@ -29,6 +29,4 @@ const config = {
       : undefined,
 }
 
-console.log(config)
-
 export default config

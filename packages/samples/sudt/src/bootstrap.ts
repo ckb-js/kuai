@@ -15,7 +15,7 @@ import { config } from '@ckb-lumos/lumos'
 import { DataSource } from 'typeorm'
 import { AccountController } from './controllers/account.controller'
 import { ExplorerService } from './services/explorer.service'
-import { BalanceTask } from './tasks/balance.task'
+// import { BalanceTask } from './tasks/balance.task'
 import { NervosService } from './services/nervos.service'
 
 const initiateDataSource = async () => {
@@ -43,6 +43,7 @@ process.on('uncaughtException', (error) => {
 export const bootstrap = async () => {
   const kuaiCtx = await initialKuai()
   const kuaiEnv = kuaiCtx.getRuntimeEnvironment()
+  console.log(kuaiEnv.config)
 
   if (kuaiEnv.config.redisPort) {
     mqContainer.bind(REDIS_PORT_SYMBOL).toConstantValue(kuaiEnv.config.redisPort)
@@ -74,8 +75,8 @@ export const bootstrap = async () => {
 
   const dataSource = await initiateDataSource()
 
-  const balanceTask = new BalanceTask(dataSource)
-  balanceTask.run()
+  // const balanceTask = new BalanceTask(dataSource)
+  // balanceTask.run()
   const nervosService = new NervosService(kuaiEnv.config.ckbChain.rpcUrl, kuaiEnv.config.ckbChain.rpcUrl)
 
   // init kuai io
