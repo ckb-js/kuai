@@ -25,7 +25,9 @@ export class ContractDeployer {
     signer?: MessageSigner,
   ) {
     this.#signer = signer
-    this.#rpc = new RPC(network.rpcUrl)
+    this.#rpc = new RPC(network.rpcUrl, {
+      fetch: (request, init) => globalThis.fetch(request, { ...init, keepalive: true }),
+    })
     this.#index = new Indexer(network.rpcUrl)
     this.#network = network
   }

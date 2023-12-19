@@ -12,7 +12,7 @@ const SpecialCellLocation: {
 }
 
 export async function getGenesisScriptsConfig(rpcUrl: string): Promise<Record<string, config.ScriptConfig>> {
-  const rpc = new RPC(rpcUrl)
+  const rpc = new RPC(rpcUrl, { fetch: (request, init) => globalThis.fetch(request, { ...init, keepalive: true }) })
   const genesisBlock = await rpc.getBlockByNumber('0x0')
 
   const generateGenesisScriptConfig = (transactionIndex: number, outputIndex: number) => {

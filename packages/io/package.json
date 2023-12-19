@@ -34,7 +34,7 @@
   "dependencies": {
     "@ckb-js/kuai-common": "0.0.1-alpha.2",
     "@ckb-js/kuai-core": "0.0.1-alpha.2",
-    "@ckb-lumos/lumos": "0.20.0",
+    "@ckb-lumos/lumos": "0.21.1",
     "http-errors": "2.0.0",
     "koa-body": "6.0.1",
     "koa-compose": "4.1.0",
@@ -43,8 +43,8 @@
     "rxjs": "7.8.1"
   },
   "devDependencies": {
-    "@ckb-lumos/base": "0.20.0",
-    "@ckb-lumos/rpc": "0.20.0",
+    "@ckb-lumos/base": "0.21.1",
+    "@ckb-lumos/rpc": "0.21.1",
     "@types/koa-compose": "3.2.8",
     "@types/koa-router": "7.4.8",
     "koa": "2.14.2",
