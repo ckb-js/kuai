@@ -1,5 +1,8 @@
 import { BI, Indexer, Output, RPC, Script, Transaction, utils } from '@ckb-lumos/lumos'
 
+type TypeHash = string
+type LockHash = string
+
 export class NervosService {
   #indexer: Indexer
   #rpc: RPC
@@ -9,7 +12,7 @@ export class NervosService {
   }
 
   #collectTokenAmount = (
-    map: Map<string, BI>,
+    map: Map<LockHash, BI>,
     typeId: string,
     output: Output,
     outputData: string,
@@ -19,7 +22,7 @@ export class NervosService {
       if (utils.computeScriptHash(output.type) !== typeId) return map
 
       const lockHash = utils.computeScriptHash(output.lock)
-      lockMap.set(lockHash, output.lock)
+      lockMap.set(lockHash, output.type)
 
       const totalAmount = map.get(typeId) ?? BI.from(0)
       map.set(lockHash, totalAmount.add(BI.from(outputData)))
@@ -28,32 +31,52 @@ export class NervosService {
     return map
   }
 
-  #filterFrom = async (tx: Transaction, typeIds: string, lockMap: Map<string, Script>): Promise<Map<string, BI>> => {
-    let from = new Map<string, BI>()
-    for (const input of tx.inputs) {
-      const previousTransaction = await this.#rpc.getTransaction(input.previousOutput.txHash)
-      const txIndex = parseInt(input.previousOutput.index, 16)
-      const previousOutput = previousTransaction.transaction.outputs[txIndex]
-      console.log(previousOutput)
-      const previousOutputData = previousTransaction.transaction.outputsData[txIndex]
-      from = this.#collectTokenAmount(from, typeIds, previousOutput, previousOutputData, lockMap)
-    }
+  #filterFrom = async (
+    tx: Transaction,
+    typeIds: string[],
+    lockMap: Map<string, Script>,
+  ): Promise<Map<TypeHash, Map<LockHash, BI>>> => {
+    const from = new Map<TypeHash, Map<LockHash, BI>>()
+    for (const typeId of typeIds) {
+      let fromSingleTx = new Map<string, BI>()
+      for (const input of tx.inputs) {
+        const previousTransaction = await this.#rpc.getTransaction(input.previousOutput.txHash)
+        const txIndex = parseInt(input.previousOutput.index, 16)
+        const previousOutput = previousTransaction.transaction.outputs[txIndex]
+        const previousOutputData = previousTransaction.transaction.outputsData[txIndex]
+        fromSingleTx = this.#collectTokenAmount(fromSingleTx, typeId, previousOutput, previousOutputData, lockMap)
+      }
 
+      if (Array.from(fromSingleTx.entries()).length > 0) {
+        from.set(typeId, fromSingleTx)
+      }
+    }
     return from
   }
 
-  #filterTo = async (tx: Transaction, typeId: string, lockMap: Map<string, Script>): Promise<Map<string, BI>> =>
-    tx.outputs.reduce((acc, cur, key) => {
-      this.#collectTokenAmount(acc, typeId, cur, tx.outputsData[key], lockMap)
-      return acc
-    }, new Map<string, BI>())
+  #filterTo = async (
+    tx: Transaction,
+    typeIds: string[],
+    lockMap: Map<string, Script>,
+  ): Promise<Map<TypeHash, Map<LockHash, BI>>> =>
+    typeIds.reduce((acc, typeId) => {
+      const toSingleTx = tx.outputs.reduce((acc, cur, key) => {
+        this.#collectTokenAmount(acc, typeId, cur, tx.outputsData[key], lockMap)
+        return acc
+      }, new Map<string, BI>())
 
-  fetchTransferHistory = async (lockScript: Script, typeScript: Script, sizeLimit: number, lastCursor?: string) => {
+      if (Array.from(toSingleTx.entries()).length > 0) {
+        acc.set(typeId, toSingleTx)
+      }
+
+      return acc
+    }, new Map<TypeHash, Map<LockHash, BI>>())
+
+  fetchTransferHistory = async (lockScript: Script, typeIds: string[], sizeLimit: number, lastCursor?: string) => {
     const txs = await this.#indexer.getTransactions(
       {
         script: lockScript,
         scriptType: 'lock',
-        filter: { script: typeScript },
       },
       { order: 'desc', sizeLimit, lastCursor },
     )
@@ -62,18 +85,29 @@ export class NervosService {
     const history = await Promise.all(
       txs.objects.map(async ({ txHash }) => {
         const { transaction } = await this.#rpc.getTransaction(txHash)
-        const from = await this.#filterFrom(transaction, utils.computeScriptHash(typeScript), lockMap)
-        const to = await this.#filterTo(transaction, utils.computeScriptHash(typeScript), lockMap)
+        const from = await this.#filterFrom(transaction, typeIds, lockMap)
+        const to = await this.#filterTo(transaction, typeIds, lockMap)
 
         return {
-          froms: Array.from(from.entries()).map(([lockHash, amount]) => ({
-            lock: lockMap.get(lockHash)!,
-            amount: amount.toString(),
-          })),
-          to: Array.from(to.entries()).map(([lockHash, amount]) => ({
-            lock: lockMap.get(lockHash)!,
-            amount: amount.toString(),
-          })),
+          txHash,
+          list: typeIds
+            .filter((typeId) => {
+              return from.has(typeId) || to.has(typeId)
+            })
+            .map((typeId) => ({
+              from: from.get(typeId)
+                ? Array.from(from.get(typeId)!.entries()).map(([lockHash, amount]) => ({
+                    lock: lockMap.get(lockHash)!,
+                    amount: amount.toString(),
+                  }))
+                : [],
+              to: to.get(typeId)
+                ? Array.from(to.get(typeId)!.entries()).map(([lockHash, amount]) => ({
+                    lock: lockMap.get(lockHash)!,
+                    amount: amount.toString(),
+                  }))
+                : [],
+            })),
         }
       }),
     )
