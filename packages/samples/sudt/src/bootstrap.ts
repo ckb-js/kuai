@@ -22,11 +22,11 @@ const initiateDataSource = async () => {
   const dataSource = new DataSource({
     connectorPackage: 'mysql2',
     type: 'mysql',
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT) || 3306,
-    username: process.env.DB_USERNAME || 'root',
-    password: process.env.DB_PASSWORD || 'root',
-    database: process.env.DB_DATABASE || 'sudt',
+    host: process.env.DBHOST || 'localhost',
+    port: Number(process.env.DBPORT) || 3306,
+    username: process.env.DBUSERNAME || 'root',
+    password: process.env.DBPASSWORD || 'root',
+    database: process.env.DBDATABASE || 'sudt',
     entities: [__dirname + '/entities/*.{js,ts}'],
     synchronize: true,
   })
