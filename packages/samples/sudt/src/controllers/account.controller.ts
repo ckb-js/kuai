@@ -4,7 +4,6 @@ import { Account } from '../entities/account.entity'
 import { SudtResponse } from '../response'
 import { Token } from '../entities/token.entity'
 import { getLock } from '../utils'
-import { encodeToAddress } from '@ckb-lumos/helpers'
 import { Asset } from '../entities/asset.entity'
 import { LockModel } from '../actors/lock.model'
 import { NervosService } from '../services/nervos.service'
@@ -75,19 +74,13 @@ export class AccountController extends BaseController {
         history: history.history.map((tx) => ({
           ...tx,
           ...{
-            list: tx.list.map((item) => ({
-              from: item.from.map((from) => ({
-                token: tokenMap.get(item.typeId),
-                typeId: item.typeId,
-                amount: from.amount,
-                address: encodeToAddress(from.lock),
-              })),
-              to: item.to.map((to) => ({
-                token: tokenMap.get(item.typeId),
-                typeId: item.typeId,
-                amount: to.amount,
-                address: encodeToAddress(to.lock),
-              })),
+            from: tx.from.map((from) => ({
+              ...from,
+              ...{ typeId: from.token, token: tokenMap.get(from.token) ?? '' },
+            })),
+            to: tx.to.map((to) => ({
+              ...to,
+              ...{ typeId: to.token, token: tokenMap.get(to.token) ?? '' },
             })),
           },
         })),
