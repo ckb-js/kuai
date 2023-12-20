@@ -95,6 +95,7 @@ export class NervosService {
               return from.has(typeId) || to.has(typeId)
             })
             .map((typeId) => ({
+              typeId,
               from: from.get(typeId)
                 ? Array.from(from.get(typeId)!.entries()).map(([lockHash, amount]) => ({
                     lock: lockMap.get(lockHash)!,

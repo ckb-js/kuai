@@ -55,6 +55,11 @@ export class AccountController extends BaseController {
       return { lastCursor: '', history: [] }
     }
 
+    const tokenMap = tokens.reduce((acc, cur) => {
+      acc.set(cur.typeId, cur)
+      return acc
+    }, new Map<string, Token>())
+
     const history = await this._nervosService.fetchTransferHistory(
       getLock(address),
       tokens.map((token) => token.typeId),
@@ -72,10 +77,14 @@ export class AccountController extends BaseController {
           ...{
             list: tx.list.map((item) => ({
               from: item.from.map((from) => ({
+                token: tokenMap.get(item.typeId),
+                typeId: item.typeId,
                 amount: from.amount,
                 address: encodeToAddress(from.lock),
               })),
               to: item.to.map((to) => ({
+                token: tokenMap.get(item.typeId),
+                typeId: item.typeId,
                 amount: to.amount,
                 address: encodeToAddress(to.lock),
               })),
