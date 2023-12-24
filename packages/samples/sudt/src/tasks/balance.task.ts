@@ -37,7 +37,7 @@ export class BalanceTask {
                 accountId: account.id,
                 tokenId: token.id,
                 typeId: token.typeId,
-                balance: balance.toString(),
+                balance: balance.sudtBalance.toString(),
               })
             } else {
               asset.setBalance(balance.sudtBalance)
@@ -49,7 +49,7 @@ export class BalanceTask {
           console.error(e)
         }
       }
-      await scheduler.wait(10000)
+      await scheduler.wait(1000)
     }
   }
 }

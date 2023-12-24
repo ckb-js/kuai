@@ -15,12 +15,13 @@ export function initiateResourceBindingManager(params: {
   dataSource?: ChainSource
   listener?: Listener<Header>
   rpc?: string
+  startBlockNumber?: string
 }) {
   assert(params.rpc || params.dataSource, 'dataSource or rpc is required')
 
   const dataSource = params.dataSource ?? new NervosChainSource(params.rpc!)
   const listener = params.listener ?? new TipHeaderListener(dataSource)
   Reflect.defineMetadata(ProviderKey.Actor, { ref: new ActorReference('resource', '/').json }, Manager)
-  const manager = new Manager(listener, dataSource)
+  const manager = new Manager(listener, dataSource, params.startBlockNumber)
   return { manager, ...manager.listen() }
 }

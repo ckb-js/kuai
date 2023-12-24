@@ -12,11 +12,13 @@ const REDIS_USER = redisOpt?.username ?? process.env.REDISUSER
 const REDIS_PASSWORD = redisOpt?.password ?? process.env.REDISPASSWORD
 const REDIS_HOST = process.env.REDIS_HOST ?? process.env.REDISHOST
 const REDIS_PORT = process.env.REDIS_PORT ?? process.env.REDISPORT
+const PORT = process.env.PORT ?? process.env.PORT
 
 const redisAuth = REDIS_USER && REDIS_PASSWORD ? { username: REDIS_USER, password: REDIS_PASSWORD } : undefined
 
 const config = {
-  port: 3000,
+  port: PORT,
+  startBlockNumber: process.env.STARTBLOCKNUMBER,
   redisPort: REDIS_PORT ? +REDIS_PORT : undefined,
   redisHost: REDIS_HOST,
   network: process.env.NETWORK || 'testnet',
