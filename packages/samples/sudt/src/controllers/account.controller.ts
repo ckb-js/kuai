@@ -7,6 +7,7 @@ import { getLock } from '../utils'
 import { Asset } from '../entities/asset.entity'
 import { LockModel } from '../actors/lock.model'
 import { NervosService } from '../services/nervos.service'
+import { BI } from '@ckb-lumos/lumos'
 
 @Controller('/account')
 export class AccountController extends BaseController {
@@ -95,7 +96,9 @@ export class AccountController extends BaseController {
 
     const assets = await this._dataSource.getRepository(Asset).findBy({ accountId: account.id })
     const assetsMap = assets.reduce((acc, cur) => {
-      acc.set(cur.tokenId, cur)
+      if (BI.from(cur.balance).gt(0)) {
+        acc.set(cur.tokenId, cur)
+      }
       return acc
     }, new Map<number, Asset>())
     return tokens.map((token) => {
