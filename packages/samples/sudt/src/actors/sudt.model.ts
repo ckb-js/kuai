@@ -16,7 +16,7 @@ import {
   TypeFilter,
   Sudt,
   LockFilter,
-  Omnilock,
+  DefaultScript,
 } from '@ckb-js/kuai-models'
 import type { Cell, HexString, Script } from '@ckb-lumos/base'
 import { number, bytes } from '@ckb-lumos/codec'
@@ -31,7 +31,7 @@ import { LockModel } from './lock.model'
 @ActorProvider({ ref: { name: 'sudt', path: `/:typeArgs/:lockArgs/` } })
 @TypeFilter()
 @LockFilter()
-@Omnilock()
+@DefaultScript('ANYONE_CAN_PAY')
 @Sudt()
 export class SudtModel extends JSONStore<Record<string, never>> {
   constructor(
