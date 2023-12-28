@@ -180,7 +180,8 @@ export default class SudtController extends BaseController {
     const token = await this._dataSource.getRepository(Token).findOneBy({ typeId })
 
     if (token) {
-      return SudtResponse.ok(tokenEntityToDto(token, '0', this.#explorerHost))
+      const owner = await this._dataSource.getRepository(Account).findOneBy({ id: token.ownerId })
+      return SudtResponse.ok(tokenEntityToDto(token, owner?.address ?? '', '0', this.#explorerHost))
     } else {
       throw new NotFound()
     }
@@ -190,6 +191,23 @@ export default class SudtController extends BaseController {
   async listTokens() {
     const tokens = await this._dataSource.getRepository(Token).find()
 
-    return SudtResponse.ok(tokens.map((token) => tokenEntityToDto(token, '0', this.#explorerHost)))
+    const owners = await tokens.reduce(async (accP, cur) => {
+      const acc = await accP
+      if (!acc.has(cur.ownerId)) {
+        const owner = await this._dataSource.getRepository(Account).findOneBy({ id: cur.ownerId })
+        if (owner) {
+          acc.set(owner.id, owner.address)
+        }
+      }
+      return acc
+    }, Promise.resolve(new Map<number, string>()))
+
+    return SudtResponse.ok(
+      await Promise.all(
+        tokens.map((token) => {
+          return tokenEntityToDto(token, owners.get(token.ownerId) ?? '', '0', this.#explorerHost)
+        }),
+      ),
+    )
   }
 }

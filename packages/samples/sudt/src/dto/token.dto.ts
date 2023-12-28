@@ -10,9 +10,10 @@ export interface TokenResponse {
   website: string
   icon: string
   explorerUrl: string
+  owner: string
 }
 
-export const tokenEntityToDto = (token: Token, amount: string, explorerHost: string): TokenResponse => {
+export const tokenEntityToDto = (token: Token, owner: string, amount: string, explorerHost: string): TokenResponse => {
   return {
     symbol: token.name,
     name: token.name,
@@ -23,5 +24,6 @@ export const tokenEntityToDto = (token: Token, amount: string, explorerHost: str
     icon: token.icon,
     typeId: token.typeId,
     explorerUrl: `${explorerHost}/sudt/${token.typeId}`,
+    owner,
   }
 }
