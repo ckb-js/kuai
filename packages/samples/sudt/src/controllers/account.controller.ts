@@ -101,18 +101,21 @@ export class AccountController extends BaseController {
       }
       return acc
     }, new Map<number, Asset>())
-    return tokens.map((token) => {
-      try {
-        return {
-          uan: token.name,
-          displayName: token.name,
-          decimal: token.decimal,
-          amount: assetsMap.get(token.id)?.balance ?? '0',
-          typeId: token.typeId,
+
+    return tokens
+      .filter((token) => BI.from(assetsMap.get(token.id)?.balance ?? 0).gt(0))
+      .map((token) => {
+        try {
+          return {
+            uan: token.name,
+            displayName: token.name,
+            decimal: token.decimal,
+            amount: assetsMap.get(token.id)?.balance ?? '0',
+            typeId: token.typeId,
+          }
+        } catch (e) {
+          console.error(e)
         }
-      } catch (e) {
-        console.error(e)
-      }
-    })
+      })
   }
 }
