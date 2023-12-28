@@ -25,10 +25,10 @@
     "find-up": "5.0.0",
     "jsonrepair": "3.4.1",
     "lodash": "4.17.21",
-    "read": "2.1.0"
+    "read": "3.0.1"
   },
   "devDependencies": {
     "@types/decompress": "4.2.7",
-    "@types/lodash": "4.14.201"
+    "@types/lodash": "4.14.202"
   }
 }
