@@ -47,27 +47,22 @@ export class AccountController extends BaseController {
   async accountTransaction(
     @Param('address') address: string,
     @Query('size') size: number,
+    @Query('typeId') typeId: string,
     @Query('lastCursor') lastCursor?: string,
   ) {
     const tokens = await this._dataSource.getRepository(Token).find()
-
-    if (tokens.length === 0) {
-      return { lastCursor: '', history: [] }
-    }
 
     const tokenMap = tokens.reduce((acc, cur) => {
       acc.set(cur.typeId, cur)
       return acc
     }, new Map<string, Token>())
 
-    const history = await this._nervosService.fetchTransferHistory(
-      getLock(address),
-      tokens.map((token) => token.typeId),
-      size,
+    const history = await this._nervosService.fetchTransferHistory({
+      lockScript: getLock(address),
+      typeIds: tokens.map((token) => token.typeId),
+      sizeLimit: size,
       lastCursor,
-    )
-
-    console.log(history)
+    })
 
     return {
       ...history,
@@ -77,11 +72,11 @@ export class AccountController extends BaseController {
           ...{
             from: tx.from.map((from) => ({
               ...from,
-              ...{ typeId: from.token, token: tokenMap.get(from.token) ?? '' },
+              ...{ typeId: from.typeId, token: from.typeId ? tokenMap.get(from.typeId) ?? undefined : undefined },
             })),
             to: tx.to.map((to) => ({
               ...to,
-              ...{ typeId: to.token, token: tokenMap.get(to.token) ?? '' },
+              ...{ typeId: to.typeId, token: to.typeId ? tokenMap.get(to.typeId) ?? undefined : undefined },
             })),
           },
         })),
