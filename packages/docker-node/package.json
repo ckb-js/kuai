@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@ckb-js/kuai-common": "0.0.1-alpha.2",
-    "@ckb-lumos/lumos": "0.20.0",
+    "@ckb-lumos/lumos": "0.21.1",
     "dockerode": "4.0.0"
   }
 }

@@ -16,6 +16,6 @@
   },
   "devDependencies": {
     "@ckb-lumos/base": "0.20.0",
-    "@ckb-lumos/lumos": "0.20.0"
+    "@ckb-lumos/lumos": "0.21.1"
   }
 }
