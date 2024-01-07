@@ -15,7 +15,7 @@
     "find-up": "5.0.0"
   },
   "devDependencies": {
-    "@ckb-lumos/base": "0.20.0",
+    "@ckb-lumos/base": "0.21.1",
     "@ckb-lumos/lumos": "0.20.0"
   }
 }

@@ -14,7 +14,7 @@
     "@ckb-js/kuai-core": "0.0.1-alpha.2",
     "@ckb-js/kuai-io": "0.0.1-alpha.2",
     "@ckb-js/kuai-models": "0.0.1-alpha.2",
-    "@ckb-lumos/base": "0.20.0",
+    "@ckb-lumos/base": "0.21.1",
     "@ckb-lumos/bi": "0.20.0",
     "@ckb-lumos/codec": "0.20.0",
     "@ckb-lumos/lumos": "0.20.0",

@@ -43,7 +43,7 @@
     "rxjs": "7.8.1"
   },
   "devDependencies": {
-    "@ckb-lumos/base": "0.20.0",
+    "@ckb-lumos/base": "0.21.1",
     "@ckb-lumos/rpc": "0.20.0",
     "@types/koa-compose": "3.2.8",
     "@types/koa-router": "7.4.8",
