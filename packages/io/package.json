@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@ckb-lumos/base": "0.20.0",
-    "@ckb-lumos/rpc": "0.20.0",
+    "@ckb-lumos/rpc": "0.21.1",
     "@types/koa-compose": "3.2.8",
     "@types/koa-router": "7.4.8",
     "koa": "2.14.2",
