@@ -163,7 +163,6 @@ export default class SudtController extends BaseController {
       iconFile: req.icon,
       uan: `${req.name}.ckb`,
       displayName: req.name,
-      email: req.email,
       token: req.explorerCode,
     })
 

@@ -34,11 +34,6 @@ export class NervosService {
             amount: BI.from(number.Uint128LE.unpack(previousOutputData.slice(0, 34))).toString(),
           })
         }
-      } else {
-        from.push({
-          address: encodeToAddress(previousOutput.lock),
-          ckb: previousOutput.capacity,
-        })
       }
     }
 
@@ -57,11 +52,6 @@ export class NervosService {
             amount: BI.from(number.Uint128LE.unpack(tx.outputsData[key].slice(0, 34))).toString(),
           })
         }
-      } else {
-        acc.push({
-          address: encodeToAddress(cur.lock),
-          ckb: cur.capacity,
-        })
       }
       return acc
     }, [])
@@ -102,7 +92,7 @@ export class NervosService {
 
     return {
       lastCursor: txs.lastCursor,
-      history,
+      history: history.filter((tx) => tx.from.length > 0 || tx.to.length > 0),
     }
   }
 }
