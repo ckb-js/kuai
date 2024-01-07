@@ -100,7 +100,7 @@ subtask('node:start', 'start a ckb node')
       ]),
       builtInDirPath,
       indexer: new Indexer(node.url),
-      rpc: new RPC(node.url),
+      rpc: new RPC(node.url, { fetch: (request, init) => globalThis.fetch(request, { ...init, keepalive: true }) }),
       privateKey: env.config.kuaiArguments?.privateKey ?? DEFAULT_KUAI_PRIVATE_KEY,
     })
   })
