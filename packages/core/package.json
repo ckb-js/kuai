@@ -16,7 +16,7 @@
     "@ckb-lumos/base": "0.20.0",
     "@ckb-lumos/config-manager": "0.20.0",
     "@ckb-lumos/hd": "0.20.0",
-    "@ckb-lumos/helpers": "0.20.0",
+    "@ckb-lumos/helpers": "0.21.1",
     "@iarna/toml": "2.2.5",
     "@jest/core": "29.7.0",
     "chalk": "4.1.2",
