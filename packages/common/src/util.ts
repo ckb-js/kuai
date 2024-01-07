@@ -1,5 +1,5 @@
 import type { TransactionWithStatus } from '@ckb-lumos/base'
-import type { RPC } from '@ckb-lumos/lumos'
+import { config, type RPC, type helpers } from '@ckb-lumos/lumos'
 import { scheduler } from 'node:timers/promises'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -83,4 +83,21 @@ export interface PackageJson {
 export async function getPackageJson(): Promise<PackageJson> {
   const root = getPackageRoot()
   return JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf-8'))
+}
+
+export const addBuiltInCellDeps = (txSkeleton: helpers.TransactionSkeletonType, dep: string) => {
+  const depConfig = config.getConfig().SCRIPTS[dep]
+  if (depConfig) {
+    txSkeleton = txSkeleton.update('cellDeps', (cellDeps) =>
+      cellDeps.push({
+        outPoint: {
+          txHash: depConfig.TX_HASH,
+          index: depConfig.INDEX,
+        },
+        depType: depConfig.DEP_TYPE,
+      }),
+    )
+  }
+
+  return txSkeleton
 }

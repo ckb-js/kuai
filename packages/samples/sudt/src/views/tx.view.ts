@@ -1,7 +1,7 @@
-import { type Cell, helpers, config } from '@ckb-lumos/lumos'
-import { SECP_SIGNATURE_PLACEHOLDER, OMNILOCK_SIGNATURE_PLACEHOLDER } from '@ckb-lumos/common-scripts/lib/helper'
-import { blockchain } from '@ckb-lumos/base'
-import { bytes } from '@ckb-lumos/codec'
+import { type Cell, helpers, commons } from '@ckb-lumos/lumos'
+import { getConfig } from '@ckb-lumos/config-manager'
+import { addBuiltInCellDeps } from '@ckb-js/kuai-common'
+import { SudtResponse } from '../response'
 
 export class Tx {
   static async toJsonString({
@@ -14,55 +14,27 @@ export class Tx {
     witnesses?: string[]
   }): Promise<helpers.TransactionSkeletonObject> {
     let txSkeleton = helpers.TransactionSkeleton({})
+    for (const input of inputs) {
+      switch (input.cellOutput.lock.codeHash) {
+        case getConfig().SCRIPTS.ANYONE_CAN_PAY?.CODE_HASH:
+          txSkeleton = await commons.anyoneCanPay.setupInputCell(txSkeleton, input)
+          break
+        case getConfig().SCRIPTS.OMNILOCK?.CODE_HASH:
+          txSkeleton = await commons.omnilock.setupInputCell(txSkeleton, input)
+          break
+        default:
+          throw SudtResponse.err('400', 'not support lock script')
+      }
+      txSkeleton = txSkeleton.remove('outputs')
+    }
     txSkeleton = txSkeleton.update('outputs', (v) => v.push(...outputs))
-    const CONFIG = config.getConfig()
-    txSkeleton = txSkeleton.update('cellDeps', (v) =>
-      v.push(
-        {
-          outPoint: {
-            txHash: CONFIG.SCRIPTS.SUDT!.TX_HASH,
-            index: CONFIG.SCRIPTS.SUDT!.INDEX,
-          },
-          depType: CONFIG.SCRIPTS.SUDT!.DEP_TYPE,
-        },
-        {
-          outPoint: {
-            txHash: CONFIG.SCRIPTS.OMNILOCK!.TX_HASH,
-            index: CONFIG.SCRIPTS.OMNILOCK!.INDEX,
-          },
-          depType: CONFIG.SCRIPTS.OMNILOCK!.DEP_TYPE,
-        },
-        {
-          outPoint: {
-            txHash: CONFIG.SCRIPTS.SECP256K1_BLAKE160!.TX_HASH,
-            index: CONFIG.SCRIPTS.SECP256K1_BLAKE160!.INDEX,
-          },
-          depType: CONFIG.SCRIPTS.SECP256K1_BLAKE160!.DEP_TYPE,
-        },
-      ),
-    )
+    txSkeleton = addBuiltInCellDeps(txSkeleton, 'SUDT')
 
-    inputs.forEach((input, idx) => {
-      txSkeleton = txSkeleton.update('inputs', (inputs) => inputs.push(input))
-
-      txSkeleton = txSkeleton.update('witnesses', (wit) => {
-        if (!witnesses?.[idx] || witnesses?.[idx] === '0x' || witnesses?.[idx] === '') {
-          const omniLock = CONFIG.SCRIPTS.OMNILOCK as NonNullable<config.ScriptConfig>
-          const fromLockScript = input.cellOutput.lock
-          return wit.push(
-            bytes.hexify(
-              blockchain.WitnessArgs.pack({
-                lock:
-                  omniLock.CODE_HASH === fromLockScript.codeHash && fromLockScript.hashType === omniLock.HASH_TYPE
-                    ? OMNILOCK_SIGNATURE_PLACEHOLDER
-                    : SECP_SIGNATURE_PLACEHOLDER,
-              }),
-            ),
-          )
-        }
-        return wit.push(witnesses?.[idx])
+    if (witnesses) {
+      witnesses.forEach((witness) => {
+        txSkeleton = txSkeleton.update('witnesses', (v) => v.push(witness))
       })
-    })
+    }
 
     return helpers.transactionSkeletonToObject(txSkeleton)
   }

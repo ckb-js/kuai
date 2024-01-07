@@ -109,8 +109,12 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
   constructor(
     private _listener: Listener<Header>,
     private _dataSource: ChainSource,
+    startBlockNumber?: string,
   ) {
     super()
+    if (startBlockNumber && BI.isBI(BI.from(startBlockNumber))) {
+      this.#tipBlockNumber = BI.from(startBlockNumber)
+    }
   }
 
   onListenBlock = (blockHeader: Header) => {
@@ -233,7 +237,7 @@ export class Manager extends Actor<object, MessagePayload<ResourceBindingManager
       )
     })
     /**
-     * remove inputs and outputs if they are matched in the block
+     * remove inputs and outputs if they are matched in the block cross transactions
      */
     ;[...newInputs.keys()].forEach((outPoint) => {
       if (newOutputs.has(outPoint)) {

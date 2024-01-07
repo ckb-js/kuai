@@ -1,38 +1,28 @@
-/**
- * @module src/actors/omnilock.model
- * @description
- * This is the actor model for omnilock, which is used to gather omnilock cells to generate record models.
- */
-
-import type { Cell, Script } from '@ckb-lumos/base'
 import {
   ActorProvider,
-  Omnilock,
-  Param,
   ActorReference,
   CellPattern,
+  DataFilter,
+  DefaultScript,
+  LockFilter,
   OutPointString,
+  Param,
   SchemaPattern,
   UpdateStorageValue,
-  LockFilter,
-  DataFilter,
 } from '@ckb-js/kuai-models'
-import { BI } from '@ckb-lumos/bi'
-import { number, bytes } from '@ckb-lumos/codec'
-import { utils } from '@ckb-lumos/base'
+import { BI, Cell, Script, utils } from '@ckb-lumos/lumos'
+import { minimalCellCapacity } from '@ckb-lumos/helpers'
 import { getConfig } from '@ckb-lumos/config-manager'
 import { InternalServerError } from 'http-errors'
-import { MIN_SUDT_WITH_OMINILOCK, TX_FEE } from '../const'
+import { bytes, number } from '@ckb-lumos/codec'
+import { TX_FEE } from '../constant'
 import { LockModel } from './lock.model'
 
-/**
- * add business logic in an actor
- */
-@ActorProvider({ ref: { name: 'omnilock', path: `/:args/` } })
+@ActorProvider({ ref: { name: 'acp', path: `/:args/` } })
 @LockFilter()
-@Omnilock()
+@DefaultScript('ANYONE_CAN_PAY')
 @DataFilter('0x')
-export class OmnilockModel extends LockModel {
+export class ACPModel extends LockModel {
   constructor(
     @Param('args') args: string,
     _schemaOption?: void,
@@ -43,7 +33,7 @@ export class OmnilockModel extends LockModel {
       schemaPattern?: SchemaPattern
     },
   ) {
-    super(undefined, { ...params, ref: ActorReference.newWithFilter(OmnilockModel, `/${args}/`) })
+    super(undefined, { ...params, ref: ActorReference.newWithFilter(ACPModel, `/${args}/`) })
     if (!this.lockScript) {
       throw new Error('lock script is required')
     }
@@ -90,12 +80,14 @@ export class OmnilockModel extends LockModel {
     }
     const sudtCell: Cell = {
       cellOutput: {
-        capacity: BI.from(MIN_SUDT_WITH_OMINILOCK).toHexString(),
+        // capacity: BI.from(MIN_SUDT_WITH_OMINILOCK).toHexString(),
+        capacity: '0x0',
         lock: lockScript,
         type: typeScript,
       },
       data: bytes.hexify(number.Uint128LE.pack(amount.toHexString())),
     }
+    sudtCell.cellOutput.capacity = `0x${minimalCellCapacity(sudtCell).toString(16)}`
     // additional 0.001 ckb for tx fee
     const needCapacity = BI.from(sudtCell.cellOutput.capacity).add(TX_FEE)
     const { inputs, currentTotalCapacity } = this.loadCapacity(needCapacity)
