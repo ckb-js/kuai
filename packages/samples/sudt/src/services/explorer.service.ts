@@ -12,7 +12,6 @@ export class ExplorerService {
     iconFile: string
     uan: string
     displayName: string
-    email: string
     token?: string
   }) => {
     const res = await fetch(`${this.host}/api/v1/udts/${params.typeHash}`, {

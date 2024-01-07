@@ -17,6 +17,7 @@ import { AccountController } from './controllers/account.controller'
 import { ExplorerService } from './services/explorer.service'
 import { BalanceTask } from './tasks/balance.task'
 import { NervosService } from './services/nervos.service'
+import { TokenTask } from './tasks/token.task'
 
 const initiateDataSource = async () => {
   const dataSource = new DataSource({
@@ -79,6 +80,8 @@ export const bootstrap = async () => {
 
   const balanceTask = new BalanceTask(dataSource)
   balanceTask.run()
+  const tokenTask = new TokenTask(dataSource, new ExplorerService(process.env.EXPLORER_API_HOST))
+  tokenTask.run()
   const nervosService = new NervosService(kuaiEnv.config.ckbChain.rpcUrl, kuaiEnv.config.ckbChain.rpcUrl)
 
   // init kuai io
