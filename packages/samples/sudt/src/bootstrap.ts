@@ -29,6 +29,7 @@ const initiateDataSource = async () => {
     password: process.env.DBPASSWORD || 'root',
     database: process.env.DBDATABASE || 'sudt',
     entities: [__dirname + '/entities/*.{js,ts}'],
+    timezone: 'Z',
     synchronize: true,
   })
 
