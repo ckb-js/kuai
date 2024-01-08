@@ -37,11 +37,11 @@ export class ExplorerService {
 
     switch (Math.ceil(res.status / 100)) {
       case 2:
-        return true
       case 3:
-        throw new Error('Redirect')
+        return true
       case 4:
-        throw new Error('Client Error')
+      case 5:
+        throw new Error(`${res.status}, ${res.statusText}`)
     }
   }
 }
