@@ -26,7 +26,6 @@ export class TokenTask {
             continue
           }
           try {
-            console.log(token)
             await this._explorerService.updateSUDT({
               typeHash: token.typeId,
               symbol: token.name,

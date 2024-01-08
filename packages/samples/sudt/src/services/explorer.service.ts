@@ -13,23 +13,25 @@ export class ExplorerService {
     operatorWebsite: string
     token?: string
   }) => {
+    const body = JSON.stringify({
+      type_hash: params.typeHash,
+      symbol: params.symbol,
+      decimal: params.decimal,
+      total_amount: params.totalAmount,
+      description: params.description,
+      operator_website: params.operatorWebsite,
+      email: this._email,
+      uan: `${params.symbol}.ckb`,
+    })
     const res = await fetch(`${this.host}/api/v1/udts/${params.typeHash}`, {
       method: 'PUT',
-      body: JSON.stringify({
-        type_hash: params.typeHash,
-        symbol: params.symbol,
-        decimal: params.decimal,
-        total_amount: params.totalAmount,
-        description: params.description,
-        operator_website: params.operatorWebsite,
-        email: this._email,
-        uan: `${params.symbol}.ckb`,
-      }),
+      body,
       headers: {
         Accept: 'application/vnd.api+json',
         'Content-Type': 'application/vnd.api+json',
       },
     })
+    console.log(res, body)
     if (!res.ok) {
       throw new Error('Internal Service Error')
     }
