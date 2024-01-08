@@ -23,6 +23,7 @@ export class ExplorerService {
       email: this._email,
       uan: `${params.symbol}.ckb`,
     })
+    console.log(`${this.host}/api/v1/udts/${params.typeHash}`)
     const res = await fetch(`${this.host}/api/v1/udts/${params.typeHash}`, {
       method: 'PUT',
       body,
