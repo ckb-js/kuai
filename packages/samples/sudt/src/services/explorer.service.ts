@@ -1,22 +1,30 @@
 export class ExplorerService {
-  constructor(private host = 'https://testnet-api.explorer.nervos.org') {}
+  constructor(
+    private host = 'https://testnet-api.explorer.nervos.org',
+    private _email: string,
+  ) {}
 
   updateSUDT = async (params: {
     typeHash: string
     symbol: string
-    fullName: string
     decimal: string
     totalAmount: string
     description: string
     operatorWebsite: string
-    iconFile: string
-    uan: string
-    displayName: string
     token?: string
   }) => {
     const res = await fetch(`${this.host}/api/v1/udts/${params.typeHash}`, {
       method: 'PUT',
-      body: JSON.stringify({}),
+      body: JSON.stringify({
+        type_hash: params.typeHash,
+        symbol: params.symbol,
+        decimal: params.decimal,
+        total_amount: params.totalAmount,
+        description: params.description,
+        operator_website: params.operatorWebsite,
+        email: this._email,
+        uan: `${params.symbol}.ckb`,
+      }),
       headers: {
         Accept: 'application/vnd.api+json',
         'Content-Type': 'application/vnd.api+json',

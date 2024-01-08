@@ -80,13 +80,16 @@ export const bootstrap = async () => {
 
   const balanceTask = new BalanceTask(dataSource)
   balanceTask.run()
-  const tokenTask = new TokenTask(dataSource, new ExplorerService(process.env.EXPLORER_API_HOST))
+  const tokenTask = new TokenTask(dataSource, new ExplorerService(process.env.EXPLORER_API_HOST, process.env.EMAIL!))
   tokenTask.run()
   const nervosService = new NervosService(kuaiEnv.config.ckbChain.rpcUrl, kuaiEnv.config.ckbChain.rpcUrl)
 
   // init kuai io
   const cor = new CoR()
-  const sudtController = new SudtController(dataSource, new ExplorerService(process.env.EXPLORER_API_HOST))
+  const sudtController = new SudtController(
+    dataSource,
+    new ExplorerService(process.env.EXPLORER_API_HOST, process.env.EMAIL!),
+  )
   const accountController = new AccountController(dataSource, nervosService)
   cor.use(sudtController.middleware())
   cor.use(accountController.middleware())

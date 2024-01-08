@@ -26,17 +26,14 @@ export class TokenTask {
             continue
           }
           try {
+            console.log(token)
             await this._explorerService.updateSUDT({
               typeHash: token.typeId,
               symbol: token.name,
-              fullName: token.name,
               decimal: token.decimal.toString(),
               totalAmount: '0',
               description: token.description ?? '',
               operatorWebsite: token.website,
-              iconFile: token.icon,
-              uan: `${token.name}.ckb`,
-              displayName: token.name,
             })
 
             token.status = TokenStatus.Committed

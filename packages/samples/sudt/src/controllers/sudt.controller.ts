@@ -155,15 +155,10 @@ export default class SudtController extends BaseController {
     this._explorerService.updateSUDT({
       typeHash: typeId,
       symbol: req.name,
-      fullName: req.name,
       decimal: req.decimal.toString(),
       totalAmount: '0',
       description: req.description,
       operatorWebsite: req.website,
-      iconFile: req.icon,
-      uan: `${req.name}.ckb`,
-      displayName: req.name,
-      token: req.explorerCode,
     })
 
     try {
