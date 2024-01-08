@@ -31,7 +31,6 @@ export class ExplorerService {
         'Content-Type': 'application/vnd.api+json',
       },
     })
-    console.log(res, body)
     if (!res.ok) {
       throw new Error('Internal Service Error')
     }
