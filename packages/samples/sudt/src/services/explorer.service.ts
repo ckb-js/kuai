@@ -32,9 +32,6 @@ export class ExplorerService {
         'Content-Type': 'application/vnd.api+json',
       },
     })
-    if (!res.ok) {
-      throw new Error('Internal Service Error')
-    }
 
     switch (Math.ceil(res.status / 100)) {
       case 2:
