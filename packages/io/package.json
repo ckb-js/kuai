@@ -48,6 +48,6 @@
     "@types/koa-compose": "3.2.8",
     "@types/koa-router": "7.4.8",
     "koa": "2.15.0",
-    "reflect-metadata": "0.1.13"
+    "reflect-metadata": "0.2.1"
   }
 }
