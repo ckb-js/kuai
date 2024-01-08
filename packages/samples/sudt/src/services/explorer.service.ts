@@ -15,7 +15,7 @@ export class ExplorerService {
     token?: string
   }) => {
     const res = await fetch(`${this.host}/api/v1/udts/${params.typeHash}`, {
-      method: 'POST',
+      method: 'PUT',
       body: JSON.stringify({}),
       headers: {
         Accept: 'application/vnd.api+json',
