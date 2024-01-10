@@ -25,7 +25,6 @@ export class TokenTask {
           if (Date.now() - token.createdAt.getTime() > this._maxTimeFromCreate) {
             continue
           }
-          console.log(Date.now(), token.createdAt.getTime())
           try {
             await this._explorerService.updateSUDT({
               typeHash: token.typeId,

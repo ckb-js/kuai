@@ -106,8 +106,8 @@ export default class SudtController extends BaseController {
         .save(this._dataSource.getRepository(Account).create({ address: req.account }))
     }
 
-    const amount = BI.isBI(req.amount) ? BI.from(req.amount) : BI.from(0)
     try {
+      const amount = BI.from(req.amount)
       const lockModel = LockModel.getLock(req.account)
 
       const { typeScript, ...result } = lockModel.mint(getLock(req.account), amount)
@@ -141,7 +141,7 @@ export default class SudtController extends BaseController {
       }
 
       console.error(e)
-      throw e
+      return SudtResponse.err('500', { message: (e as Error).message })
     }
   }
 
