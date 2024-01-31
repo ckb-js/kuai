@@ -52,7 +52,7 @@ jobs:
 
       - name: Open PR to rc branch
         if: env.IS_RC_BRANCH == 'true'
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           title: Update versions and changelogs for ${{ steps.version-number.outputs.version_number }}
           commit-message: 'chore: update versions and changelogs'
