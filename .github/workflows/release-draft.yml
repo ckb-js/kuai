@@ -17,6 +17,6 @@ jobs:
       IS_RC_MERGED: ${{ github.event.pull_requst.merged == true && startsWith(github.head_ref, 'rc/v')}}
     steps:
       - name: Create a release draft
-        uses: release-drafter/release-drafter@v5
+        uses: release-drafter/release-drafter@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
