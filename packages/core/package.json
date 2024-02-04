@@ -19,7 +19,7 @@
     "@ckb-lumos/helpers": "0.21.1",
     "@iarna/toml": "2.2.5",
     "@jest/core": "29.7.0",
-    "chalk": "4.1.2",
+    "chalk": "5.3.0",
     "decompress": "4.2.1",
     "enquirer": "2.4.1",
     "find-up": "5.0.0",
