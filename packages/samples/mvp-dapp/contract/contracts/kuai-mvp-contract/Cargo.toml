@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ckb-std = "0.10.0"
+ckb-std = "0.15.0"
 types = { path = "../../types", default-features = false }
 no-std-compat = { version = "0.4.1", features = [ "alloc" ] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
