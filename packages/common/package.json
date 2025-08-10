@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "env-paths": "2.2.1",
-    "find-up": "5.0.0"
+    "find-up": "7.0.0"
   },
   "devDependencies": {
     "@ckb-lumos/base": "0.21.1",
